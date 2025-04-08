@@ -1,21 +1,41 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
-  
+// import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
+// .env informations
+const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
+const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
+const appId = import.meta.env.VITE_FIREBASE_APP_ID;
+const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
 
+let auth;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCxVK8vcF54JYtylORQeps_Sym9OWGeqpA",
-  authDomain: "calculadora-agricultor-react.firebaseapp.com",
-  projectId: "calculadora-agricultor-react",
-  storageBucket: "calculadora-agricultor-react.firebasestorage.app",
-  messagingSenderId: "893159723013",
-  appId: "1:893159723013:web:09229e9450af16afc58c6c",
-  measurementId: "G-0Z4Q22VB2R"
-};
+if (!apiKey || !authDomain || !projectId) {
+    console.error("Firebase credentials are not properly configured. Please, config all credential to resolve.");
+} else {
+    const firebaseConfig = {
+        apiKey,
+        authDomain,
+        projectId,
+        storageBucket,
+        messagingSenderId,
+        appId,
+        measurementId,
+    };
 
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    getAnalytics(app);
 
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-export const auth = getAuth(app);
+    // AppCheck desativado por enquanto
+    // initializeAppCheck(app, {
+    //     provider: new ReCaptchaV3Provider("YOUR_SITE_KEY"),
+    //     isTokenAutoRefreshEnabled: true,
+    // });
+}
+
+export { auth };
