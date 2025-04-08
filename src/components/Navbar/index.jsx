@@ -13,7 +13,8 @@ const Navbar = () => {
         </div>
         <div className="w-100 text-white gap-3 flex justify-evenly">
           <Link to="/">Home</Link>
-          <Link to="/login">Login</Link>
+          <Link to="/Login">Login</Link>
+          <Link to="/Register">Registro</Link>
           <Link to="/settings">Configurações</Link>
         </div>
       </div>
