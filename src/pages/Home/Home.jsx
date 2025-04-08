@@ -1,16 +1,23 @@
-import styles from './Home.module.css'
+import logoEscura from '../../assets/logoEscura.svg';
 
 const Home = () => {
   return (
-    <>
-    <h1>Calculadora do Agricultor</h1>
-    <form className={styles.search_form}>
-      <input type="text"
-      placeholder='Ou busque por tags...'/>
-      <button className="btn btn-dark">Pesquisar</button>
-    </form>
-    </>
-  )
-}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-green-50 p-4 gap-6">
+      <div>
+        <img src={logoEscura} alt="Logo da Calculadora" style={{ width: '204px' }} />
+      </div>
 
-export default Home
+      <h1 className="text-3xl font-bold text-center">Calculadora do Agricultor</h1>
+      <p>A Calculadora do Agricultor 
+        é fruto da cooperação empresa-escola, através
+         dos projetos Integradores do curso de Analise de Processos 
+         Agroindustriais e Interdisciplinares do curso de Desenvolvimento
+          de Software Multiplataforma. Este software foi desenvolvido pelos alunos
+           da Fatec Matão "Luiz Marchesan", com base na planilha da empresa Marchesan.</p>
+      
+    </div>
+  );
+};
+
+export default Home;
+
