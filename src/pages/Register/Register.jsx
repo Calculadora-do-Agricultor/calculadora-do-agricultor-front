@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
-import { auth } from "../../sevices/FirebaseConfig";
+import { auth } from "../../sevices/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { setUserProperties } from "firebase/analytics";
 
