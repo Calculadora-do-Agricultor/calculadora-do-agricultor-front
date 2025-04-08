@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
-
+import {initializeAppCheck, ReCaptchaV3Provider} from "firebase/app-check"
 
 // .env informations
 const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
@@ -33,4 +33,8 @@ if (!apiKey || !authDomain || !projectId) {
     getAnalytics(app); 
 }
 
+initializeAppCheck(app,{
+    provider: new ReCaptchaV3Provider(""),
+    isTokenAutoRefreshEnable: true
+});
 export { auth }; 
