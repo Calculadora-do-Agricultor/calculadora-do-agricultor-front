@@ -1,29 +1,37 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useEffect } from "react";
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth } from "../../sevices/firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import { setUserProperties } from "firebase/analytics";
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
-const Register =() => {
-    const navigate = useNavigate();
-    const[email, setEmail] = useState('');
-    const[password, setPassword] = useState('');
 
-    
-    const[createUserWithEmailAndPassword,user,loading,error,]
-    = useCreateUserWithEmailAndPassword(auth);
+const Register = () => {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-    function handleSignOut(e){
-        e.preventDefault();
-        createUserWithEmailAndPassword(email,password )
+  const [
+    createUserWithEmailAndPassword,
+    user,
+    loading,
+    error,
+  ] = useCreateUserWithEmailAndPassword(auth);
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    await createUserWithEmailAndPassword(email, password);
+
+   
+  };
+
+  useEffect(() => {
+    if (user) {
+      alert("Conta criada com sucesso!");
+      navigate("/login"); // ou para onde você quiser redirecionar
     }
-
-    if(loading){
-        return <p>carregando...</p>
-    }
-    
+   
   return(
     <div className="flex items-center justify-center bg-white px-4 h-[calc(100vh-64px-40px)]">
       <form className="bg-blue-100 p-12 rounded-2xl shadow-xl w-full max-w-md space-y-3">
@@ -68,4 +76,4 @@ const Register =() => {
     );
 };  
 
-  export default Register;
+export default Register;
