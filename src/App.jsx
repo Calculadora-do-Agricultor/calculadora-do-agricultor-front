@@ -22,7 +22,6 @@ function App() {
         </main>
         <Footer />
         {/* COMPONENTES FIXOS (fora das rotas) */}
-
       </Router>
     </div>
   );
