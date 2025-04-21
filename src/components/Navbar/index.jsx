@@ -18,6 +18,7 @@ const Navbar = () => {
             <Link className='hover:bg-yellow-400 rounded' to="/">Página Inicial</Link>
             <Link className='hover:bg-yellow-400 rounded'to="/Login">Entrar</Link>
             <Link className='hover:bg-yellow-400 rounded' to="/Register">Cadastre-se</Link>
+            <Link className='hover:bg-yellow-400 rounded'to="/calculator">Calculadora</Link>
             <Link className='hover:bg-yellow-400 rounded'to="/settings">Configurações</Link>
           </div>
           {/* Bandeira ou ícone */}
