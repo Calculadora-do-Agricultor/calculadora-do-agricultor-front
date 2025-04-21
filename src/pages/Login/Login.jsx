@@ -15,8 +15,9 @@ const Login = () => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      localStorage.setItem('authToken', 'logado');
       alert("Login realizado com sucesso!");
-      navigate("/");
+      navigate("/Calculator");
     } catch (error) {
       alert("Erro: " + error.message);
     }
