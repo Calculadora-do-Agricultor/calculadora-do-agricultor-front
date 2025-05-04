@@ -6,7 +6,8 @@ import Register from "./pages/Register/Register";
 import Settings from "./pages/Settings/Settings";
 import Calculator from "./pages/Calculator/Calculator";
 import React from 'react';
-import PrivateRoute from './components/PrivateRoute/privateRouter'
+import PrivateRoute from './components/PrivateRoute/privateRouter';
+import PlantioPage from "./pages/Calculator/PlantioPage";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             </Route>
             <Route path="/Calculator" element = {<PrivateRoute/>}>
             <Route index element={<Calculator />} />
+            <Route path="plantio" element={<PlantioPage/>} />
             </Route>
 
           </Routes>
