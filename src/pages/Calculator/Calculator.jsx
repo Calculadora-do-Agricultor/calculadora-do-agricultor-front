@@ -1,76 +1,118 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import plantio from "../../assets/plantio.svg";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { getDocs, collection, getDoc, doc, query, where} from "firebase/firestore";
 
-const Calculator = () => {
-  const [tab, setTab] = useState("categorias");
+import { auth, db } from "../../services/firebaseConfig";
+import { Categorias } from "../../components/Categorias";
+import { ListaCalculos } from "../../components/ListaCalculos";
+import CreateCategory from "../../components/CreateCategory";
+
+export default function Calculator() {
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
+  const [categorias, setCategorias] = useState([]);
+  const [user] = useAuthState(auth);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [showCreateCategory, setShowCreateCategory] = useState(false);
   const navigate = useNavigate();
+  const fetchCategorias = async () => {
+    try {
+      const categoriasSnapshot = await getDocs(collection(db, "categories"));
+  
+      const categoriasComCalculos = await Promise.all(
+        categoriasSnapshot.docs.map(async (doc) => {
+          const categoria = { id: doc.id, ...doc.data() };
+  
+          // Busca todos os cálculos que pertencem a esta categoria
+          const calculosSnapshot = await getDocs(
+            query(
+              collection(db, "calculations"),
+              where("category", "==", categoria.name)
+            )
+          );
+  
+          const calculos = calculosSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+  
+          return { ...categoria, calculos };
+        })
+      );
+  
+      setCategorias(categoriasComCalculos);
+    } catch (error) {
+      console.error("Erro ao buscar categorias com cálculos:", error);
+    }
+  };
+  
+  // Verificar se o usuário é admin
+  useEffect(() => {
+    if (user) {
+      const userRef = doc(db, "users", user.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          setIsAdmin(docSnap.data().role === "admin");
+        }
+      });
+    }
 
-  const categorias = [
-    {
-      titulo: "Plantio",
-      descricao:
-        "Engloba todas as atividades relacionadas à implantação da lavoura",
-      icon: () => <img src={plantio} alt="" className="h-8 w-8" />,
-      route: "/Calculator/plantio",
-    },
-  ];
+    fetchCategorias();
+  }, [user]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white px-4 py-10">
-      <div className="mb-6 flex w-full max-w-2xl space-x-10 border-b-2 border-gray-300 text-xl">
-        <button
-          className={`pb-3 font-semibold transition ${
-            tab === "categorias"
-              ? "border-b-4 border-blue-900 text-blue-900"
-              : "text-gray-500"
-          }`}
-          onClick={() => setTab("categorias")}
-        >
-          Categorias
-        </button>
-        <button
-          className={`pb-3 font-semibold transition ${
-            tab === "favoritos"
-              ? "border-b-4 border-blue-900 text-blue-900"
-              : "text-gray-500"
-          }`}
-          onClick={() => setTab("favoritos")}
-        >
-          Favoritos
-        </button>
-      </div>
+    <div className="p-6 flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-4 text-blue-900">Categorias</h1>
 
-      {tab === "categorias" ? (
-        <div className="w-full max-w-2xl space-y-6">
-          {categorias.map((cat, index) => {
-            const Icon = cat.icon;
-            return (
-              <div
-                key={index}
-                onClick={() => navigate(cat.route)}
-                className="flex cursor-pointer items-center justify-between rounded-xl border bg-gray-50 p-6 shadow-md transition hover:shadow-lg"
-              >
-                <div className="flex items-center gap-6">
-                  <Icon className="h-8 w-8 text-blue-900" />
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {cat.titulo}
-                    </h2>
-                    <p className="text-base text-gray-500">{cat.descricao}</p>
-                  </div>
-                </div>
+      <Categorias categorias={categorias} aoSelecionar={setCategoriaSelecionada} />
+
+      {isAdmin && (
+        <>
+          <button
+            onClick={() => setShowOptions(!showOptions)}
+            className="fixed bottom-20 right-15 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Criar
+          </button>
+
+          {showOptions && (
+            <div className="border border-black w-80 h-20 rounded flex items-center justify-center mt-2">
+              <div className="flex gap-4 justify-around">
+                <button
+                  onClick={() => {
+                    setShowCreateCategory(true);
+                    setShowOptions(false);
+                  }}
+                  className="bg-blue-500 text-white px-3 py-1 rounded"
+                >
+                  Criar Categoria
+                </button>
+                <button
+                  onClick={() => {
+                    navigate("/admin/criar-calculo"); // navega para a nova página
+                  }}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Criar Cálculo
+                </button>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="mt-12 text-center text-lg text-gray-500">
-          Nenhum favorito adicionado.
-        </div>
+            </div>
+          )}
+
+          {showCreateCategory && (
+            <CreateCategory
+              onCreate={() => {
+                fetchCategorias();
+                setShowCreateCategory(false);
+              }}
+              onCancel={() => setShowCreateCategory(false)}
+            />
+          )}
+        </>
       )}
+
+      {categoriaSelecionada && <ListaCalculos categoria={categoriaSelecionada} />}
     </div>
   );
-};
-
-export default Calculator;
+}
