@@ -9,8 +9,6 @@ import React from 'react';
 import PrivateRoute from './components/PrivateRoute/privateRouter'
 import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 
-
-
 function App() {
   return (
     <div className="min-h-screen flex flex-col w-full">
