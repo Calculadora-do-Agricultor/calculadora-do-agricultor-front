@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../sevices/firebaseConfig";
+import { auth } from "../../services/firebaseConfig";
 import { EnvelopeIcon,  LockClosedIcon } from '@heroicons/react/24/outline';
 
 
@@ -43,7 +43,7 @@ const Login = () => {
                 className="w-full p-3 pl-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                 onChange={(e) => setEmail(e.target.value)}
              e="password"
-            plac   required
+            required
             />
 
   <EnvelopeIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
