@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { doc, setDoc } from 'firebase/firestore';
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth, db } from "../../services/firebaseConfig";
-import { EnvelopeIcon, LockClosedIcon, UserIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Alert from '../../components/Alert/Alert';
 
 const Register = () => {
@@ -13,6 +13,8 @@ const Register = () => {
   const [role, setRole] = useState('user');
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -154,26 +156,48 @@ const Register = () => {
 
         <div className="relative">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Senha"
-            className="w-full p-3 pl-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 hover:border-blue-500"
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
           />
           <LockClosedIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="w-5 h-5" />
+            ) : (
+              <EyeIcon className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         <div className="relative">
           <input
-            type="password"
+            type={showConfirmPassword ? "text" : "password"}
             placeholder="Confirme a Senha"
-            className="w-full p-3 pl-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 hover:border-blue-500"
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             minLength={6}
           />
           <LockClosedIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+          >
+            {showConfirmPassword ? (
+              <EyeSlashIcon className="w-5 h-5" />
+            ) : (
+              <EyeIcon className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         {errorMessage && <Alert type="error" message={errorMessage} onClose={() => setErrorMessage('')} />}

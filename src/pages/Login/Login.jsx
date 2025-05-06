@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseConfig";
-import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Alert from '../../components/Alert/Alert';
 
 
@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
     if (!email.trim()) {
@@ -96,13 +97,24 @@ const Login = () => {
 </div>
         <div className="relative">
           <input
-            typeholder="Senha"
+            type={showPassword ? "text" : "password"}
             placeholder="Senha"
-            className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 hover:border-blue-500"
             onChange={(e) => setPassword(e.target.value)}
             required
           />
           <LockClosedIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+          >
+            {showPassword ? (
+              <EyeSlashIcon className="w-5 h-5" />
+            ) : (
+              <EyeIcon className="w-5 h-5" />
+            )}
+          </button>
         </div>
 
         {error && <Alert type="error" message={error} onClose={() => setError("")} />}
