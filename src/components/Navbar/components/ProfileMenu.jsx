@@ -43,14 +43,6 @@ const ProfileMenu = ({ userName }) => {
           role="menu"
         >
           <Link
-            to="/profile"
-            className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200"
-            role="menuitem"
-            onClick={() => setIsOpen(false)}
-          >
-            Ver Perfil
-          </Link>
-          <Link
             to="/Settings"
             className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200"
             role="menuitem"

@@ -91,14 +91,6 @@ const MobileMenu = ({ user, userName }) => {
                 <CogIcon className="w-5 h-5 mr-2" />
                 Configurações
               </Link>
-              <Link
-                to="/profile"
-                className={`${linkStyle('/profile')} border-b border-blue-800`}
-                onClick={() => setIsOpen(false)}
-              >
-                <UserIcon className="w-5 h-5 mr-2" />
-                Ver Perfil
-              </Link>
               <button
                 onClick={() => {
                   handleLogout();
