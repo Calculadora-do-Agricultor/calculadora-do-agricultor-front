@@ -1,6 +1,18 @@
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut } from "firebase/auth"
 
 import { useState, useEffect } from "react";
+
+// Função de logout independente, sem hooks
+export const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+        await signOut(auth);
+    } catch (error) {
+        // Pode-se adicionar lógica de erro se necessário
+        console.error("Erro ao fazer logout:", error);
+    }
+};
+
 export const useAuthentication = () => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(null);
@@ -8,13 +20,14 @@ export const useAuthentication = () => {
 
     const auth = getAuth();
 
-    function checkIfIsCalcelled() {
+    function checkIfIsCancelled() {
         if (cancelled) {
-            return;
+            throw new Error("Operação cancelada");
         }
     }
+
     const createUser = async (data) => {
-        checkIsIsCancelled()
+        checkIfIsCancelled();
 
         setLoading(true);
 
@@ -40,8 +53,15 @@ export const useAuthentication = () => {
             } else if (error.message.includes("email-already")) {
                 systemErrorMessage = "E-mail já cadastrado.";
             } else {
-                systemErrorMessage = "Ocorreu um erro, por favor tenta  mais tarde.";
+                systemErrorMessage = "Ocorreu um erro, por favor tente mais tarde.";
             }
+            setError(systemErrorMessage);
+            setLoading(false);
+            return null;
         }
-    }
+    };
+
+    return { createUser, error, loading };
 }
+
+export default useAuthentication;

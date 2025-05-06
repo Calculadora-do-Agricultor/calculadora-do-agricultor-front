@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseConfig";
-import { EnvelopeIcon,  LockClosedIcon } from '@heroicons/react/24/outline';
+import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import Alert from '../../components/Alert/Alert';
 
 
 
@@ -10,16 +11,61 @@ const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const validateForm = () => {
+    if (!email.trim()) {
+      setError("Por favor, insira seu email.");
+      return false;
+    }
+    if (!password.trim()) {
+      setError("Por favor, insira sua senha.");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Por favor, insira um email válido.");
+      return false;
+    }
+    return true;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       localStorage.setItem('authToken', 'logado');
-      alert("Login realizado com sucesso!");
       navigate("/Calculator");
     } catch (error) {
-      alert("Erro: " + error.message);
+      let errorMessage = "";
+      switch (error.code) {
+        case "auth/wrong-password":
+        case "auth/user-not-found":
+          errorMessage = "Email ou senha incorretos.";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "Email inválido.";
+          break;
+        case "auth/too-many-requests":
+          errorMessage = "Muitas tentativas de login. Por favor, tente novamente mais tarde.";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+          break;
+        default:
+          errorMessage = "Ocorreu um erro ao fazer login. Tente novamente.";
+      }
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,11 +105,13 @@ const Login = () => {
           <LockClosedIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
         </div>
 
+        {error && <Alert type="error" message={error} onClose={() => setError("")} />}
         <button
           type="submit"
-          className="w-40 bg-blue-700 text-white py-2 rounded-lg font-semibold text-lg hover:bg-blue-800 transition mx-auto block mt-5"
-          >
-          Entrar
+          disabled={loading}
+          className={`w-40 ${loading ? 'bg-blue-400' : 'bg-blue-700 hover:bg-blue-800'} text-white py-2 rounded-lg font-semibold text-lg transition mx-auto block mt-5`}
+        >
+          {loading ? "Entrando..." : "Entrar"}
         </button>
         </form>
       </div>
