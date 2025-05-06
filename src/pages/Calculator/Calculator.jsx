@@ -4,8 +4,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { getDocs, collection, getDoc, doc, query, where} from "firebase/firestore";
 
 import { auth, db } from "../../services/firebaseConfig";
-import { Categorias } from "../../components/Categorias";
-import { ListaCalculos } from "../../components/ListaCalculos";
+import { Categories, CalculationList } from "../../components";
 import CreateCategory from "../../components/CreateCategory";
 
 export default function Calculator() {
@@ -65,7 +64,7 @@ export default function Calculator() {
     <div className="p-6 flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-4 text-blue-900">Categorias</h1>
 
-      <Categorias categorias={categorias} aoSelecionar={setCategoriaSelecionada} />
+      <Categories categories={categorias} onSelect={setCategoriaSelecionada} />
 
       {isAdmin && (
         <>
@@ -112,7 +111,7 @@ export default function Calculator() {
         </>
       )}
 
-      {categoriaSelecionada && <ListaCalculos categoria={categoriaSelecionada} />}
+      {categoriaSelecionada && <CalculationList category={categoriaSelecionada} />}
     </div>
   );
 }

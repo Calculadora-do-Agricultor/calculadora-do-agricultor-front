@@ -26,7 +26,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className="bg-blue-900 w-full px-6 py-3 flex items-center border-b-4 border-yellow-400 shadow-md justify-between"
+      className="fixed top-0 z-50 bg-blue-900 w-full px-6 py-3 flex items-stretch border-b-4 border-yellow-400 shadow-md justify-between h-20"
       role="navigation"
       aria-label="Navegação principal"
     >
@@ -41,12 +41,6 @@ const Navbar = () => {
         <NavLinks user={user} />
         {user !== null && <ProfileMenu userName={userName} />}
         <MobileMenu user={user} userName={userName} />
-        
-        <img
-          src="https://flagcdn.com/w40/br.png"
-          alt="Bandeira do Brasil"
-          className="h-6 w-8 rounded-sm ml-4"
-        />
       </div>
     </nav>
   );

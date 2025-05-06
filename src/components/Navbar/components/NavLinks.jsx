@@ -7,11 +7,11 @@ const NavLinks = ({ user }) => {
 
   const linkStyle = (path) => {
     const isActive = location.pathname === path;
-    return `flex items-center px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 ${isActive ? 'bg-yellow-400 font-bold' : 'hover:bg-yellow-500 focus:ring focus:ring-yellow-300'}`;
+    return `flex items-center px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${isActive ? 'bg-yellow-400' : 'hover:bg-yellow-500 focus:ring focus:ring-yellow-300'}`;
   };
 
   return (
-    <div className="hidden md:flex items-center space-x-4 text-white">
+    <div className="hidden lg:flex items-center space-x-4 text-white h-full">
       <Link className={linkStyle('/')} to="/">
         <HomeIcon className="w-5 h-5 mr-2" />
         Página Inicial
@@ -32,10 +32,6 @@ const NavLinks = ({ user }) => {
           <Link className={linkStyle('/calculator')} to="/calculator">
             <CalculatorIcon className="w-5 h-5 mr-2" />
             Calculadora
-          </Link>
-          <Link className={linkStyle('/Settings')} to="/Settings">
-            <CogIcon className="w-5 h-5 mr-2" />
-            Configurações
           </Link>
         </>
       )}

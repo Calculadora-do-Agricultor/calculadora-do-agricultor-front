@@ -13,7 +13,7 @@ const MobileMenu = ({ user, userName }) => {
   };
 
   return (
-    <div className="md:hidden">
+    <div className="lg:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="text-white p-2 hover:bg-yellow-500 rounded-lg transition duration-200"

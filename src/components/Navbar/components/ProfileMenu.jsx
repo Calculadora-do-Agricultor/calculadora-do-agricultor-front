@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
+import { BrazilFlag } from '../../../components/BrazilFlag';
 
 const ProfileMenu = ({ userName }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +50,20 @@ const ProfileMenu = ({ userName }) => {
           >
             Ver Perfil
           </Link>
+          <Link
+            to="/Settings"
+            className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200"
+            role="menuitem"
+            onClick={() => setIsOpen(false)}
+          >
+            Configurações
+          </Link>
+          <div className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200 cursor-pointer">
+            <div className="flex items-center gap-2">
+              <BrazilFlag width="20" height="20" />
+              <span>Português (Brasil)</span>
+            </div>
+          </div>
           <button
             onClick={() => {
               handleLogout();
