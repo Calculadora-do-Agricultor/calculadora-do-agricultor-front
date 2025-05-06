@@ -39,16 +39,16 @@ const PlantioPage = () => {
   }, [numeroLinhas, espacamento, velocidade, eficiencia]);
 
   return (
-    <div className="min-h-screen bg-white px-4 py-10 text-gray-800">
+    <div className="min-h-screen bg-white px-4 py-10 text-black">
       <div className="mx-auto max-w-5xl">
         <div className="relative mb-10 flex items-center justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-0 text-blue-900 hover:text-blue-700"
+            className="absolute left-0 text-[#1E3B8C] hover:text-[#3B5FD9]"
           >
             <FaArrowLeft className="text-xl" />
           </button>
-          <h1 className="text-center text-3xl font-bold text-blue-900">
+          <h1 className="text-center text-3xl font-bold text-[#1E3B8C]">
             Plantio
           </h1>
         </div>
@@ -56,9 +56,9 @@ const PlantioPage = () => {
         <div className="flex flex-wrap justify-center gap-x-8 gap-y-6">
           <div
             onClick={() => setModalAberto("capacidade")}
-            className="relative flex aspect-square w-40 cursor-pointer flex-col items-center justify-center rounded-xl bg-gray-100 p-4 text-center shadow-md transition duration-200 hover:shadow-lg"
+            className="relative flex aspect-square w-40 cursor-pointer flex-col items-center justify-center rounded-xl bg-[#D9E1FF] p-4 text-center shadow-md transition duration-200 hover:shadow-lg"
           >
-            <div className="absolute top-0 left-0 h-1 w-full rounded-t-xl bg-blue-500" />
+            <div className="absolute top-0 left-0 h-1 w-full rounded-t-xl bg-[#3B5FD9]" />
             <FaTractor className="mb-2 text-3xl text-black" />
             <h2 className="mb-1 text-sm font-semibold text-black">
               Capacidade Operacional
@@ -68,9 +68,9 @@ const PlantioPage = () => {
 
           <div
             onClick={() => setModalAberto("capacidade")}
-            className="relative flex aspect-square w-40 cursor-pointer flex-col items-center justify-center rounded-xl bg-gray-100 p-4 text-center shadow-md transition duration-200 hover:shadow-lg"
+            className="relative flex aspect-square w-40 cursor-pointer flex-col items-center justify-center rounded-xl bg-[#D9E1FF] p-4 text-center shadow-md transition duration-200 hover:shadow-lg"
           >
-            <div className="absolute top-0 left-0 h-1 w-full rounded-t-xl bg-blue-500" />
+            <div className="absolute top-0 left-0 h-1 w-full rounded-t-xl bg-[#3B5FD9]" />
             <FaClipboardCheck className="mb-2 text-3xl text-black" />
             <h2 className="mb-1 text-sm font-semibold text-black">
               Plantadeiras
@@ -82,7 +82,7 @@ const PlantioPage = () => {
 
       {modalAberto === "capacidade" && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 px-4 py-6">
-          <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
+          <div className="relative w-full max-w-xl rounded-2xl bg-[#D9E1FF] p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FaTractor className="text-xl text-black" />
@@ -94,10 +94,10 @@ const PlantioPage = () => {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <button className="text-blue-600 hover:text-blue-800">
+                <button className="text-[#3B5FD9] hover:text-[#1E3B8C]">
                   <i className="fas fa-info-circle"></i>
                 </button>
-                <button className="text-red-500 hover:text-red-700">
+                <button className="text-[#CC0000] hover:text-[#990000]">
                   <i className="fas fa-trash"></i>
                 </button>
                 <button
@@ -167,13 +167,13 @@ const PlantioPage = () => {
               Resultados
             </h3>
             <div className="space-y-4">
-              <div className="w-full rounded-xl bg-gray-50 p-5 shadow-lg">
+              <div className="w-full rounded-xl bg-white p-5 shadow-lg">
                 <span className="text-lg text-gray-700">
                   <strong>Largura Útil de Trabalho (m):</strong>{" "}
                   {parseFloat(larguraUtil).toLocaleString("pt-BR")}
                 </span>
               </div>
-              <div className="w-full rounded-xl bg-blue-100 p-5 shadow-lg">
+              <div className="w-full rounded-xl bg-[#D9E1FF] p-5 shadow-lg">
                 <span className="text-lg text-gray-700">
                   <strong>Capacidade Operacional (ha/h):</strong>{" "}
                   {parseFloat(capacidadeOperacional).toLocaleString("pt-BR")}
@@ -195,7 +195,7 @@ const PlantioPage = () => {
             </p>
             <button
               onClick={() => setModalAberto(null)}
-              className="mt-4 w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+              className="mt-4 w-full rounded bg-[#3B5FD9] px-4 py-2 text-white hover:bg-[#1E3B8C]"
             >
               Fechar
             </button>

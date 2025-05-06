@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import { doc, setDoc } from 'firebase/firestore';
 import { useCreateUserWithEmailAndPassword } from 'react-firebase-hooks/auth';
 import { auth, db } from "../../services/firebaseConfig";
@@ -6,13 +8,15 @@ import { EnvelopeIcon, LockClosedIcon, UserIcon, EyeIcon, EyeSlashIcon } from '@
 import Alert from '../../components/Alert/Alert';
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { user: authUser, loading: authLoading } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('user');
   const [errorMessage, setErrorMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -61,16 +65,16 @@ const Register = () => {
     return true;
   };
 
-  const [createUserWithEmailAndPassword, user, authLoading, error] = useCreateUserWithEmailAndPassword(auth);
+  const [createUserWithEmailAndPassword, firebaseUser, firebaseLoading, firebaseError] = useCreateUserWithEmailAndPassword(auth);
 
   const handleRegister = async (e) => {
     e.preventDefault();
 
     setErrorMessage('');
-    setLoading(true);
+    setIsLoading(true);
 
     if (!validateForm()) {
-      setLoading(false);
+      setIsLoading(false);
       return;
     }
 
@@ -89,6 +93,8 @@ const Register = () => {
           env: import.meta.env.VITE_ENV || "dev"
         });
 
+        localStorage.setItem('authToken', 'logado');
+        navigate('/Calculator');
         console.log("Usuário registrado e salvo no Firestore.");
       }
     } catch (err) {
@@ -112,11 +118,17 @@ const Register = () => {
       setErrorMessage(errorMsg);
       console.error("Erro ao salvar no Firestore:", err);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
+  useEffect(() => {
+    if (!authLoading && authUser) {
+      navigate("/Calculator", { replace: true });
+    }
+  }, [authUser, authLoading, navigate]);
+
+  if (firebaseLoading || isLoading) {
     return <p>Carregando...</p>;
   }
 
@@ -168,6 +180,7 @@ const Register = () => {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+            tabIndex="-1"
           >
             {showPassword ? (
               <EyeSlashIcon className="w-5 h-5" />
@@ -191,6 +204,7 @@ const Register = () => {
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+            tabIndex="-1"
           >
             {showConfirmPassword ? (
               <EyeSlashIcon className="w-5 h-5" />
@@ -204,10 +218,10 @@ const Register = () => {
 
         <button
           type="submit"
-          disabled={loading}
-          className={`w-40 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-800'} text-white py-2 rounded-lg font-semibold text-lg transition mx-auto block mt-5`}
+          disabled={isLoading}
+          className={`w-40 ${isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-700 hover:bg-blue-800'} text-white py-2 rounded-lg font-semibold text-lg transition mx-auto block mt-5`}
         >
-          {loading ? 'Registrando...' : 'Registrar'}
+          {isLoading ? 'Registrando...' : 'Registrar'}
         </button>
       </form>
     </div>

@@ -22,7 +22,7 @@ const ProfileMenu = ({ userName }) => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-white px-3 py-1 rounded-lg hover:bg-yellow-500 transition duration-200"
+        className="flex items-center space-x-2 text-white px-3 py-1 rounded-lg transition-all duration-300 transform hover:scale-105 text-base hover:bg-[#00418F] focus:ring focus:ring-[#FFEE00]"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
@@ -39,18 +39,18 @@ const ProfileMenu = ({ userName }) => {
 
       {isOpen && (
         <div
-          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50"
+          className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-50 transition-all duration-300 transform"
           role="menu"
         >
           <Link
             to="/Settings"
-            className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200"
+            className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
             role="menuitem"
             onClick={() => setIsOpen(false)}
           >
             Configurações
           </Link>
-          <div className="block px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200 cursor-pointer">
+          <div className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg cursor-pointer">
             <div className="flex items-center gap-2">
               <BrazilFlag width="20" height="20" />
               <span>Português (Brasil)</span>
@@ -61,7 +61,7 @@ const ProfileMenu = ({ userName }) => {
               handleLogout();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-yellow-100 transition duration-200"
+            className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
             role="menuitem"
           >
             Sair

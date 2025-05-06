@@ -26,7 +26,7 @@ const Navbar = () => {
 
   return (
     <nav
-      className="fixed top-0 z-50 bg-blue-900 w-full px-6 py-3 flex items-stretch border-b-4 border-yellow-400 shadow-md justify-between h-20"
+      className="fixed top-0 z-50 bg-[#00418F] w-full px-6 py-3 flex items-stretch border-b-4 border-[#FFEE00] shadow-md justify-between h-20"
       role="navigation"
       aria-label="Navegação principal"
     >

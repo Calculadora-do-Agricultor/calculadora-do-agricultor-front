@@ -17,16 +17,22 @@ function App() {
         <main className="flex-grow pt-20">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/Register" element={<Register />} />
+            <Route path="/login" element={<PrivateRoute requiresAuth={false} />}>
+              <Route index element={<Login />} />
+            </Route>
+            <Route path="/Register" element={<PrivateRoute requiresAuth={false} />}>
+              <Route index element={<Register />} />
+            </Route>
 
-            <Route path="/settings" element={<PrivateRoute />}>
+            <Route path="/settings" element={<PrivateRoute requiresAuth={true} />}>
               <Route index element={<Settings />} />
             </Route>
-            <Route path="/calculator" element={<PrivateRoute />}>
+            <Route path="/calculator" element={<PrivateRoute requiresAuth={true} />}>
               <Route index element={<Calculator />} />
             </Route>
-            <Route path="/admin/criar-calculo" element={<CreateCalculationPage />} />
+            <Route path="/admin/criar-calculo" element={<PrivateRoute requiresAuth={true} />}>
+              <Route index element={<CreateCalculationPage />} />
+            </Route>
 
 
           </Routes>
