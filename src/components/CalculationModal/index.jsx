@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Copy } from "lucide-react";
+import { X, Copy, Calculator } from "lucide-react";
 import "./styles.css";
 
 /**
@@ -35,22 +35,34 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
         );
 
         if (allParamsFilled) {
-          // Calcula o resultado principal
-          const calculatedValue = calculateResult(calculation, paramValues);
-          
           // Prepara o objeto de resultados
-          const newResults = {
-            value: calculatedValue.toFixed(2)
-          };
+          const newResults = {};
           
-          // Calcula resultados adicionais se existirem
-          if (calculation.additionalResults && calculation.additionalResults.length > 0) {
-            calculation.additionalResults.forEach(result => {
-              if (result.key === 'coleta50m') {
-                // Exemplo: para o cálculo de coleta em 50 metros
-                newResults[result.key] = (calculatedValue * 50 / 1000).toFixed(2); // Convertendo g/m para kg em 50m
-              }
+          // Verifica se o cálculo tem múltiplos resultados (novo formato)
+          if (calculation.results && calculation.results.length > 0) {
+            // Processa cada resultado definido
+            calculation.results.forEach((result, index) => {
+              const calculatedValue = calculateExpressionResult(result.expression, paramValues);
+              newResults[`result_${index}`] = {
+                name: result.name,
+                description: result.description,
+                value: calculatedValue.toFixed(2),
+                unit: result.unit || ""
+              };
             });
+          } else {
+            // Compatibilidade com o formato antigo (resultado único)
+            const calculatedValue = calculateResult(calculation, paramValues);
+            newResults.value = calculatedValue.toFixed(2);
+            
+            // Calcula resultados adicionais se existirem (formato antigo)
+            if (calculation.additionalResults && calculation.additionalResults.length > 0) {
+              calculation.additionalResults.forEach(result => {
+                if (result.key === 'coleta50m') {
+                  newResults[result.key] = (calculatedValue * 50 / 1000).toFixed(2);
+                }
+              });
+            }
           }
           
           setResults(newResults);
@@ -61,44 +73,11 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     }
   }, [paramValues, calculation]);
 
-  // Função para calcular o resultado com base na expressão do cálculo
+  // Função para calcular o resultado com base na expressão do cálculo (formato antigo)
   const calculateResult = (calculation, values) => {
-    // Esta é uma implementação simplificada
-    // Em um caso real, você precisaria interpretar a expressão matemática
-    // e aplicar os valores dos parâmetros
-    
-    // Exemplo: se tivermos uma expressão como "param1 * param2"
     if (calculation.expression) {
       try {
-        // Cria um contexto com os valores dos parâmetros
-        const context = {};
-        
-        // Converte os valores para números quando possível
-        Object.keys(values).forEach(key => {
-          context[key] = parseFloat(values[key]) || 0;
-        });
-        
-        // Substitui os nomes dos parâmetros na expressão pelos valores
-        let expressionToEval = calculation.expression;
-        Object.keys(context).forEach(key => {
-          // Substitui todas as ocorrências do nome do parâmetro pelo seu valor
-          const regex = new RegExp(key, 'g');
-          expressionToEval = expressionToEval.replace(regex, context[key]);
-        });
-        
-        // Avalia a expressão
-        // eslint-disable-next-line no-eval
-        const result = eval(expressionToEval);
-        
-        // Calcula resultados adicionais se existirem
-        if (calculation.additionalResults && calculation.additionalResults.length > 0) {
-          // Exemplo: para o cálculo de coleta em 50 metros
-          if (calculation.additionalResults.some(r => r.key === 'coleta50m')) {
-            context.coleta50m = result * 50 / 1000; // Convertendo g/m para kg em 50m
-          }
-        }
-        
-        return result;
+        return calculateExpressionResult(calculation.expression, values);
       } catch (error) {
         console.error("Erro ao avaliar expressão:", error);
         return 0;
@@ -106,6 +85,34 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     }
     
     return 0; // Valor padrão se não houver expressão
+  };
+
+  // Função para calcular o resultado de uma expressão com base nos valores dos parâmetros
+  const calculateExpressionResult = (expression, values) => {
+    try {
+      // Cria um contexto com os valores dos parâmetros
+      const context = {};
+      
+      // Converte os valores para números quando possível
+      Object.keys(values).forEach(key => {
+        context[key] = parseFloat(values[key]) || 0;
+      });
+      
+      // Substitui os nomes dos parâmetros na expressão pelos valores
+      let expressionToEval = expression;
+      Object.keys(context).forEach(key => {
+        // Substitui todas as ocorrências do nome do parâmetro pelo seu valor
+        const regex = new RegExp(key, 'g');
+        expressionToEval = expressionToEval.replace(regex, context[key]);
+      });
+      
+      // Avalia a expressão
+      // eslint-disable-next-line no-eval
+      return eval(expressionToEval);
+    } catch (error) {
+      console.error("Erro ao avaliar expressão:", error);
+      return 0;
+    }
   };
 
   // Atualiza o valor de um parâmetro
@@ -196,37 +203,46 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
           <div className="calculation-modal-section">
             <h3>Resultados</h3>
             <div className="calculation-modal-results">
-              <div className="calculation-result">
-                <div className="calculation-result-label">
-                  <span>{calculation.resultName || "Quantidade Desejada de Adubo"}</span>
-                  <span className="unit">{calculation.resultUnit || "(g/m)"}</span>
-                </div>
-                <div className="calculation-result-value">
-                  <span>{results.value || 0}</span>
-                  <button
-                    onClick={() => copyToClipboard(results.value?.toString() || "0")}
-                    className={`copy-button ${copied ? "copied" : ""}`}
-                    aria-label="Copiar resultado"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Você pode adicionar mais resultados aqui se necessário */}
-              {calculation.additionalResults &&
-                calculation.additionalResults.map((result, index) => (
-                  <div key={index} className="calculation-result">
+              {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
+              {calculation.results && calculation.results.length > 0 ? (
+                // Novo formato: múltiplos resultados
+                Object.keys(results).map((key) => (
+                  <div key={key} className="calculation-result">
                     <div className="calculation-result-label">
-                      <span>{result.name}</span>
-                      <span className="unit">{result.unit}</span>
+                      <span>{results[key].name}</span>
+                      {results[key].unit && (
+                        <span className="unit">({results[key].unit})</span>
+                      )}
                     </div>
                     <div className="calculation-result-value">
-                      <span>{results[result.key] || 0}</span>
+                      <span>{results[key].value || "0"}</span>
                       <button
-                        onClick={() =>
-                          copyToClipboard(results[result.key]?.toString() || "0")
-                        }
+                        onClick={() => copyToClipboard(results[key].value?.toString() || "0")}
+                        className={`copy-button ${copied ? "copied" : ""}`}
+                        aria-label="Copiar resultado"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </div>
+                    {results[key].description && (
+                      <div className="calculation-result-description">
+                        {results[key].description}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                // Formato antigo: resultado único
+                <>
+                  <div className="calculation-result">
+                    <div className="calculation-result-label">
+                      <span>{calculation.resultName || "Quantidade Desejada de Adubo"}</span>
+                      <span className="unit">{calculation.resultUnit || "(g/m)"}</span>
+                    </div>
+                    <div className="calculation-result-value">
+                      <span>{results.value || 0}</span>
+                      <button
+                        onClick={() => copyToClipboard(results.value?.toString() || "0")}
                         className={`copy-button ${copied ? "copied" : ""}`}
                         aria-label="Copiar resultado"
                       >
@@ -234,7 +250,31 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                       </button>
                     </div>
                   </div>
-                ))}
+
+                  {/* Resultados adicionais (formato antigo) */}
+                  {calculation.additionalResults &&
+                    calculation.additionalResults.map((result, index) => (
+                      <div key={index} className="calculation-result">
+                        <div className="calculation-result-label">
+                          <span>{result.name}</span>
+                          <span className="unit">{result.unit}</span>
+                        </div>
+                        <div className="calculation-result-value">
+                          <span>{results[result.key] || 0}</span>
+                          <button
+                            onClick={() =>
+                              copyToClipboard(results[result.key]?.toString() || "0")
+                            }
+                            className={`copy-button ${copied ? "copied" : ""}`}
+                            aria-label="Copiar resultado"
+                          >
+                            <Copy size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </>
+              )}
             </div>
           </div>
         </div>

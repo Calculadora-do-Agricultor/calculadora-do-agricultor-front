@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { db } from "../../services/firebaseConfig";
 import { collection, addDoc, getDocs } from "firebase/firestore";
+import { PlusCircle, X, Hash } from "lucide-react";
 import "./styles.css";
 
 const CreateCalculation = ({ onCreate, onCancel }) => {
@@ -26,10 +27,12 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   };
 
   // Dados dos resultados
-  const [resultName, setResultName] = useState("");
-  const [resultDescription, setResultDescription] = useState("");
-  const [selectedParams, setSelectedParams] = useState([]);
-  const [expression, setExpression] = useState("");
+  const [results, setResults] = useState([{ 
+    name: "", 
+    description: "", 
+    expression: "", 
+    unit: "" 
+  }]);
 
   // Estados para feedback ao usuário
   const [error, setError] = useState("");
@@ -76,15 +79,40 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       setError("Todos os parâmetros devem ter um nome.");
       return false;
     }
-    if (!resultName.trim()) {
-      setError("O nome do resultado é obrigatório.");
+    if (results.some(result => !result.name.trim())) {
+      setError("Todos os resultados devem ter um nome.");
       return false;
     }
-    if (!expression.trim()) {
-      setError("A expressão de cálculo é obrigatória.");
+    if (results.some(result => !result.expression.trim())) {
+      setError("Todos os resultados devem ter uma expressão de cálculo.");
       return false;
     }
     return true;
+  };
+
+  // Função para adicionar um novo resultado
+  const addResult = () => {
+    setResults([...results, { name: "", description: "", expression: "", unit: "" }]);
+  };
+
+  // Função para remover um resultado
+  const removeResult = (index) => {
+    const updatedResults = results.filter((_, i) => i !== index);
+    setResults(updatedResults);
+  };
+
+  // Função para atualizar um resultado
+  const updateResult = (index, field, value) => {
+    const updatedResults = [...results];
+    updatedResults[index][field] = value;
+    setResults(updatedResults);
+  };
+
+  // Função para inserir um parâmetro na expressão
+  const insertParameterInExpression = (resultIndex, paramName) => {
+    const updatedResults = [...results];
+    updatedResults[resultIndex].expression += paramName;
+    setResults(updatedResults);
   };
 
   // Função para salvar o cálculo no Firestore
@@ -106,10 +134,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         description: calculationDescription,
         category: selectedCategory,
         parameters,
-        resultName,
-        resultDescription,
-        selectedParams,
-        expression,
+        results,
         createdAt: new Date(),
       });
 
@@ -312,46 +337,144 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         </div>
       )}
 
-      {/* Etapa 3: Resultado */}
+      {/* Etapa 3: Resultados */}
       {step === 3 && (
         <div className="flex flex-col justify-center items-center space-y-4">
-          <h2 className="text-2xl font-bold text-blue-900">Resultado</h2>
+          <h2 className="text-2xl font-bold text-blue-900">Resultados</h2>
           
-          <div className="w-full">
-            <label htmlFor="resultName" className="block text-gray-700 text-sm font-bold mb-2">Nome do Resultado</label>
-            <input
-              id="resultName"
-              type="text"
-              placeholder="Nome do Resultado"
-              value={resultName}
-              onChange={(e) => setResultName(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            />
-          </div>
+          {results.map((result, resultIndex) => (
+            <div key={resultIndex} className="w-full bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">Resultado {resultIndex + 1}</h3>
+                {results.length > 1 && (
+                  <button
+                    onClick={() => removeResult(resultIndex)}
+                    className="text-red-500 hover:text-red-700 flex items-center"
+                    type="button"
+                  >
+                    <X size={16} className="mr-1" /> Remover
+                  </button>
+                )}
+              </div>
+              
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-1">Nome do Resultado</label>
+                    <input
+                      type="text"
+                      placeholder="Nome do Resultado"
+                      value={result.name}
+                      onChange={(e) => updateResult(resultIndex, 'name', e.target.value)}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 text-sm font-bold mb-1">Unidade</label>
+                    <input
+                      type="text"
+                      placeholder="Unidade (ex: kg, m, etc)"
+                      value={result.unit}
+                      onChange={(e) => updateResult(resultIndex, 'unit', e.target.value)}
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    />
+                  </div>
+                </div>
 
-          <div className="w-full">
-            <label htmlFor="resultDescription" className="block text-gray-700 text-sm font-bold mb-2">Descrição do Resultado</label>
-            <textarea
-              id="resultDescription"
-              placeholder="Descrição do Resultado"
-              value={resultDescription}
-              onChange={(e) => setResultDescription(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-h-[80px]"
-            />
-          </div>
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-1">Descrição do Resultado</label>
+                  <textarea
+                    placeholder="Descrição do Resultado"
+                    value={result.description}
+                    onChange={(e) => updateResult(resultIndex, 'description', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-h-[60px]"
+                  />
+                </div>
 
-          <div className="w-full">
-            <label htmlFor="expression" className="block text-gray-700 text-sm font-bold mb-2">Expressão de Cálculo</label>
-            <textarea
-              id="expression"
-              placeholder="Expressão de Cálculo"
-              value={expression}
-              onChange={(e) => setExpression(e.target.value)}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-h-[80px]"
-            />
-          </div>
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-gray-700 text-sm font-bold">Expressão de Cálculo</label>
+                    <div className="flex space-x-1">
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + '+')}  
+                      >
+                        +
+                      </button>
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + '-')}  
+                      >
+                        -
+                      </button>
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + '*')}  
+                      >
+                        *
+                      </button>
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + '/')}  
+                      >
+                        /
+                      </button>
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + '(')}  
+                      >
+                        (
+                      </button>
+                      <button 
+                        type="button" 
+                        className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded hover:bg-blue-200"
+                        onClick={() => updateResult(resultIndex, 'expression', result.expression + ')')}  
+                      >
+                        )
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    placeholder="Expressão de Cálculo (ex: param1 * param2 / 100)"
+                    value={result.expression}
+                    onChange={(e) => updateResult(resultIndex, 'expression', e.target.value)}
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline min-h-[60px] font-mono"
+                  />
+                </div>
 
-          <div className="w-full flex justify-between space-x-4">
+                <div>
+                  <label className="block text-gray-700 text-sm font-bold mb-1">Inserir Parâmetros</label>
+                  <div className="flex flex-wrap gap-2">
+                    {parameters.map((param, paramIndex) => (
+                      <button
+                        key={paramIndex}
+                        type="button"
+                        onClick={() => insertParameterInExpression(resultIndex, param.name)}
+                        className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm px-3 py-1 rounded flex items-center"
+                      >
+                        <Hash size={14} className="mr-1" /> {param.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          <button
+            onClick={addResult}
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center"
+            type="button"
+          >
+            <PlusCircle size={18} className="mr-2" /> Adicionar Resultado
+          </button>
+
+          <div className="w-full flex justify-between space-x-4 mt-4">
             <button
               onClick={prevStep}
               className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
