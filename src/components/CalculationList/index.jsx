@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import { ArrowRight } from "lucide-react"
+import { CalculationModal } from "../CalculationModal"
 import "./styles.css"
 
 export function CalculationList({ category, searchTerm = "" }) {
@@ -11,6 +12,8 @@ export function CalculationList({ category, searchTerm = "" }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filteredCalculations, setFilteredCalculations] = useState([])
+  const [selectedCalculation, setSelectedCalculation] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchCalculations = async () => {
@@ -101,12 +104,27 @@ export function CalculationList({ category, searchTerm = "" }) {
             </p>
           </div>
           <div className="calculation-footer">
-            <button className="details-button">
+            <button 
+              className="details-button"
+              onClick={() => {
+                setSelectedCalculation(calculation)
+                setIsModalOpen(true)
+              }}
+            >
               Ver detalhes <ArrowRight size={16} />
             </button>
           </div>
         </div>
       ))}
+      
+      {/* Modal de Cálculo */}
+      {selectedCalculation && (
+        <CalculationModal
+          calculation={selectedCalculation}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

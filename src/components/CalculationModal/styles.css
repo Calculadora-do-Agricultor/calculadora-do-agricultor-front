@@ -1,0 +1,238 @@
+.calculation-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.calculation-modal {
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.calculation-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to right, #00418F, #0066CC);
+  color: white;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+.calculation-modal-title {
+  flex: 1;
+}
+
+.calculation-modal-title h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.calculation-modal-title p {
+  font-size: 0.875rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.calculation-modal-close {
+  background: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.calculation-modal-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.calculation-modal-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.calculation-modal-section h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+  color: #00418F;
+}
+
+.calculation-modal-parameters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.calculation-modal-parameter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.calculation-modal-parameter label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4B5563;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.calculation-modal-parameter input,
+.calculation-modal-parameter select {
+  padding: 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.calculation-modal-parameter input:focus,
+.calculation-modal-parameter select:focus {
+  outline: none;
+  border-color: #0066CC;
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
+}
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #4B5563;
+  pointer-events: none;
+}
+
+.calculation-modal-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: #F9FAFB;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.calculation-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 0.5rem;
+  border: 1px solid #E5E7EB;
+}
+
+.calculation-result-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+.unit {
+  font-size: 0.75rem;
+  color: #6B7280;
+  font-weight: normal;
+}
+
+.calculation-result-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #00418F;
+}
+
+.copy-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #F3F4F6;
+  color: #00418F;
+}
+
+.copy-button.copied {
+  color: #10B981;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+  .calculation-modal {
+    max-width: 100%;
+    border-radius: 0.75rem;
+  }
+  
+  .calculation-modal-header {
+    padding: 1rem;
+  }
+  
+  .calculation-modal-content {
+    padding: 1rem;
+  }
+  
+  .calculation-modal-title h2 {
+    font-size: 1.25rem;
+  }
+}
