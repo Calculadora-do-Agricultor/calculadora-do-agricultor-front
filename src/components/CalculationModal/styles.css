@@ -141,31 +141,15 @@
   
   /* Divisor entre parâmetros e resultados */
   .calculation-modal-divider {
-    position: relative;
     height: 1px;
     background-color: #e5e7eb;
     margin: 0.5rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .divider-icon {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 50%;
-    padding: 0.25rem;
-    color: #6b7280;
   }
   
   /* Parâmetros */
   .calculation-modal-parameters {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
   }
   
@@ -233,34 +217,16 @@
     pointer-events: none;
   }
   
-  /* Estado vazio para resultados */
-  .empty-results {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    border: 1px dashed #d1d5db;
-    text-align: center;
-  }
-  
-  .empty-results-icon {
-    color: #9ca3af;
-    margin-bottom: 1rem;
-  }
-  
-  .empty-results p {
-    color: #6b7280;
-    margin: 0;
-  }
-  
   /* Resultados */
   .calculation-modal-results {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    transition: opacity 0.3s ease;
+  }
+  
+  .calculation-modal-results.inactive {
+    opacity: 0.5;
   }
   
   .calculation-result {
@@ -272,6 +238,7 @@
     background-color: #f9fafb;
     border: 1px solid #e5e7eb;
     transition: all 0.2s;
+    min-height: 100px; /* Ensure stable height */
   }
   
   .calculation-result:hover {
@@ -303,6 +270,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 0.5rem;
   }
   
   .calculation-result-value span {
@@ -326,9 +294,14 @@
     transition: all 0.2s;
   }
   
-  .copy-button:hover {
+  .copy-button:hover:not(:disabled) {
     background-color: #e5e7eb;
     color: #1f2937;
+  }
+  
+  .copy-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
   
   .copy-button.copied {
@@ -377,10 +350,6 @@
   
     .calculation-modal-content {
       padding: 1rem;
-    }
-  
-    .calculation-modal-parameters {
-      grid-template-columns: 1fr;
     }
   }
   

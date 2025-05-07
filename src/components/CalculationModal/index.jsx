@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { X, Copy, Calculator, Check, Info, ChevronRight } from "lucide-react"
+import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import "./styles.css"
 
 /**
@@ -26,7 +26,28 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
         initialValues[param.name] = ""
       })
       setParamValues(initialValues)
-      setResults({})
+
+      // Initialize results with zero values to maintain stable layout
+      const initialResults = {}
+      if (calculation.results && calculation.results.length > 0) {
+        calculation.results.forEach((result, index) => {
+          initialResults[`result_${index}`] = {
+            name: result.name,
+            description: result.description,
+            value: "0",
+            unit: result.unit || "",
+          }
+        })
+      } else {
+        initialResults.value = "0"
+        if (calculation.additionalResults && calculation.additionalResults.length > 0) {
+          calculation.additionalResults.forEach((result) => {
+            initialResults[result.key] = "0"
+          })
+        }
+      }
+      setResults(initialResults)
+
       setAllFieldsFilled(false)
     }
   }, [calculation])
@@ -143,13 +164,6 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     )
   }
 
-  // Fecha o modal ao clicar fora dele
-  const handleOverlayClick = (e) => {
-    if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose()
-    }
-  }
-
   // Fecha o modal ao pressionar ESC
   useEffect(() => {
     const handleEsc = (e) => {
@@ -168,7 +182,7 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
   if (!isOpen || !calculation) return null
 
   return (
-    <div className="calculation-modal-overlay" onClick={handleOverlayClick}>
+    <div className="calculation-modal-overlay">
       <div className="calculation-modal" ref={modalRef}>
         <div className="calculation-modal-header">
           <div className="calculation-modal-title">
@@ -242,97 +256,87 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
             </div>
           </div>
 
-          <div className="calculation-modal-divider">
-            <span className="divider-icon">
-              <ChevronRight size={20} />
-            </span>
-          </div>
+          <div className="calculation-modal-divider"></div>
 
           <div className="calculation-modal-section">
             <div className="section-header">
               <h3>Resultados</h3>
             </div>
 
-            {!allFieldsFilled ? (
-              <div className="empty-results">
-                <div className="empty-results-icon">
-                  <Calculator size={32} />
-                </div>
-                <p>Preencha todos os parâmetros para ver os resultados</p>
-              </div>
-            ) : (
-              <div className="calculation-modal-results">
-                {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
-                {calculation.results && calculation.results.length > 0 ? (
-                  // Novo formato: múltiplos resultados
-                  Object.keys(results).map((key) => (
-                    <div key={key} className="calculation-result">
-                      <div className="calculation-result-label">
-                        <span className="result-name">{results[key].name}</span>
-                        {results[key].unit && <span className="unit">({results[key].unit})</span>}
-                      </div>
-                      <div className="calculation-result-value">
-                        <span>{results[key].value || "0"}</span>
-                        <button
-                          onClick={() => copyToClipboard(results[key].value?.toString() || "0")}
-                          className={`copy-button ${copied ? "copied" : ""}`}
-                          aria-label="Copiar resultado"
-                        >
-                          {copied ? <Check size={16} /> : <Copy size={16} />}
-                          <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
-                        </button>
-                      </div>
-                      {results[key].description && (
-                        <div className="calculation-result-description">{results[key].description}</div>
-                      )}
+            <div className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}>
+              {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
+              {calculation.results && calculation.results.length > 0 ? (
+                // Novo formato: múltiplos resultados
+                Object.keys(results).map((key) => (
+                  <div key={key} className="calculation-result">
+                    <div className="calculation-result-label">
+                      <span className="result-name">{results[key].name}</span>
+                      {results[key].unit && <span className="unit">({results[key].unit})</span>}
                     </div>
-                  ))
-                ) : (
-                  // Formato antigo: resultado único
-                  <>
-                    <div className="calculation-result primary">
-                      <div className="calculation-result-label">
-                        <span className="result-name">{calculation.resultName || "Resultado"}</span>
-                        <span className="unit">{calculation.resultUnit || ""}</span>
-                      </div>
-                      <div className="calculation-result-value">
-                        <span>{results.value || 0}</span>
-                        <button
-                          onClick={() => copyToClipboard(results.value?.toString() || "0")}
-                          className={`copy-button ${copied ? "copied" : ""}`}
-                          aria-label="Copiar resultado"
-                        >
-                          {copied ? <Check size={16} /> : <Copy size={16} />}
-                          <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
-                        </button>
-                      </div>
+                    <div className="calculation-result-value">
+                      <span>{results[key].value || "0"}</span>
+                      <button
+                        onClick={() => copyToClipboard(results[key].value?.toString() || "0")}
+                        className={`copy-button ${copied ? "copied" : ""}`}
+                        aria-label="Copiar resultado"
+                        disabled={!allFieldsFilled}
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                      </button>
                     </div>
+                    {results[key].description && (
+                      <div className="calculation-result-description">{results[key].description}</div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                // Formato antigo: resultado único
+                <>
+                  <div className="calculation-result primary">
+                    <div className="calculation-result-label">
+                      <span className="result-name">{calculation.resultName || "Resultado"}</span>
+                      <span className="unit">{calculation.resultUnit || ""}</span>
+                    </div>
+                    <div className="calculation-result-value">
+                      <span>{results.value || "0"}</span>
+                      <button
+                        onClick={() => copyToClipboard(results.value?.toString() || "0")}
+                        className={`copy-button ${copied ? "copied" : ""}`}
+                        aria-label="Copiar resultado"
+                        disabled={!allFieldsFilled}
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                      </button>
+                    </div>
+                  </div>
 
-                    {/* Resultados adicionais (formato antigo) */}
-                    {calculation.additionalResults &&
-                      calculation.additionalResults.map((result, index) => (
-                        <div key={index} className="calculation-result secondary">
-                          <div className="calculation-result-label">
-                            <span className="result-name">{result.name}</span>
-                            <span className="unit">{result.unit}</span>
-                          </div>
-                          <div className="calculation-result-value">
-                            <span>{results[result.key] || 0}</span>
-                            <button
-                              onClick={() => copyToClipboard(results[result.key]?.toString() || "0")}
-                              className={`copy-button ${copied ? "copied" : ""}`}
-                              aria-label="Copiar resultado"
-                            >
-                              {copied ? <Check size={16} /> : <Copy size={16} />}
-                              <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
-                            </button>
-                          </div>
+                  {/* Resultados adicionais (formato antigo) */}
+                  {calculation.additionalResults &&
+                    calculation.additionalResults.map((result, index) => (
+                      <div key={index} className="calculation-result secondary">
+                        <div className="calculation-result-label">
+                          <span className="result-name">{result.name}</span>
+                          <span className="unit">{result.unit}</span>
                         </div>
-                      ))}
-                  </>
-                )}
-              </div>
-            )}
+                        <div className="calculation-result-value">
+                          <span>{results[result.key] || "0"}</span>
+                          <button
+                            onClick={() => copyToClipboard(results[result.key]?.toString() || "0")}
+                            className={`copy-button ${copied ? "copied" : ""}`}
+                            aria-label="Copiar resultado"
+                            disabled={!allFieldsFilled}
+                          >
+                            {copied ? <Check size={16} /> : <Copy size={16} />}
+                            <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
