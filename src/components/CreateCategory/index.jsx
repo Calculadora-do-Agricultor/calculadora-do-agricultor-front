@@ -1,94 +1,119 @@
-// src/components/CreateCategory.jsx
-import React, { useState } from "react";
-import { doc, setDoc } from "firebase/firestore";
-import { db } from "../../services/firebaseConfig";
-import "./styles.css";
+import { useState } from "react"
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
+import { Loader2 } from "lucide-react"
 
-const CreateCategory = ({ onCreate, onCancel }) => {
-  const [categoryName, setCategoryName] = useState("");
-  const [categoryDescription, setCategoryDescription] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function CreateCategory({ onCreate, onCancel }) {
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleCreateCategory = async () => {
-    if (!categoryName || !categoryDescription) {
-      setError("Por favor, preencha todos os campos obrigatórios.");
-      return;
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!name.trim()) {
+      setError("O nome da categoria é obrigatório")
+      return
     }
 
     try {
-      setIsSubmitting(true);
-      const categoryRef = doc(db, "categories", categoryName);
-      await setDoc(categoryRef, {
-        name: categoryName,
-        description: categoryDescription,
+      setLoading(true)
+      setError("")
+
+      // Verifica se já existe uma categoria com o mesmo nome
+      const q = query(
+        collection(db, "categories"),
+        where("name", "==", name.trim())
+      )
+      const querySnapshot = await getDocs(q)
+
+      if (!querySnapshot.empty) {
+        setError("Já existe uma categoria com este nome")
+        setLoading(false)
+        return
+      }
+
+      await addDoc(collection(db, "categories"), {
+        name: name.trim(),
+        description: description.trim(),
         createdAt: new Date(),
-      });
-      setCategoryName("");
-      setCategoryDescription("");
-      setError("");
-      if (onCreate) onCreate();
-    } catch (err) {
-      console.error(err);
-      setError("Ocorreu um erro ao criar a categoria. Por favor, tente novamente.");
+        updatedAt: new Date(),
+      })
+
+      setName("")
+      setDescription("")
+      onCreate()
+    } catch (error) {
+      console.error("Erro ao criar categoria:", error)
+      setError("Ocorreu um erro ao criar a categoria. Tente novamente.")
     } finally {
-      setIsSubmitting(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="create-category-modal">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h2 className="modal-title">Criar Nova Categoria</h2>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+          <p className="text-red-700">{error}</p>
         </div>
-        
-        <div className="input-group">
-          <input
-            type="text"
-            placeholder="Nome da Categoria"
-            value={categoryName}
-            onChange={(e) => setCategoryName(e.target.value)}
-            className="input-field"
-            disabled={isSubmitting}
-          />
-        </div>
+      )}
 
-        <div className="input-group">
-          <textarea
-            placeholder="Descrição da Categoria"
-            value={categoryDescription}
-            onChange={(e) => setCategoryDescription(e.target.value)}
-            className="input-field textarea-field"
-            disabled={isSubmitting}
-          />
-        </div>
-
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
-
-        <div className="button-group">
-          <button
-            onClick={handleCreateCategory}
-            className="create-button"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Criando..." : "Criar Categoria"}
-          </button>
-          <button 
-            onClick={onCancel}
-            className="cancel-button"
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </button>
-        </div>
+      <div>
+        <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 mb-1">
+          Nome da Categoria <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="category-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]"
+          placeholder="Digite o nome da categoria"
+          disabled={loading}
+        />
       </div>
-    </div>
-  );
-};
 
-export default CreateCategory;
+      <div>
+        <label htmlFor="category-description" className="block text-sm font-medium text-gray-700 mb-1">
+          Descrição
+        </label>
+        <textarea
+          id="category-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]"
+          placeholder="Digite uma descrição para a categoria (opcional)"
+          rows={3}
+          disabled={loading}
+        />
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+          disabled={loading}
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 bg-[#00418F] text-white rounded-md hover:bg-[#003166] focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:ring-opacity-50 transition-colors"
+          disabled={loading}
+        >
+          {loading ? (
+            <span className="flex items-center">
+              <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
+              Criando...
+            </span>
+          ) : (
+            "Criar Categoria"
+          )}
+        </button>
+      </div>
+    </form>
+  )
+}
