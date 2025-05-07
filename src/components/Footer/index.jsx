@@ -42,7 +42,7 @@ const Footer = () => {
 
       <footer className="w-full bg-gradient-to-b from-[#00418F] to-[#00418F]/90 text-white mt-auto">
         {/* Ondulação decorativa no topo do footer */}
-        <div className="w-full overflow-hidden leading-none">
+        {/* <div className="w-full overflow-hidden leading-none">
           <svg
             className="relative block w-full h-12"
             data-name="Layer 1"
@@ -55,7 +55,7 @@ const Footer = () => {
               className="fill-white"
             ></path>
           </svg>
-        </div>
+        </div> */}
 
         <div className="max-w-7xl mx-auto px-4 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
