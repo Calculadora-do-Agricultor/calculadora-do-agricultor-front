@@ -1,119 +1,124 @@
+"use client"
+
 import { useState } from "react"
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore"
+import { collection, addDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
-import { Loader2 } from "lucide-react"
+import { X, Plus, AlertCircle, Loader2 } from "lucide-react"
+import "./styles.css"
 
-export default function CreateCategory({ onCreate, onCancel }) {
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
-  const [loading, setLoading] = useState(false)
+const CreateCategory = ({ onCreate, onCancel }) => {
+  const [categoryName, setCategoryName] = useState("")
+  const [categoryDescription, setCategoryDescription] = useState("")
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    if (!name.trim()) {
-      setError("O nome da categoria é obrigatório")
+  const handleCreateCategory = async () => {
+    // Validação
+    if (!categoryName.trim()) {
+      setError("O nome da categoria é obrigatório.")
       return
     }
 
     try {
-      setLoading(true)
+      setIsSubmitting(true)
       setError("")
 
-      // Verifica se já existe uma categoria com o mesmo nome
-      const q = query(
-        collection(db, "categories"),
-        where("name", "==", name.trim())
-      )
-      const querySnapshot = await getDocs(q)
-
-      if (!querySnapshot.empty) {
-        setError("Já existe uma categoria com este nome")
-        setLoading(false)
-        return
-      }
-
+      // Usando addDoc para gerar um ID automático
       await addDoc(collection(db, "categories"), {
-        name: name.trim(),
-        description: description.trim(),
+        name: categoryName.trim(),
+        description: categoryDescription.trim(),
         createdAt: new Date(),
         updatedAt: new Date(),
       })
 
-      setName("")
-      setDescription("")
-      onCreate()
-    } catch (error) {
-      console.error("Erro ao criar categoria:", error)
-      setError("Ocorreu um erro ao criar a categoria. Tente novamente.")
+      setCategoryName("")
+      setCategoryDescription("")
+
+      if (onCreate) onCreate()
+    } catch (err) {
+      console.error("Erro ao criar categoria:", err)
+      setError("Ocorreu um erro ao criar a categoria. Por favor, tente novamente.")
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-          <p className="text-red-700">{error}</p>
+    <div className="create-category-modal">
+      <div className="modal-content">
+        <div className="modal-header">
+          <div className="header-content">
+            <div className="header-icon">
+              <Plus size={20} />
+            </div>
+            <h2 className="modal-title">Criar Nova Categoria</h2>
+          </div>
+          <button onClick={onCancel} className="close-button" aria-label="Fechar modal">
+            <X size={20} />
+          </button>
         </div>
-      )}
 
-      <div>
-        <label htmlFor="category-name" className="block text-sm font-medium text-gray-700 mb-1">
-          Nome da Categoria <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="category-name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]"
-          placeholder="Digite o nome da categoria"
-          disabled={loading}
-        />
-      </div>
+        <div className="modal-body">
+          <div className="input-group">
+            <label htmlFor="category-name" className="input-label">
+              Nome da Categoria <span className="required">*</span>
+            </label>
+            <input
+              id="category-name"
+              type="text"
+              placeholder="Ex: Adubação, Irrigação, Plantio..."
+              value={categoryName}
+              onChange={(e) => setCategoryName(e.target.value)}
+              className="input-field"
+              disabled={isSubmitting}
+            />
+          </div>
 
-      <div>
-        <label htmlFor="category-description" className="block text-sm font-medium text-gray-700 mb-1">
-          Descrição
-        </label>
-        <textarea
-          id="category-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]"
-          placeholder="Digite uma descrição para a categoria (opcional)"
-          rows={3}
-          disabled={loading}
-        />
-      </div>
+          <div className="input-group">
+            <label htmlFor="category-description" className="input-label">
+              Descrição da Categoria
+            </label>
+            <textarea
+              id="category-description"
+              placeholder="Descreva o propósito desta categoria de cálculos..."
+              value={categoryDescription}
+              onChange={(e) => setCategoryDescription(e.target.value)}
+              className="input-field textarea-field"
+              disabled={isSubmitting}
+              rows={4}
+            />
+            <p className="input-help">Uma boa descrição ajuda os usuários a entenderem o propósito desta categoria.</p>
+          </div>
 
-      <div className="flex justify-end space-x-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          disabled={loading}
-        >
-          Cancelar
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-[#00418F] text-white rounded-md hover:bg-[#003166] focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:ring-opacity-50 transition-colors"
-          disabled={loading}
-        >
-          {loading ? (
-            <span className="flex items-center">
-              <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
-              Criando...
-            </span>
-          ) : (
-            "Criar Categoria"
+          {error && (
+            <div className="error-message">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
           )}
-        </button>
+        </div>
+
+        <div className="modal-footer">
+          <button onClick={onCancel} className="cancel-button" disabled={isSubmitting} type="button">
+            Cancelar
+          </button>
+          <button onClick={handleCreateCategory} className="create-button" disabled={isSubmitting} type="button">
+            {isSubmitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Criando...</span>
+              </>
+            ) : (
+              <>
+                <Plus size={16} />
+                <span>Criar Categoria</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
-    </form>
+    </div>
   )
 }
+
+export default CreateCategory

@@ -1,4 +1,3 @@
-"use client"
 
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
@@ -87,7 +86,7 @@ export default function Calculator() {
           <div className="relative z-10 px-6 py-10 text-white">
             <div className="flex flex-col md:flex-row items-center justify-between">
               <div className="mb-6 md:mb-0 text-center md:text-left">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">Cálculos e Conversores</h1>
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">Calculadora do Agricultor</h1>
                 <p className="text-blue-100 max-w-2xl">
                   Explore nossa coleção de ferramentas de cálculo para diversas aplicações.
                 </p>
@@ -285,10 +284,37 @@ export default function Calculator() {
         <>
           <button
             onClick={() => setShowOptions(!showOptions)}
-            className="fixed bottom-8 right-8 bg-[#00418F] text-white p-4 rounded-full shadow-lg hover:shadow-xl z-10 flex items-center justify-center"
+            className="fixed bottom-8 right-8 bg-gradient-to-r from-[#00418F] to-[#0066CC] text-white p-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 z-10 flex items-center justify-center transform hover:scale-110 hover:rotate-180 focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:ring-opacity-50 backdrop-blur-sm group"
             aria-label="Opções de administrador"
+            style={{
+              animation: 'bounce 1s infinite',
+              boxShadow: '0 4px 15px rgba(0, 65, 143, 0.3)',
+            }}
           >
-            {showOptions ? <X className="h-6 w-6" /> : <PlusCircle className="h-6 w-6" />}
+            {showOptions ? (
+              <X className="h-6 w-6 transition-transform duration-300 transform group-hover:rotate-90" />
+            ) : (
+              <PlusCircle className="h-6 w-6 transition-transform duration-300 transform group-hover:rotate-90" />
+            )}
+            <style jsx>{`
+              @keyframes bounce {
+                0%, 100% {
+                  transform: translateY(0);
+                }
+                50% {
+                  transform: translateY(-5px);
+                }
+              }
+              
+              button:hover {
+                box-shadow: 0 8px 25px rgba(0, 65, 143, 0.4);
+                transform: translateY(-2px) scale(1.1);
+              }
+              
+              button:active {
+                transform: translateY(1px) scale(0.95);
+              }
+            `}</style>
           </button>
 
           {showOptions && (
