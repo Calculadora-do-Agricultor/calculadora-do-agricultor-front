@@ -7,7 +7,7 @@ const NavLinks = ({ user }) => {
 
   const linkStyle = (path) => {
     const isActive = location.pathname === path;
-    return `flex items-center px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${isActive ? 'bg-yellow-400' : 'hover:border-yellow-500 focus:ring focus:ring-yellow-300'}`;
+    return `flex items-center px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${isActive ? 'bg-[#FFEE00] text-[#00418F]' : 'hover:bg-[#00418F] focus:ring focus:ring-[#FFEE00]'}`;
   };
 
   return (

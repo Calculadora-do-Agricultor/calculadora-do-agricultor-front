@@ -10,8 +10,8 @@ const CreateCalculationPage = () => {
       <h1 className="text-2xl font-bold mb-4 text-blue-900">Criar Cálculo</h1>
 
       <CreateCalculation
-        onCreate={() => navigate("/calculadora")} // volta para a tela principal
-        onCancel={() => navigate("/calculadora")} // cancelar também volta
+        onCreate={() => navigate("/calculator")} // volta para a tela principal
+        onCancel={() => navigate("/calculator")} // cancelar também volta
       />
     </div>
   );

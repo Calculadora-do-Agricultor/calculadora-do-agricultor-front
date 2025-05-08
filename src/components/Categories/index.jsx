@@ -1,21 +1,29 @@
-import React from "react";
+import React from "react"
+import "./styles.css"
 
-export function Categories({ categories, onSelect }) {
+export function Categories({ categories, onSelect, selectedCategory }) {
   if (!categories || categories.length === 0) {
-    return <p>Nenhuma categoria disponível.</p>;
+    return (
+      <div className="categories-empty">
+        <p>Nenhuma categoria disponível.</p>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col gap-4 justify-center">
+    <div className="categories-container">
       {categories.map((category, index) => (
         <button
           key={index}
           onClick={() => onSelect(category.name)}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          className={`category-item ${selectedCategory === category.name ? "selected" : ""}`}
         >
-          {category.name}
+          <span className="category-name">{category.name}</span>
+          {selectedCategory === category.name && (
+            <span className="selected-indicator"></span>
+          )}
         </button>
       ))}
     </div>
-  );
+  )
 }

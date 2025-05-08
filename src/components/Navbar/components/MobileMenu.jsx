@@ -9,14 +9,14 @@ const MobileMenu = ({ user, userName }) => {
 
   const linkStyle = (path) => {
     const isActive = location.pathname === path;
-    return `flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 text-white ${isActive ? 'bg-yellow-400 text-black font-bold' : 'hover:bg-yellow-500 hover:text-black'}`;
+    return `flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${isActive ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`;
   };
 
   return (
     <div className="lg:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="text-white p-2 hover:bg-yellow-500 rounded-lg transition duration-200"
+        className="text-white p-2 hover:bg-[#FFEE00] hover:text-[#00418F] rounded-lg transition-all duration-300 transform hover:scale-105"
         aria-label="Menu de navegação"
       >
         <svg
@@ -44,10 +44,10 @@ const MobileMenu = ({ user, userName }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute top-16 right-0 left-0 bg-blue-900 shadow-lg z-50 border-t-4 border-yellow-400">
+        <div className="absolute top-16 right-0 left-0 bg-[#00418F] shadow-lg z-50 border-t-4 border-[#FFEE00]">
           <Link
             to="/"
-            className={`${linkStyle('/')} border-b border-blue-800`}
+            className={`${linkStyle('/')} border-b border-[#00418F]/80`}
             onClick={() => setIsOpen(false)}
           >
             <HomeIcon className="w-5 h-5 mr-2" />
@@ -58,7 +58,7 @@ const MobileMenu = ({ user, userName }) => {
             <>
               <Link
                 to="/Login"
-                className={`${linkStyle('/Login')} border-b border-blue-800`}
+                className={`${linkStyle('/Login')} border-b border-[#00418F]/80`}
                 onClick={() => setIsOpen(false)}
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5 mr-2" />
@@ -66,7 +66,7 @@ const MobileMenu = ({ user, userName }) => {
               </Link>
               <Link
                 to="/Register"
-                className={`${linkStyle('/Register')} border-b border-blue-800`}
+                className={`${linkStyle('/Register')} border-b border-[#00418F]/80`}
                 onClick={() => setIsOpen(false)}
               >
                 <UserPlusIcon className="w-5 h-5 mr-2" />
@@ -77,7 +77,7 @@ const MobileMenu = ({ user, userName }) => {
             <>
               <Link
                 to="/calculator"
-                className={`${linkStyle('/calculator')} border-b border-blue-800`}
+                className={`${linkStyle('/calculator')} border-b border-[#00418F]/80`}
                 onClick={() => setIsOpen(false)}
               >
                 <CalculatorIcon className="w-5 h-5 mr-2" />
@@ -85,7 +85,7 @@ const MobileMenu = ({ user, userName }) => {
               </Link>
               <Link
                 to="/Settings"
-                className={`${linkStyle('/Settings')} border-b border-blue-800`}
+                className={`${linkStyle('/Settings')} border-b border-[#00418F]/80`}
                 onClick={() => setIsOpen(false)}
               >
                 <CogIcon className="w-5 h-5 mr-2" />
@@ -96,12 +96,12 @@ const MobileMenu = ({ user, userName }) => {
                   handleLogout();
                   setIsOpen(false);
                 }}
-                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-yellow-500 hover:text-black transition-all duration-300 transform hover:scale-105 border-b border-blue-800"
+                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-[#FFEE00] hover:text-[#00418F] transition-all duration-300 transform hover:scale-105 border-b border-[#00418F]/20"
               >
                 <ArrowRightOnRectangleIcon className="w-5 h-5 mr-2" />
                 Sair
               </button>
-              <div className="px-4 py-2 text-white font-medium border-t border-blue-800 mt-2">
+              <div className="px-4 py-2 text-white font-medium border-t border-[#00418F]/20 mt-2">
                 Olá {userName}!
               </div>
             </>

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../../context/AuthContext';
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../services/firebaseConfig";
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -9,10 +10,11 @@ import Alert from '../../components/Alert/Alert';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { user, loading } = useContext(AuthContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = () => {
@@ -40,7 +42,7 @@ const Login = () => {
       return;
     }
     
-    setLoading(true);
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       localStorage.setItem('authToken', 'logado');
@@ -66,10 +68,15 @@ const Login = () => {
       }
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
+  useEffect(() => {
+    if (!loading && user) {
+      navigate("/Calculator", { replace: true });
+    }
+  }, [user, loading, navigate]);
   return (
     <div className="flex items-center justify-center bg-white px-4 h-[calc(100vh-64px-40px)]">
           <div className="bg-blue-100 p-12 rounded-2xl shadow-xl w-full max-w-md space-y-3">
@@ -108,6 +115,7 @@ const Login = () => {
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
+            tabIndex="-1"
           >
             {showPassword ? (
               <EyeSlashIcon className="w-5 h-5" />
@@ -120,10 +128,10 @@ const Login = () => {
         {error && <Alert type="error" message={error} onClose={() => setError("")} />}
         <button
           type="submit"
-          disabled={loading}
-          className={`w-40 ${loading ? 'bg-blue-400' : 'bg-blue-700 hover:bg-blue-800'} text-white py-2 rounded-lg font-semibold text-lg transition mx-auto block mt-5`}
+          disabled={isLoading}
+          className={`w-40 ${isLoading ? 'bg-blue-400' : 'bg-blue-700 hover:bg-blue-800'} text-white py-2 rounded-lg font-semibold text-lg transition mx-auto block mt-5`}
         >
-          {loading ? "Entrando..." : "Entrar"}
+          {isLoading ? "Entrando..." : "Entrar"}
         </button>
         </form>
       </div>

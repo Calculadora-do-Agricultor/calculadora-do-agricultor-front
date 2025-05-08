@@ -4,7 +4,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebaseConfig.js';
 
-const PrivateRoute = ({ requiredRole }) => {
+const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
   const [user, loading, error] = useAuthState(auth);
   const [role, setRole] = useState(null);
   const location = useLocation();
@@ -32,7 +32,7 @@ const PrivateRoute = ({ requiredRole }) => {
     getUserRole();
   }, [user]);
 
-  if (loading || role === null) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
@@ -40,10 +40,17 @@ const PrivateRoute = ({ requiredRole }) => {
     return <div>Error: {error.message}</div>;
   }
 
-  if (!user) {
+  // Se a rota requer autenticação e o usuário não está logado
+  if (requiresAuth && !user) {
     return <Navigate to='/login' state={{ from: location }} replace />;
   }
 
+  // Se a rota não requer autenticação (login/registro) e o usuário está logado
+  if (!requiresAuth && user) {
+    return <Navigate to='/calculator' replace />;
+  }
+
+  // Verificação de papel específico (role)
   if (requiredRole && role !== requiredRole) {
     return <Navigate to='/not-authorized' replace />;
   }
