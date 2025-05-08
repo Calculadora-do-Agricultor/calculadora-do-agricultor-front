@@ -1,10 +1,29 @@
 import { UserIcon, EnvelopeIcon, PhoneIcon, LockClosedIcon, LanguageIcon, SunIcon, MoonIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { signOut } from "firebase/auth";
-import { auth } from "../../services/firebaseConfig";
+import { auth, db } from "../../services/firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
 
 const Settings = () => {
   const navigate = useNavigate();
+
+  const [user] = useAuthState(auth);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      const userRef = doc(db, 'users', user.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          setUserName(docSnap.data().name);
+        }
+      });
+    }
+  }, [user]);
+
+
 
   const handleLogout = async () => {
     try {
@@ -27,7 +46,7 @@ const Settings = () => {
               <PencilIcon className="w-4 h-4 text-[#00418F]" />
             </button>
           </div>
-          <h2 className="text-2xl font-bold text-[#00418F] mb-1">NOME DO PERFIL</h2>
+          <h2 className="text-2xl font-bold text-[#00418F] mb-1">{userName}</h2>
           <p className="text-[#00418F] font-medium mb-8">AGRICULTOR</p>
 
           {/* Seção dos Botões */}
