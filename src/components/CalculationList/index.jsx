@@ -78,7 +78,6 @@ export function CalculationList({
           views: doc.data().views || 0,
           createdAt: doc.data().createdAt || { toDate: () => new Date() },
           updatedAt: doc.data().updatedAt || { toDate: () => new Date() },
-          complexity: doc.data().complexity || "medium",
           tags: doc.data().tags || [],
         }))
 
@@ -161,19 +160,6 @@ export function CalculationList({
     }
     setFavorites(newFavorites)
     localStorage.setItem("calculationFavorites", JSON.stringify(newFavorites))
-  }
-
-  const getComplexityColor = (complexity) => {
-    switch (complexity) {
-      case "easy":
-        return "bg-green-100 text-green-800"
-      case "medium":
-        return "bg-yellow-100 text-yellow-800"
-      case "hard":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-blue-100 text-blue-800"
-    }
   }
 
   const getTimeAgo = (date) => {
@@ -361,14 +347,16 @@ export function CalculationList({
         {filteredCalculations.map((calculation) => (
           <div key={calculation.id} className="calculation-card">
             {(isAdmin || (user && calculation.createdBy === user.uid)) && (
-              <CalculationActions
-                calculation={calculation}
-                onEdit={onEditCalculation}
-                onDeleted={(deletedId) => {
-                  // Remover o cálculo excluído da lista
-                  setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== deletedId))
-                }}
-              />
+              <div className="calculation-actions-wrapper">
+                <CalculationActions
+                  calculation={calculation}
+                  onEdit={onEditCalculation}
+                  onDeleted={(deletedId) => {
+                    // Remover o cálculo excluído da lista
+                    setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== deletedId))
+                  }}
+                />
+              </div>
             )}
             {favorites.includes(calculation.id) && (
               <div className="favorite-badge">
@@ -380,15 +368,6 @@ export function CalculationList({
             <div className="calculation-content">
               <div className="calculation-header">
                 <h3 className="calculation-title">{calculation.name || calculation.nome}</h3>
-                {calculation.complexity && (
-                  <span className={`complexity-badge ${getComplexityColor(calculation.complexity)}`}>
-                    {calculation.complexity === "easy"
-                      ? "Fácil"
-                      : calculation.complexity === "medium"
-                        ? "Médio"
-                        : "Avançado"}
-                  </span>
-                )}
               </div>
 
               <p className="calculation-description">

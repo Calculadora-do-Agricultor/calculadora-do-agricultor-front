@@ -43,11 +43,11 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
     alert("Funcionalidade de duplicação será implementada em breve.");
   };
 
-  const handleShare = () => {
-    // Implementação futura
-    setShowMenu(false);
-    alert("Funcionalidade de compartilhamento será implementada em breve.");
-  };
+  // const handleShare = () => {
+  //   // Implementação futura
+  //   setShowMenu(false);
+  //   alert("Funcionalidade de compartilhamento será implementada em breve.");
+  // };
 
   return (
     <div className="calculation-actions">
@@ -69,10 +69,10 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
             <Copy size={16} />
             <span>Duplicar</span>
           </button>
-          <button className="action-item" onClick={handleShare}>
+          {/* <button className="action-item" onClick={handleShare}>
             <Share2 size={16} />
             <span>Compartilhar</span>
-          </button>
+          </button> */}
           <button
             className="action-item delete"
             onClick={() => {
