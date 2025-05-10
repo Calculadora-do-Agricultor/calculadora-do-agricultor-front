@@ -1,0 +1,174 @@
+/* Estilos específicos para o modo de edição */
+.edit-mode {
+  border-left: 4px solid #00418f;
+}
+
+.edit-mode .create-calculation-header h1 {
+  display: flex;
+  align-items: center;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.history-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #4b5563;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-button:hover {
+  background-color: #e5e7eb;
+}
+
+.history-button.active {
+  background-color: #00418f;
+  color: white;
+  border-color: #00418f;
+}
+
+/* Painel de histórico */
+.history-panel {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.history-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #374151;
+}
+
+.close-history-button {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.close-history-button:hover {
+  color: #ef4444;
+  background-color: #fee2e2;
+}
+
+.history-content {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.history-item {
+  padding: 10px;
+  border-bottom: 1px solid #f3f4f6;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-timestamp {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.history-description {
+  color: #374151;
+}
+
+.no-history {
+  color: #6b7280;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Caixa de aviso */
+.warning-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background-color: #fff7ed;
+  border-radius: 8px;
+  border-left: 4px solid #f97316;
+}
+
+.warning-box svg {
+  color: #f97316;
+  flex-shrink: 0;
+}
+
+/* Botão de atualização */
+.update-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #00418f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.update-button:hover {
+  background-color: #003166;
+}
+
+.update-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 10px;
+  }
+
+  .history-button,
+  .preview-toggle-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

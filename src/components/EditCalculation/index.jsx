@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore"
+import { collection, doc, getDoc, updateDoc, getDocs, query, where } from "firebase/firestore"
 import {
   PlusCircle,
   X,
@@ -20,20 +20,24 @@ import {
   Loader2,
   Sliders,
   FileText,
+  Edit,
+  History,
 } from "lucide-react"
 import "./styles.css"
 
-const CreateCalculation = ({ onCreate, onCancel }) => {
+const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
+  const [originalName, setOriginalName] = useState("") // Para verificar se o nome foi alterado
   const [calculationDescription, setCalculationDescription] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
+  const [lastModified, setLastModified] = useState(null)
 
   // Dados dos parâmetros
   const [parameters, setParameters] = useState([
@@ -60,6 +64,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Estados para feedback ao usuário
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [validationErrors, setValidationErrors] = useState({
     basic: {},
@@ -67,23 +72,70 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     results: {},
   })
 
+  // Histórico de alterações
+  const [changeHistory, setChangeHistory] = useState([])
+  const [showHistory, setShowHistory] = useState(false)
+
   // Carregar categorias para o dropdown
   const [categories, setCategories] = useState([])
   const [loadingCategories, setLoadingCategories] = useState(true)
 
   // Verificar se o nome do cálculo já existe
-  const checkCalculationNameExists = useCallback(async (name) => {
-    try {
-      const q = query(collection(db, "calculations"), where("name", "==", name))
-      const querySnapshot = await getDocs(q)
-      return !querySnapshot.empty
-    } catch (err) {
-      console.error("Erro ao verificar nome do cálculo:", err)
-      return false
-    }
-  }, [])
+  const checkCalculationNameExists = useCallback(
+    async (name) => {
+      if (name === originalName) return false // Se o nome não mudou, não precisa verificar
 
+      try {
+        const q = query(collection(db, "calculations"), where("name", "==", name))
+        const querySnapshot = await getDocs(q)
+        return !querySnapshot.empty
+      } catch (err) {
+        console.error("Erro ao verificar nome do cálculo:", err)
+        return false
+      }
+    },
+    [originalName],
+  )
+
+  // Carregar dados do cálculo existente
   useEffect(() => {
+    const fetchCalculation = async () => {
+      try {
+        setInitialLoading(true)
+        const calculationDoc = await getDoc(doc(db, "calculations", calculationId))
+
+        if (calculationDoc.exists()) {
+          const calculationData = calculationDoc.data()
+
+          // Preencher os estados com os dados existentes
+          setCalculationName(calculationData.name)
+          setOriginalName(calculationData.name)
+          setCalculationDescription(calculationData.description)
+          setSelectedCategory(calculationData.category)
+          setTags(calculationData.tags || [])
+
+          // Parâmetros e resultados
+          if (calculationData.parameters && calculationData.parameters.length > 0) {
+            setParameters(calculationData.parameters)
+          }
+
+          if (calculationData.results && calculationData.results.length > 0) {
+            setResults(calculationData.results)
+          }
+
+          // Adicionar entrada no histórico de alterações
+          addToChangeHistory("Carregamento inicial do cálculo")
+        } else {
+          setError("Cálculo não encontrado.")
+        }
+      } catch (err) {
+        console.error("Erro ao carregar cálculo:", err)
+        setError("Erro ao carregar dados do cálculo. Verifique sua conexão e tente novamente.")
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+
     const fetchCategories = async () => {
       try {
         setLoadingCategories(true)
@@ -101,21 +153,68 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       }
     }
 
+    fetchCalculation()
     fetchCategories()
-  }, [])
+  }, [calculationId])
+
+  // Adicionar entrada ao histórico de alterações
+  const addToChangeHistory = (description) => {
+    const newEntry = {
+      timestamp: new Date(),
+      description,
+    }
+    setChangeHistory((prev) => [newEntry, ...prev])
+  }
 
   // Funções para manipular parâmetros
   const addParameter = () => {
     setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
+    addToChangeHistory("Adicionado novo parâmetro")
   }
 
   const removeParameter = (index) => {
+    const paramName = parameters[index].name
     const updatedParameters = parameters.filter((_, i) => i !== index)
     setParameters(updatedParameters)
+    addToChangeHistory(`Removido parâmetro: ${paramName || `Parâmetro ${index + 1}`}`)
+
+    // Atualizar expressões de resultados que usam este parâmetro
+    const paramRegex = new RegExp(paramName, "g")
+    const updatedResults = results.map((result) => {
+      if (result.expression.includes(paramName)) {
+        return {
+          ...result,
+          expression: result.expression.replace(paramRegex, "0"),
+        }
+      }
+      return result
+    })
+    setResults(updatedResults)
   }
 
   const updateParameter = (index, field, value) => {
     const updatedParameters = [...parameters]
+
+    // Se estamos atualizando o nome, precisamos atualizar as expressões
+    if (field === "name" && updatedParameters[index].name) {
+      const oldName = updatedParameters[index].name
+      const newName = value
+
+      // Atualizar expressões de resultados que usam este parâmetro
+      const updatedResults = results.map((result) => {
+        if (result.expression.includes(oldName)) {
+          const paramRegex = new RegExp(oldName, "g")
+          return {
+            ...result,
+            expression: result.expression.replace(paramRegex, newName),
+          }
+        }
+        return result
+      })
+      setResults(updatedResults)
+      addToChangeHistory(`Renomeado parâmetro: ${oldName} → ${newName}`)
+    }
+
     updatedParameters[index][field] = value
     setParameters(updatedParameters)
   }
@@ -127,6 +226,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     }
     updatedParameters[paramIndex].options.push({ label: "", value: "" })
     setParameters(updatedParameters)
+    addToChangeHistory(`Adicionada opção ao parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`)
   }
 
   const updateParameterOption = (paramIndex, optionIndex, field, value) => {
@@ -137,8 +237,12 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   const removeParameterOption = (paramIndex, optionIndex) => {
     const updatedParameters = [...parameters]
+    const optionLabel = updatedParameters[paramIndex].options[optionIndex].label
     updatedParameters[paramIndex].options = updatedParameters[paramIndex].options.filter((_, i) => i !== optionIndex)
     setParameters(updatedParameters)
+    addToChangeHistory(
+      `Removida opção "${optionLabel}" do parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`,
+    )
   }
 
   // Funções para manipular resultados
@@ -154,27 +258,37 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         isMainResult: false,
       },
     ])
+    addToChangeHistory("Adicionado novo resultado")
   }
 
   const removeResult = (index) => {
+    const resultName = results[index].name
     const updatedResults = results.filter((_, i) => i !== index)
     setResults(updatedResults)
+    addToChangeHistory(`Removido resultado: ${resultName || `Resultado ${index + 1}`}`)
   }
 
   const updateResult = (index, field, value) => {
     const updatedResults = [...results]
-    updatedResults[index][field] = value
 
-    // Se estamos definindo um resultado como principal, desmarque os outros
+    // Se estamos alterando o resultado principal
     if (field === "isMainResult" && value === true) {
       updatedResults.forEach((result, i) => {
         if (i !== index) {
           result.isMainResult = false
         }
       })
+      addToChangeHistory(
+        `Definido "${updatedResults[index].name || `Resultado ${index + 1}`}" como resultado principal`,
+      )
     }
 
+    updatedResults[index][field] = value
     setResults(updatedResults)
+
+    if (field === "expression") {
+      addToChangeHistory(`Atualizada expressão do resultado: ${updatedResults[index].name || `Resultado ${index + 1}`}`)
+    }
   }
 
   // Função para inserir um parâmetro na expressão
@@ -196,12 +310,14 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       setTags([...tags, currentTag.trim()])
       setCurrentTag("")
+      addToChangeHistory(`Adicionada tag: ${currentTag.trim()}`)
     }
   }
 
   // Função para remover uma tag
   const removeTag = (tagToRemove) => {
     setTags(tags.filter((tag) => tag !== tagToRemove))
+    addToChangeHistory(`Removida tag: ${tagToRemove}`)
   }
 
   // Validação por etapa
@@ -286,7 +402,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   const nextStep = async () => {
     if (validateStep(step)) {
       // Verificação especial para o nome do cálculo na primeira etapa
-      if (step === 1) {
+      if (step === 1 && calculationName !== originalName) {
         const exists = await checkCalculationNameExists(calculationName)
         if (exists) {
           setValidationErrors({
@@ -380,48 +496,95 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     }
   }, [previewMode, parameters])
 
-  // Função para salvar o cálculo no Firestore
-  const handleCreateCalculation = async () => {
-    // Limpa mensagens anteriores
-    setError("")
-    setSuccess(false)
-
-    // Valida o formulário
-    if (!validateStep(3)) {
-      return
+  // Função para atualizar o cálculo no Firestore
+  // Função para validar o cálculo antes de salvar
+  const validateCalculation = () => {
+    const errors = {
+      basic: {},
+      parameters: {},
+      results: {}
     }
-
+    let isValid = true
+  
+    // Validar dados básicos
+    if (!calculationName.trim()) {
+      errors.basic.name = "Nome do cálculo é obrigatório"
+      isValid = false
+    }
+    if (!selectedCategory) {
+      errors.basic.category = "Categoria é obrigatória"
+      isValid = false
+    }
+  
+    // Validar parâmetros
+    parameters.forEach((param, index) => {
+      if (!param.name.trim()) {
+        if (!errors.parameters[index]) errors.parameters[index] = {}
+        errors.parameters[index].name = "Nome do parâmetro é obrigatório"
+        isValid = false
+      }
+    })
+  
+    // Validar resultados
+    results.forEach((result, index) => {
+      if (!result.name.trim()) {
+        if (!errors.results[index]) errors.results[index] = {}
+        errors.results[index].name = "Nome do resultado é obrigatório"
+        isValid = false
+      }
+      if (!result.expression.trim()) {
+        if (!errors.results[index]) errors.results[index] = {}
+        errors.results[index].expression = "Expressão é obrigatória"
+        isValid = false
+      }
+    })
+  
+    return { isValid, errors }
+  }
+  
+  // Função para atualizar o cálculo
+  const handleUpdateCalculation = async () => {
     try {
-      setLoading(true)
-
-      await addDoc(collection(db, "calculations"), {
+      setLoading(true);
+      // Validate input data here
+      // Update the Firestore document
+      const calculationRef = doc(db, "calculations", calculationId);
+      await updateDoc(calculationRef, {
         name: calculationName,
         description: calculationDescription,
         category: selectedCategory,
-        parameters,
-        results,
-        tags,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-
-      setSuccess(true)
-      setError("")
-
-      // Aguarda um momento para mostrar a mensagem de sucesso antes de redirecionar
-      setTimeout(() => {
-        if (onCreate) onCreate() // Retorna para a tela inicial
-      }, 1500)
-    } catch (err) {
-      console.error("Erro ao criar cálculo:", err)
-      setError("Erro ao criar cálculo. Verifique sua conexão e tente novamente.")
-      setSuccess(false)
+        tags: tags,
+        parameters: parameters,
+        results: results,
+        lastModified: new Date(),
+      });
+      setSuccess(true);
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      console.error("Erro ao atualizar cálculo:", error);
+      setError("Erro ao atualizar cálculo. Tente novamente.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  };
+  
+  // Connect the function to the UI element
+  <button onClick={handleUpdateCalculation} disabled={loading}>
+    {loading ? "Atualizando..." : "Atualizar Cálculo"}
+  </button>
+
+  // Formatar data para exibição
+  const formatDate = (date) => {
+    return new Date(date).toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
   }
 
-  // Renderiza o indicador de progresso
+  // Renderizar o indicador de progresso
   const renderProgressIndicator = () => (
     <div className="progress-indicator mb-8">
       <div className="flex justify-between">
@@ -444,25 +607,76 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     </div>
   )
 
+  if (initialLoading) {
+    return (
+      <div className="create-calculation-container">
+        <div className="loading-indicator">
+          <Loader2 size={36} className="animate-spin" />
+          <p>Carregando dados do cálculo...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="create-calculation-container">
+    <div className="create-calculation-container edit-mode">
       <div className="create-calculation-header">
         <div className="flex items-center">
           <button onClick={onCancel} className="back-button mr-4" aria-label="Voltar">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-primary">Etapas de criação</h1>
+          <h1 className="text-2xl font-bold text-primary">
+            <Edit size={20} className="inline-block mr-2" />
+            Editar Cálculo
+          </h1>
         </div>
 
-        {step < totalSteps && (
+        <div className="header-actions">
           <button
-            onClick={() => setPreviewMode(!previewMode)}
-            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+            onClick={() => setShowHistory(!showHistory)}
+            className={`history-button ${showHistory ? "active" : ""}`}
+            title="Histórico de alterações"
           >
-            {previewMode ? "Editar" : "Visualizar"}
+            <History size={18} />
+            <span>Histórico</span>
           </button>
-        )}
+
+          {step < totalSteps && (
+            <button
+              onClick={() => setPreviewMode(!previewMode)}
+              className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+            >
+              {previewMode ? "Editar" : "Visualizar"}
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Histórico de alterações */}
+      {showHistory && (
+        <div className="history-panel">
+          <div className="history-header">
+            <h3>Histórico de Alterações</h3>
+            <button onClick={() => setShowHistory(false)} className="close-history-button">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="history-content">
+            {changeHistory.length > 0 ? (
+              <ul className="history-list">
+                {changeHistory.map((entry, index) => (
+                  <li key={index} className="history-item">
+                    <span className="history-timestamp">{formatDate(entry.timestamp)}</span>
+                    <span className="history-description">{entry.description}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="no-history">Nenhuma alteração registrada.</p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mensagens de feedback */}
       {error && (
@@ -475,7 +689,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       {success && (
         <div className="success-message" role="alert">
           <CheckCircle size={18} />
-          <p>Cálculo criado com sucesso!</p>
+          <p>Cálculo atualizado com sucesso!</p>
         </div>
       )}
 
@@ -615,6 +829,17 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                 </p>
                 <p className="text-sm">
                   Defina um nome claro, escolha o tipo adequado e adicione uma unidade quando aplicável.
+                </p>
+              </div>
+            </div>
+
+            <div className="warning-box mb-4">
+              <AlertTriangle size={18} />
+              <div>
+                <p className="font-medium">Atenção ao modificar parâmetros existentes!</p>
+                <p className="text-sm">
+                  Alterar o nome de um parâmetro atualizará automaticamente as expressões de cálculo que o utilizam.
+                  Remover um parâmetro pode quebrar expressões existentes.
                 </p>
               </div>
             </div>
@@ -1081,7 +1306,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
             <div className="confirmation-box">
               <p>
-                Todos os dados estão corretos? Ao confirmar, o cálculo será criado e disponibilizado para os usuários.
+                Todos os dados estão corretos? Ao confirmar, o cálculo será atualizado e as alterações serão
+                disponibilizadas para os usuários.
               </p>
             </div>
           </div>
@@ -1199,16 +1425,16 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
             <ChevronRight size={18} />
           </button>
         ) : (
-          <button onClick={handleCreateCalculation} className="create-button" type="button" disabled={loading}>
+          <button onClick={handleUpdateCalculation} className="update-button" type="button" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 size={18} className="animate-spin" />
-                <span>Criando...</span>
+                <span>Atualizando...</span>
               </>
             ) : (
               <>
                 <Save size={18} />
-                <span>Criar Cálculo</span>
+                <span>Atualizar Cálculo</span>
               </>
             )}
           </button>
@@ -1218,4 +1444,4 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   )
 }
 
-export default CreateCalculation
+export default EditCalculation
