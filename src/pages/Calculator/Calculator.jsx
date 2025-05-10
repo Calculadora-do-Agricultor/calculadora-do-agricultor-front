@@ -470,7 +470,16 @@ export default function Calculator() {
                     selectedCategory={categoriaSelecionada}
                   />
                 </div>
-
+{/* console.log("Categorias:", categorias);
+console.log("Categoria selecionada:", categoriaSelecionada);
+console.log("Usuário:", user);
+console.log("É administrador?", isAdmin);
+console.log("Cálculos recentes:", recentCalculations);
+console.log("Cálculos populares:", popularCalculations);
+console.log("Contagem de usuários:", userCount);
+console.log("Modo de visualização:", viewMode);
+console.log("Termo de pesquisa:", searchTerm);
+console.log("Opções de filtragem:", currentSortOption, selectedComplexities); */}
                 {/* Links rápidos */}
                 <div className="quick-links">
                   <h3 className="quick-links-header">Links Rápidos</h3>
