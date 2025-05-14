@@ -4,24 +4,40 @@ import Home from "./pages/Home/Home";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Settings from "./pages/Settings/Settings";
+import Calculator from "./pages/Calculator/Calculator.jsx";
+import React from 'react';
+import PrivateRoute from './components/PrivateRoute/privateRouter'
+import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <Router>
-        {/* COMPONENTES FIXOS (fora das rotas) */}
         <Navbar />
-        {/* PÁGINAS COM ROTAS */}
-        <main className="flex-grow">
+        <main className="flex-grow pt-20">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/Register" element={<Register />} />
-            <Route path="/Settings" element={<Settings />} />
+            <Route path="/login" element={<PrivateRoute requiresAuth={false} />}>
+              <Route index element={<Login />} />
+            </Route>
+            <Route path="/Register" element={<PrivateRoute requiresAuth={false} />}>
+              <Route index element={<Register />} />
+            </Route>
+
+            <Route path="/settings" element={<PrivateRoute requiresAuth={true} />}>
+              <Route index element={<Settings />} />
+            </Route>
+            <Route path="/calculator" element={<PrivateRoute requiresAuth={true} />}>
+              <Route index element={<Calculator />} />
+            </Route>
+            <Route path="/admin/criar-calculo" element={<PrivateRoute requiresAuth={true} />}>
+              <Route index element={<CreateCalculationPage />} />
+            </Route>
+
+
           </Routes>
         </main>
         <Footer />
-        {/* COMPONENTES FIXOS (fora das rotas) */}
       </Router>
     </div>
   );
