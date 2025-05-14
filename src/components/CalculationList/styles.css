@@ -397,9 +397,9 @@
   padding: 3rem 1.5rem;
   text-align: center;
   background-color: white;
-  border-radius: 1rem;
+  /* border-radius: 1rem;
   border: 1px solid rgba(0, 65, 143, 0.1);
-  box-shadow: 0 4px 12px rgba(0, 65, 143, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 65, 143, 0.08); */
 }
 
 /* Skeleton loading */

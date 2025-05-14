@@ -578,60 +578,6 @@ console.log("Opções de filtragem:", currentSortOption, selectedComplexities); 
                           </select>
                         </div>
 
-                        <div className="filter-group">
-                          <label>Complexidade</label>
-                          <div className="filter-options">
-                            <label className="filter-option">
-                              <input
-                                type="checkbox"
-                                name="complexity"
-                                value="easy"
-                                checked={selectedComplexities.includes("easy")}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedComplexities([...selectedComplexities, "easy"])
-                                  } else {
-                                    setSelectedComplexities(selectedComplexities.filter((item) => item !== "easy"))
-                                  }
-                                }}
-                              />
-                              <span>Fácil</span>
-                            </label>
-                            <label className="filter-option">
-                              <input
-                                type="checkbox"
-                                name="complexity"
-                                value="medium"
-                                checked={selectedComplexities.includes("medium")}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedComplexities([...selectedComplexities, "medium"])
-                                  } else {
-                                    setSelectedComplexities(selectedComplexities.filter((item) => item !== "medium"))
-                                  }
-                                }}
-                              />
-                              <span>Médio</span>
-                            </label>
-                            <label className="filter-option">
-                              <input
-                                type="checkbox"
-                                name="complexity"
-                                value="hard"
-                                checked={selectedComplexities.includes("hard")}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedComplexities([...selectedComplexities, "hard"])
-                                  } else {
-                                    setSelectedComplexities(selectedComplexities.filter((item) => item !== "hard"))
-                                  }
-                                }}
-                              />
-                              <span>Avançado</span>
-                            </label>
-                          </div>
-                        </div>
-
                         <div className="filter-actions">
                           <button className="filter-apply">Aplicar Filtros</button>
                           <button
