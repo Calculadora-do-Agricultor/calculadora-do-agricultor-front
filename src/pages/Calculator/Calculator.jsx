@@ -31,7 +31,7 @@ import { CalculationList } from "../../components/CalculationList"
 import CreateCategory from "../../components/CreateCategory"
 import EditCalculation from "../../components/EditCalculation"
 import logoClara from '../../assets/logoClara.svg';
-import "./calculator.css"
+import "./Calculator.css"
 
 export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null)
