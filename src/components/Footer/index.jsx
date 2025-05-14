@@ -1,11 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail, MapPin, ChevronUp, Wheat } from 'lucide-react'
 
 const Footer = () => {
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const location = useLocation()
+  const isCalculatorPage = location.pathname.includes('/calculator')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,7 +35,7 @@ const Footer = () => {
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50"
+          className={`fixed ${isCalculatorPage ? 'right-25' : 'right-6'} bottom-6  bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50`}
           aria-label="Voltar ao topo"
         >
           <ChevronUp className="h-5 w-5" />

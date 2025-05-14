@@ -1,13 +1,37 @@
+"use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getDocs, collection, getDoc, doc, query, where } from "firebase/firestore"
-import { PlusCircle, X, Search, ChevronRight, CalculatorIcon, LayoutGrid, List, Filter, Info } from "lucide-react"
+import {
+  PlusCircle,
+  X,
+  ChevronRight,
+  Filter,
+  ArrowUpRight,
+  Sparkles,
+  Info,
+  CalculatorIcon,
+  BookOpen,
+  TrendingUp,
+  Star,
+  Clock,
+  Calendar,
+  Users,
+  ChevronDown,
+  Bookmark,
+  History,
+  Award,
+  Loader2,
+} from "lucide-react"
 import { auth, db } from "../../services/firebaseConfig"
 import { Categories } from "../../components/Categories"
 import { CalculationList } from "../../components/CalculationList"
 import CreateCategory from "../../components/CreateCategory"
+import EditCalculation from "../../components/EditCalculation"
+import logoClara from '../../assets/logoClara.svg';
+import "./Calculator.css"
 
 export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null)
@@ -20,7 +44,20 @@ export default function Calculator() {
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState("grid") // grid ou list
   const [showFilters, setShowFilters] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showFeaturedCalculations, setShowFeaturedCalculations] = useState(true)
+  const [recentCalculations, setRecentCalculations] = useState([])
+  const [popularCalculations, setPopularCalculations] = useState([])
+  const [userCount, setUserCount] = useState(0)
+  const [showUserCount, setShowUserCount] = useState(false)
+  const searchInputRef = useRef(null)
   const navigate = useNavigate()
+
+  const [showEditCalculation, setShowEditCalculation] = useState(false)
+  const [calculationToEdit, setCalculationToEdit] = useState(null)
+
+  const [currentSortOption, setCurrentSortOption] = useState("name_asc")
+  const [selectedComplexities, setSelectedComplexities] = useState([])
 
   const fetchCategorias = async () => {
     try {
@@ -51,6 +88,9 @@ export default function Calculator() {
       if (categoriasComCalculos.length > 0 && !categoriaSelecionada) {
         setCategoriaSelecionada(categoriasComCalculos[0].name)
       }
+
+      // Buscar cálculos recentes e populares
+      fetchFeaturedCalculations()
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error)
     } finally {
@@ -58,19 +98,93 @@ export default function Calculator() {
     }
   }
 
-  // Verificar se o usuário é admin
+  const fetchFeaturedCalculations = async () => {
+    try {
+      // Buscar cálculos recentes
+      const recentQuery = query(collection(db, "calculations"), where("createdAt", "!=", null))
+      const recentSnapshot = await getDocs(recentQuery)
+      const recentCalcs = recentSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+        .slice(0, 4)
+
+      setRecentCalculations(recentCalcs)
+
+      // Buscar cálculos populares (baseado em visualizações)
+      const popularQuery = query(collection(db, "calculations"))
+      const popularSnapshot = await getDocs(popularQuery)
+      const popularCalcs = popularSnapshot.docs
+        .map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        .sort((a, b) => (b.views || 0) - (a.views || 0))
+        .slice(0, 4)
+
+      setPopularCalculations(popularCalcs)
+    } catch (error) {
+      console.error("Erro ao buscar cálculos em destaque:", error)
+    }
+  }
+
+  // Verificar se o usuário é admin e buscar contagem de usuários
   useEffect(() => {
-    if (user) {
-      const userRef = doc(db, "users", user.uid)
-      getDoc(userRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          setIsAdmin(docSnap.data().role === "admin")
+    const checkAdminAndFetchData = async () => {
+      if (user) {
+        try {
+          const userRef = doc(db, "users", user.uid)
+          const docSnap = await getDoc(userRef)
+          if (docSnap.exists()) {
+            const isUserAdmin = docSnap.data().role === "admin"
+            setIsAdmin(isUserAdmin)
+            setShowUserCount(isUserAdmin)
+            // Apenas buscar contagem de usuários se for admin
+            if (isUserAdmin) {
+              await fetchUserCount()
+            }
+          }
+        } catch (error) {
+          console.error("Erro ao verificar permissões do usuário:", error)
         }
-      })
+      }
     }
 
+    checkAdminAndFetchData()
     fetchCategorias()
+
+    // Escutar eventos de mudança de modo de visualização
+    const handleViewModeChange = (event) => {
+      setViewMode(event.detail)
+    }
+
+    window.addEventListener("changeViewMode", handleViewModeChange)
+
+    return () => {
+      window.removeEventListener("changeViewMode", handleViewModeChange)
+    }
   }, [user])
+
+  // Função para focar no campo de pesquisa quando pressionar Ctrl+K ou Command+K
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault()
+        searchInputRef.current?.focus()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [])
+
+  // Handle edit calculation
+  const handleEditCalculation = (calculation) => {
+    setCalculationToEdit(calculation)
+    setShowEditCalculation(true)
+  }
 
   // Total de cálculos em todas as categorias
   const totalCalculos = categorias.reduce((total, cat) => total + (cat.calculos?.length || 0), 0)
@@ -78,144 +192,310 @@ export default function Calculator() {
   // Encontrar a categoria selecionada
   const categoriaAtual = categorias.find((cat) => cat.name === categoriaSelecionada)
 
+  // Função para formatar data
+  const formatDate = (date) => {
+    if (!date) return ""
+    return new Date(date).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+  }
+
+
+
+  const fetchUserCount = async () => {
+    try {
+      const usersSnapshot = await getDocs(collection(db, "users"))
+      setUserCount(usersSnapshot.size)
+    } catch (error) {
+      console.error("Erro ao buscar contagem de usuários:", error)
+      setUserCount(0)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto px-4 sm:px-6 py-8 max-w-7xl">
-        {/* Header com banner */}
-        <div className="relative mb-8 bg-[#00418F] rounded-xl overflow-hidden">
-          <div className="relative z-10 px-6 py-10 text-white">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="mb-6 md:mb-0 text-center md:text-left">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">Calculadora do Agricultor</h1>
-                <p className="text-blue-100 max-w-2xl">
-                  Explore nossa coleção de ferramentas de cálculo para diversas aplicações.
-                </p>
-              </div>
-              <div className="bg-white/10 p-4 rounded-xl">
-                <CalculatorIcon className="h-16 w-16 text-[#FFEE00]" />
-              </div>
+    <div className="calculator-page">
+      {/* Menu móvel */}
+      {showMobileMenu && (
+        <div className="mobile-menu">
+          <div className="mobile-menu-header">
+            <h3>Menu</h3>
+            <button onClick={() => setShowMobileMenu(false)} aria-label="Fechar menu">
+              <X size={24} />
+            </button>
+          </div>
+          <div className="mobile-menu-content">
+            <div className="mobile-menu-section">
+              <h4>Categorias</h4>
+              <ul className="mobile-categories">
+                {categorias.map((categoria) => (
+                  <li key={categoria.id}>
+                    <button
+                      className={categoriaSelecionada === categoria.name ? "active" : ""}
+                      onClick={() => {
+                        setCategoriaSelecionada(categoria.name)
+                        setShowMobileMenu(false)
+                      }}
+                    >
+                      {categoria.name}
+                      <ChevronRight size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Barra de pesquisa e controles */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="relative w-full md:w-auto md:flex-1 max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Buscar cálculos..."
-                className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center gap-2 self-end md:self-auto">
-              <div className="flex items-center">
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-[#00418F]"
-                >
-                  <Filter className="h-5 w-5" />
-                </button>
-
-                <span className="text-sm text-gray-500 mx-2">Visualização:</span>
-
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "grid" ? "bg-[#00418F]/10 text-[#00418F]" : "text-gray-500 hover:bg-gray-100"
-                  }`}
-                  aria-label="Visualização em grade"
-                >
-                  <LayoutGrid className="h-5 w-5" />
-                </button>
-
-                <button
-                  onClick={() => setViewMode("list")}
-                  className={`p-2 rounded-lg ${
-                    viewMode === "list" ? "bg-[#00418F]/10 text-[#00418F]" : "text-gray-500 hover:bg-gray-100"
-                  }`}
-                  aria-label="Visualização em lista"
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Filtros expandidos */}
-          {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ordenar por</label>
-                <select className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-[#00418F]">
-                  <option>Nome (A-Z)</option>
-                  <option>Nome (Z-A)</option>
-                  <option>Mais recentes</option>
-                  <option>Mais antigos</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button className="bg-[#00418F] hover:bg-[#003166] text-white px-4 py-2 rounded-lg flex items-center">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <span>Aplicar Filtros</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          {/* Sidebar com categorias */}
-          <div className="md:col-span-4 lg:col-span-3">
-            {loading ? (
-              <div className="animate-pulse bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="space-y-2">
-                  <div className="h-10 bg-gray-200 rounded"></div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
-                  <div className="h-10 bg-gray-200 rounded"></div>
+      <div className="main-content">
+        {/* Banner principal */}
+        <div className="main-banner">
+          <div className="banner-content">
+            <h1>Calculadora do Agricultor</h1>
+            <p>
+              Ferramentas de cálculo especializadas para otimizar suas atividades agrícolas e aumentar sua
+              produtividade.
+            </p>
+            <div className="banner-stats">
+              <div className="stat-item">
+                <div className="stat-icon">
+                  <CalculatorIcon size={20} />
                 </div>
+                <div className="stat-info">
+                  <span className="stat-value">{totalCalculos}</span>
+                  <span className="stat-label">Cálculos</span>
+                </div>
+              </div>
+              <div className="stat-item">
+                <div className="stat-icon">
+                  <BookOpen size={20} />
+                </div>
+                <div className="stat-info">
+                  <span className="stat-value">{categorias.length}</span>
+                  <span className="stat-label">Categorias</span>
+                </div>
+              </div>
+              {showUserCount && (
+                <div className="stat-item">
+                  <div className="stat-icon">
+                    <Users size={20} />
+                  </div>
+                  <div className="stat-info">
+                    <span className="stat-value">{userCount}</span>
+                    <span className="stat-label">Usuários</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="banner-image">
+            <img src={logoClara} alt="Ilustração de calculadora" />
+          </div>
+        </div>
+
+        {/* Cálculos em destaque (visível apenas na página inicial) */}
+        {showFeaturedCalculations && !categoriaSelecionada && (
+          <div className="featured-calculations">
+            <div className="featured-section">
+              <div className="section-header">
+                <h2>
+                  <Clock size={20} /> Cálculos Recentes
+                </h2>
+                <button className="view-all-button">
+                  Ver todos <ChevronRight size={16} />
+                </button>
+              </div>
+              <div className="featured-grid">
+                {recentCalculations.length > 0 ? (
+                  recentCalculations.map((calc) => (
+                    <div key={calc.id} className="featured-card">
+                      <div className="featured-card-content">
+                        <h3>{calc.name}</h3>
+                        <p>{calc.description}</p>
+                        <div className="featured-card-meta">
+                          <span>
+                            <Calendar size={14} /> {formatDate(calc.createdAt?.toDate())}
+                          </span>
+                          <span>
+                            <BookOpen size={14} /> {calc.category}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="featured-card-actions">
+                        <button
+                          className="featured-card-button"
+                          onClick={() => {
+                            setCategoriaSelecionada(calc.category)
+                            setShowFeaturedCalculations(false)
+                            // Scroll para a lista de cálculos
+                            document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
+                          }}
+                        >
+                          Acessar <ArrowUpRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="featured-loading">
+                    <Loader2 size={24} className="animate-spin" />
+                    <p>Carregando cálculos recentes...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="featured-section">
+              <div className="section-header">
+                <h2>
+                  <Star size={20} /> Cálculos Populares
+                </h2>
+                <button className="view-all-button">
+                  Ver todos <ChevronRight size={16} />
+                </button>
+              </div>
+              <div className="featured-grid">
+                {popularCalculations.length > 0 ? (
+                  popularCalculations.map((calc) => (
+                    <div key={calc.id} className="featured-card">
+                      <div className="featured-card-content">
+                        <h3>{calc.name}</h3>
+                        <p>{calc.description}</p>
+                        <div className="featured-card-meta">
+                          <span>
+                            <TrendingUp size={14} /> {calc.views || 0} visualizações
+                          </span>
+                          <span>
+                            <BookOpen size={14} /> {calc.category}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="featured-card-actions">
+                        <button
+                          className="featured-card-button"
+                          onClick={() => {
+                            setCategoriaSelecionada(calc.category)
+                            setShowFeaturedCalculations(false)
+                            // Scroll para a lista de cálculos
+                            document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
+                          }}
+                        >
+                          Acessar <ArrowUpRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="featured-loading">
+                    <Loader2 size={24} className="animate-spin" />
+                    <p>Carregando cálculos populares...</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Seção de categorias em destaque */}
+            <div className="categories-highlight">
+              <h2>Categorias de Cálculos</h2>
+              <p>Explore nossa coleção de cálculos organizados por categorias especializadas</p>
+
+              <div className="categories-grid">
+                {categorias.slice(0, 6).map((categoria) => (
+                  <button
+                    key={categoria.id}
+                    className="category-card"
+                    onClick={() => {
+                      setCategoriaSelecionada(categoria.name)
+                      setShowFeaturedCalculations(false)
+                      // Scroll para a lista de cálculos
+                      document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
+                    }}
+                  >
+                    <div className="category-icon">{categoria.icon || <CalculatorIcon size={24} />}</div>
+                    <div className="category-info">
+                      <h3>{categoria.name}</h3>
+                      <span className="category-count">
+                        {categoria.calculos?.length || 0} cálculo{categoria.calculos?.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <ChevronRight size={20} className="category-arrow" />
+                  </button>
+                ))}
+              </div>
+
+              {categorias.length > 6 && (
+                <div className="categories-more">
+                  <button
+                    className="view-all-categories"
+                    onClick={() => {
+                      const sidebar = document.querySelector(".sidebar")
+                      if (sidebar) {
+                        sidebar.scrollIntoView({ behavior: "smooth" })
+                      }
+                    }}
+                  >
+                    Ver todas as categorias ({categorias.length})
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Conteúdo principal com sidebar e lista de cálculos */}
+        <div className="content-container" id="calculations-list">
+          {/* Sidebar com categorias */}
+          <div className="sidebar">
+            {loading ? (
+              <div className="sidebar-loading">
+                <div className="skeleton-header"></div>
+                <div className="skeleton-item"></div>
+                <div className="skeleton-item"></div>
+                <div className="skeleton-item"></div>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4">
-                  <div className="bg-[#00418F] px-4 py-3">
-                    <h2 className="text-white font-semibold text-lg">Categorias</h2>
+                <div className="categories-container">
+                  <div className="categories-header">
+                    <h2>Categorias</h2>
                   </div>
                   <Categories
                     categories={categorias}
-                    onSelect={setCategoriaSelecionada}
+                    onSelect={(category) => {
+                      setCategoriaSelecionada(category)
+                      setShowFeaturedCalculations(false)
+                    }}
                     selectedCategory={categoriaSelecionada}
                   />
                 </div>
-
-                {/* Estatísticas */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                  <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center">
-                    <Info className="h-4 w-4 mr-2" />
-                    Estatísticas
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Total de Categorias</span>
-                      <span className="font-semibold">{categorias.length}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Total de Cálculos</span>
-                      <span className="font-semibold">{totalCalculos}</span>
-                    </div>
-                    {categoriaAtual && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Cálculos nesta categoria</span>
-                        <span className="font-semibold">{categoriaAtual.calculos?.length || 0}</span>
-                      </div>
-                    )}
+{/* console.log("Categorias:", categorias);
+console.log("Categoria selecionada:", categoriaSelecionada);
+console.log("Usuário:", user);
+console.log("É administrador?", isAdmin);
+console.log("Cálculos recentes:", recentCalculations);
+console.log("Cálculos populares:", popularCalculations);
+console.log("Contagem de usuários:", userCount);
+console.log("Modo de visualização:", viewMode);
+console.log("Termo de pesquisa:", searchTerm);
+console.log("Opções de filtragem:", currentSortOption, selectedComplexities); */}
+                {/* Links rápidos */}
+                <div className="quick-links">
+                  <h3 className="quick-links-header">Links Rápidos</h3>
+                  <div className="quick-links-content">
+                    <a href="#" className="quick-link">
+                      <Bookmark size={16} />
+                      <span>Favoritos</span>
+                    </a>
+                    <a href="#" className="quick-link">
+                      <History size={16} />
+                      <span>Histórico</span>
+                    </a>
+                    <a href="#" className="quick-link">
+                      <Award size={16} />
+                      <span>Mais Usados</span>
+                    </a>
                   </div>
                 </div>
               </>
@@ -223,124 +503,181 @@ export default function Calculator() {
           </div>
 
           {/* Conteúdo principal */}
-          <div className="md:col-span-8 lg:col-span-9">
+          <div className="main-area">
             {loading ? (
-              <div className="animate-pulse bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                <div className="h-64 bg-gray-200 rounded"></div>
+              <div className="main-area-loading">
+                <div className="skeleton-header"></div>
+                <div className="skeleton-text"></div>
+                <div className="skeleton-grid">
+                  <div className="skeleton-card"></div>
+                  <div className="skeleton-card"></div>
+                  <div className="skeleton-card"></div>
+                  <div className="skeleton-card"></div>
+                </div>
               </div>
             ) : !categoriaSelecionada ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
-                <div className="flex flex-col items-center justify-center py-12">
-                  <div className="bg-blue-50 p-4 rounded-full mb-4">
-                    <ChevronRight className="h-12 w-12 text-[#00418F]" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">Selecione uma categoria</h3>
-                  <p className="text-gray-500 max-w-md mx-auto">
-                    Escolha uma categoria no painel lateral para ver os cálculos disponíveis.
-                  </p>
+              <div className="select-category-message">
+                <div className="message-icon">
+                  <ChevronRight size={48} />
                 </div>
+                <h3>Selecione uma categoria</h3>
+                <p>Escolha uma categoria no painel lateral para ver os cálculos disponíveis.</p>
               </div>
             ) : (
               <>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h2 className="text-2xl font-bold text-[#00418F] mb-2">{categoriaSelecionada}</h2>
-                      <p className="text-gray-600">
-                        Explore nossa coleção de cálculos e conversores para {categoriaSelecionada.toLowerCase()}.
-                      </p>
+                <div className="category-header">
+                  <div className="category-info">
+                    <h2>{categoriaSelecionada}</h2>
+                    <p>Explore nossa coleção de cálculos e conversores para {categoriaSelecionada.toLowerCase()}.</p>
+                  </div>
+                  {categoriaAtual?.calculos?.length > 0 && (
+                    <div className="category-badge">
+                      <CalculatorIcon size={16} />
+                      <span>
+                        {categoriaAtual.calculos.length} cálculo{categoriaAtual.calculos.length !== 1 ? "s" : ""}
+                      </span>
                     </div>
-                    {categoriaAtual?.calculos?.length > 0 && (
-                      <div className="hidden md:flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
-                        <CalculatorIcon className="h-4 w-4 text-[#00418F]" />
-                        <span className="text-sm font-medium text-[#00418F]">
-                          {categoriaAtual.calculos.length} cálculo{categoriaAtual.calculos.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Breadcrumbs */}
-                  <div className="flex items-center text-sm text-gray-500">
-                    <span>Início</span>
-                    <ChevronRight className="h-4 w-4 mx-1" />
-                    <span>Calculadora</span>
-                    <ChevronRight className="h-4 w-4 mx-1" />
-                    <span className="font-medium text-[#00418F]">{categoriaSelecionada}</span>
-                  </div>
+                  )}
                 </div>
 
-                <CalculationList category={categoriaSelecionada} searchTerm={searchTerm} viewMode={viewMode} />
+                {/* Breadcrumbs */}
+                <div className="breadcrumbs">
+                  <span>Início</span>
+                  <ChevronRight size={16} />
+                  <span>Calculadora</span>
+                  <ChevronRight size={16} />
+                  <span className="current">{categoriaSelecionada}</span>
+                </div>
+
+                {/* Filtros */}
+                <div className="filters-bar">
+                  <button
+                    className={`filter-toggle ${showFilters ? "active" : ""}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <Filter size={16} />
+                    <span>Filtros</span>
+                    <ChevronDown size={14} className={showFilters ? "rotate" : ""} />
+                  </button>
+
+                  {showFilters && (
+                    <div className="filters-panel">
+                      <div className="filters-grid">
+                        <div className="filter-group">
+                          <label>Ordenar por</label>
+                          <select
+                            className="filter-select"
+                            value={currentSortOption}
+                            onChange={(e) => setCurrentSortOption(e.target.value)}
+                          >
+                            <option value="name_asc">Nome (A-Z)</option>
+                            <option value="name_desc">Nome (Z-A)</option>
+                            <option value="date_newest">Mais recentes</option>
+                            <option value="date_oldest">Mais antigos</option>
+                            <option value="views_desc">Mais visualizados</option>
+                          </select>
+                        </div>
+
+                        <div className="filter-actions">
+                          <button className="filter-apply">Aplicar Filtros</button>
+                          <button
+                            className="filter-clear"
+                            onClick={() => {
+                              setCurrentSortOption("name_asc")
+                              setSelectedComplexities([])
+                            }}
+                          >
+                            Limpar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Lista de cálculos */}
+                <CalculationList
+                  category={categoriaSelecionada}
+                  searchTerm={searchTerm}
+                  viewMode={viewMode}
+                  sortOption={currentSortOption}
+                  complexityFilters={selectedComplexities}
+                  onEditCalculation={handleEditCalculation}
+                />
               </>
             )}
           </div>
         </div>
+
+        {/* Seção de recursos */}
+        {/* <div className="resources-section">
+          <div className="resources-content">
+            <h2>Recursos Adicionais</h2>
+            <p>Além dos cálculos, oferecemos recursos complementares para auxiliar nas suas atividades agrícolas.</p>
+            <button className="resources-button">
+              <span>Explorar recursos</span>
+              <ArrowUpRight size={16} />
+            </button>
+          </div>
+          <div className="resources-illustration">
+            <Sparkles size={48} className="sparkles-icon" />
+          </div>
+        </div> */}
+
+    
       </div>
+
+      {/* Interface de Edição de Cálculo */}
+      {showEditCalculation && calculationToEdit && (
+        <EditCalculation
+          calculation={calculationToEdit}
+          onUpdate={() => {
+            fetchCategorias() // Recarrega os dados após a atualização
+            setShowEditCalculation(false)
+            setCalculationToEdit(null)
+          }}
+          onCancel={() => {
+            setShowEditCalculation(false)
+            setCalculationToEdit(null)
+          }}
+        />
+      )}
 
       {/* Área de administração */}
       {isAdmin && (
         <>
           <button
             onClick={() => setShowOptions(!showOptions)}
-            className="fixed bottom-8 right-8 bg-gradient-to-r from-[#00418F] to-[#0066CC] text-white p-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 z-10 flex items-center justify-center transform hover:scale-110 hover:rotate-180 focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:ring-opacity-50 backdrop-blur-sm group"
+            className="admin-button"
             aria-label="Opções de administrador"
-            style={{
-              animation: 'bounce 1s infinite',
-              boxShadow: '0 4px 15px rgba(0, 65, 143, 0.3)',
-            }}
           >
-            {showOptions ? (
-              <X className="h-6 w-6 transition-transform duration-300 transform group-hover:rotate-90" />
-            ) : (
-              <PlusCircle className="h-6 w-6 transition-transform duration-300 transform group-hover:rotate-90" />
-            )}
-            <style jsx>{`
-              @keyframes bounce {
-                0%, 100% {
-                  transform: translateY(0);
-                }
-                50% {
-                  transform: translateY(-5px);
-                }
-              }
-              
-              button:hover {
-                box-shadow: 0 8px 25px rgba(0, 65, 143, 0.4);
-                transform: translateY(-2px) scale(1.1);
-              }
-              
-              button:active {
-                transform: translateY(1px) scale(0.95);
-              }
-            `}</style>
+            {showOptions ? <X size={24} /> : <PlusCircle size={24} />}
           </button>
 
           {showOptions && (
-            <div className="fixed bottom-24 right-8 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-10 w-64">
-              <div className="p-4 bg-[#00418F] text-white">
-                <h3 className="text-lg font-semibold">Opções de Administrador</h3>
+            <div className="admin-menu">
+              <div className="admin-menu-header">
+                <h3>Opções de Administrador</h3>
               </div>
-              <div className="p-4 flex flex-col gap-3">
+              <div className="admin-menu-options">
                 <button
                   onClick={() => {
                     setShowCreateCategory(true)
                     setShowOptions(false)
                   }}
-                  className="bg-[#00418F] text-white px-4 py-3 rounded-lg w-full flex items-center justify-center"
+                  className="admin-option create-category"
                 >
-                  <PlusCircle className="h-5 w-5 mr-3" />
-                  <span className="font-medium">Criar Categoria</span>
+                  <PlusCircle size={20} />
+                  <span>Criar Categoria</span>
                 </button>
                 <button
                   onClick={() => {
                     navigate("/admin/criar-calculo")
                     setShowOptions(false)
                   }}
-                  className="bg-[#FFEE00] text-[#00418F] font-medium px-4 py-3 rounded-lg w-full flex items-center justify-center"
+                  className="admin-option create-calculation"
                 >
-                  <PlusCircle className="h-5 w-5 mr-3" />
+                  <PlusCircle size={20} />
                   <span>Criar Cálculo</span>
                 </button>
               </div>

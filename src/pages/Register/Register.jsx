@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useContext, useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { AuthContext } from "../../context/AuthContext"
@@ -103,40 +101,48 @@ const Register = () => {
 
     try {
       const result = await createUserWithEmailAndPassword(email, password)
-      console.log("Cadastro realizado com sucesso!", result.user)
-
-      if (result && result.user) {
-        const uid = result.user.uid
-
-        await setDoc(doc(db, "users", uid), {
-          name: name,
-          email: email,
-          createdAt: new Date(),
-          role: "user",
-          env: import.meta.env.VITE_ENV || "dev",
-        })
-
-        localStorage.setItem("authToken", "logado")
-        navigate("/Calculator")
-        console.log("Usuário registrado e salvo no Firestore.")
+      
+      if (!result) {
+        throw new Error("Falha no cadastro do usuário")
       }
+
+      console.log("Cadastro realizado com sucesso!", result.user)
+      const uid = result.user.uid
+
+      await setDoc(doc(db, "users", uid), {
+        name: name,
+        email: email,
+        createdAt: new Date(),
+        role: "user",
+        env: import.meta.env.VITE_ENV || "dev",
+      })
+
+      localStorage.setItem("authToken", "logado")
+      navigate("/Calculator")
+      console.log("Usuário registrado e salvo no Firestore.")
     } catch (err) {
       let errorMsg
       switch (err.code) {
         case "auth/email-already-in-use":
-          errorMsg = "Este email já está em uso."
+          errorMsg = "Email já cadastrado. Use outro email ou faça login."
           break
         case "auth/invalid-email":
-          errorMsg = "Email inválido."
+          errorMsg = "Email inválido. Verifique o formato."
           break
         case "auth/network-request-failed":
-          errorMsg = "Erro de conexão. Verifique sua internet e tente novamente."
+          errorMsg = "Erro de conexão. Verifique sua internet."
           break
         case "auth/weak-password":
-          errorMsg = "A senha é muito fraca. Tente uma senha mais forte."
+          errorMsg = "Senha fraca. Use 6+ caracteres, letras maiúsculas e números."
+          break
+        case "auth/operation-not-allowed":
+          errorMsg = "Cadastro temporariamente indisponível."
+          break
+        case "auth/too-many-requests":
+          errorMsg = "Muitas tentativas. Aguarde alguns minutos."
           break
         default:
-          errorMsg = "Erro ao criar conta. Tente novamente."
+          errorMsg = "Erro no cadastro. Tente novamente ou contate o suporte."
       }
       setErrorMessage(errorMsg)
       console.error("Erro ao salvar no Firestore:", err)
