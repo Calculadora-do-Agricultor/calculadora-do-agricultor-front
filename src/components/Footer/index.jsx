@@ -1,13 +1,15 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useContext } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail, MapPin, ChevronUp, Wheat } from 'lucide-react'
+import { AuthContext } from "../../context/AuthContext"
 
 const Footer = () => {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const location = useLocation()
   const isCalculatorPage = location.pathname.includes('/calculator')
+  const { hideFooter, user } = useContext(AuthContext)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,6 +29,23 @@ const Footer = () => {
       top: 0,
       behavior: "smooth",
     })
+  }
+
+  // Se o rodapé estiver oculto E o usuário estiver logado, apenas renderiza o botão de voltar ao topo
+  if (user && hideFooter) {
+    return (
+      <>
+        {showScrollTop && (
+          <button
+            onClick={scrollToTop}
+            className={`fixed ${isCalculatorPage ? 'right-25' : 'right-6'} bottom-6  bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50`}
+            aria-label="Voltar ao topo"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </button>
+        )}
+      </>
+    );
   }
 
   return (

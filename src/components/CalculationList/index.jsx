@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react"
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
+import { AuthContext } from "../../context/AuthContext"
 import {
   ArrowRight,
   Search,
@@ -35,23 +36,12 @@ export function CalculationList({
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // Verificar se o usuário é admin
+  // Usar o isAdmin do AuthContext em vez de verificar localmente
+  const { isAdmin: contextIsAdmin } = useContext(AuthContext)
+  
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (user) {
-        try {
-          const userRef = doc(db, "users", user.uid)
-          const docSnap = await getDoc(userRef)
-          if (docSnap.exists()) {
-            setIsAdmin(docSnap.data().role === "admin")
-          }
-        } catch (error) {
-          console.error("Erro ao verificar permissões do usuário:", error)
-        }
-      }
-    }
-    checkAdminStatus()
-  }, [user])
+    setIsAdmin(contextIsAdmin)
+  }, [contextIsAdmin])
   const [calculations, setCalculations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

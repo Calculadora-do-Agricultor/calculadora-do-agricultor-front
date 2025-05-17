@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import {
   Edit,
   Trash2,
@@ -8,15 +8,21 @@ import {
   Copy,
   Share2,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import { doc, deleteDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
+import { AuthContext } from "../../context/AuthContext";
 import "./styles.css";
 
 const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { isAdmin, user } = useContext(AuthContext);
+  
+  // Verifica se o usuário atual é o criador do cálculo ou um administrador
+  const canEdit = isAdmin || (user && calculation.createdBy === user.uid);
 
   const handleEdit = () => {
     setShowMenu(false);
@@ -61,28 +67,37 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
 
       {showMenu && (
         <div className="actions-menu">
-          <button className="action-item" onClick={handleEdit}>
-            <Edit size={16} />
-            <span>Editar</span>
-          </button>
-          <button className="action-item" onClick={handleDuplicate}>
-            <Copy size={16} />
-            <span>Duplicar</span>
-          </button>
-          {/* <button className="action-item" onClick={handleShare}>
-            <Share2 size={16} />
-            <span>Compartilhar</span>
-          </button> */}
-          <button
-            className="action-item delete"
-            onClick={() => {
-              setShowDeleteConfirm(true);
-              setShowMenu(false);
-            }}
-          >
-            <Trash2 size={16} />
-            <span>Excluir</span>
-          </button>
+          {canEdit ? (
+            <>
+              <button className="action-item" onClick={handleEdit}>
+                <Edit size={16} />
+                <span>Editar</span>
+              </button>
+              <button className="action-item" onClick={handleDuplicate}>
+                <Copy size={16} />
+                <span>Duplicar</span>
+              </button>
+              {/* <button className="action-item" onClick={handleShare}>
+                <Share2 size={16} />
+                <span>Compartilhar</span>
+              </button> */}
+              <button
+                className="action-item delete"
+                onClick={() => {
+                  setShowDeleteConfirm(true);
+                  setShowMenu(false);
+                }}
+              >
+                <Trash2 size={16} />
+                <span>Excluir</span>
+              </button>
+            </>
+          ) : (
+            <div className="action-item disabled">
+              <Lock size={16} />
+              <span>Acesso restrito a administradores</span>
+            </div>
+          )}
         </div>
       )}
 

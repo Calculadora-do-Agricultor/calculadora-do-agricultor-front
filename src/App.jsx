@@ -7,6 +7,7 @@ import Settings from "./pages/Settings/Settings";
 import Calculator from "./pages/Calculator/Calculator.jsx";
 import React from 'react';
 import PrivateRoute from './components/PrivateRoute/privateRouter'
+import ProtectedRoute from './components/ProtectedRoute'
 import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
 
@@ -31,10 +32,16 @@ function App() {
             <Route path="/calculator" element={<PrivateRoute requiresAuth={true} />}>
               <Route index element={<Calculator />} />
             </Route>
-            <Route path="/admin/criar-calculo" element={<PrivateRoute requiresAuth={true} />}>
-              <Route index element={<CreateCalculationPage />} />
-            </Route>
-            <Route path="/edit-calculation/:id" element={<EditCalculationPage />} />
+            <Route path="/admin/criar-calculo" element={
+              <ProtectedRoute adminOnly={true} redirectTo="/calculator">
+                <CreateCalculationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/edit-calculation/:id" element={
+              <ProtectedRoute adminOnly={true} redirectTo="/calculator">
+                <EditCalculationPage />
+              </ProtectedRoute>
+            } />
           </Routes>
         </main>
         <Footer />
