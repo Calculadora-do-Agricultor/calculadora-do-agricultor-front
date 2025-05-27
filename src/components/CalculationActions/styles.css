@@ -47,12 +47,25 @@
   }
   
   .action-item.delete {
-    color: #ef4444;
-  }
-  
-  .action-item.delete:hover {
-    background-color: #fee2e2;
-  }
+  color: #ef4444;
+}
+
+.action-item.delete:hover {
+  background-color: #fee2e2;
+}
+
+.action-item.disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.action-item.disabled:hover {
+  background-color: transparent;
+}
   
   /* Confirmação de exclusão */
   .delete-confirmation {

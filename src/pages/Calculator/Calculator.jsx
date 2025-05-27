@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { getDocs, collection, getDoc, doc, query, where } from "firebase/firestore"
+import { AuthContext } from "../../context/AuthContext"
 import {
   PlusCircle,
   X,
@@ -37,7 +38,7 @@ export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null)
   const [categorias, setCategorias] = useState([])
   const [user] = useAuthState(auth)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const { isAdmin } = useContext(AuthContext)
   const [showOptions, setShowOptions] = useState(false)
   const [showCreateCategory, setShowCreateCategory] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -130,29 +131,16 @@ export default function Calculator() {
     }
   }
 
-  // Verificar se o usuário é admin e buscar contagem de usuários
+  // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
-    const checkAdminAndFetchData = async () => {
-      if (user) {
-        try {
-          const userRef = doc(db, "users", user.uid)
-          const docSnap = await getDoc(userRef)
-          if (docSnap.exists()) {
-            const isUserAdmin = docSnap.data().role === "admin"
-            setIsAdmin(isUserAdmin)
-            setShowUserCount(isUserAdmin)
-            // Apenas buscar contagem de usuários se for admin
-            if (isUserAdmin) {
-              await fetchUserCount()
-            }
-          }
-        } catch (error) {
-          console.error("Erro ao verificar permissões do usuário:", error)
-        }
-      }
+    setShowUserCount(isAdmin)
+    // Apenas buscar contagem de usuários se for admin
+    if (isAdmin) {
+      fetchUserCount()
     }
+  }, [isAdmin])
 
-    checkAdminAndFetchData()
+  useEffect(() => {
     fetchCategorias()
 
     // Escutar eventos de mudança de modo de visualização
@@ -470,16 +458,6 @@ export default function Calculator() {
                     selectedCategory={categoriaSelecionada}
                   />
                 </div>
-{/* console.log("Categorias:", categorias);
-console.log("Categoria selecionada:", categoriaSelecionada);
-console.log("Usuário:", user);
-console.log("É administrador?", isAdmin);
-console.log("Cálculos recentes:", recentCalculations);
-console.log("Cálculos populares:", popularCalculations);
-console.log("Contagem de usuários:", userCount);
-console.log("Modo de visualização:", viewMode);
-console.log("Termo de pesquisa:", searchTerm);
-console.log("Opções de filtragem:", currentSortOption, selectedComplexities); */}
                 {/* Links rápidos */}
                 <div className="quick-links">
                   <h3 className="quick-links-header">Links Rápidos</h3>
@@ -547,52 +525,6 @@ console.log("Opções de filtragem:", currentSortOption, selectedComplexities); 
                   <span>Calculadora</span>
                   <ChevronRight size={16} />
                   <span className="current">{categoriaSelecionada}</span>
-                </div>
-
-                {/* Filtros */}
-                <div className="filters-bar">
-                  <button
-                    className={`filter-toggle ${showFilters ? "active" : ""}`}
-                    onClick={() => setShowFilters(!showFilters)}
-                  >
-                    <Filter size={16} />
-                    <span>Filtros</span>
-                    <ChevronDown size={14} className={showFilters ? "rotate" : ""} />
-                  </button>
-
-                  {showFilters && (
-                    <div className="filters-panel">
-                      <div className="filters-grid">
-                        <div className="filter-group">
-                          <label>Ordenar por</label>
-                          <select
-                            className="filter-select"
-                            value={currentSortOption}
-                            onChange={(e) => setCurrentSortOption(e.target.value)}
-                          >
-                            <option value="name_asc">Nome (A-Z)</option>
-                            <option value="name_desc">Nome (Z-A)</option>
-                            <option value="date_newest">Mais recentes</option>
-                            <option value="date_oldest">Mais antigos</option>
-                            <option value="views_desc">Mais visualizados</option>
-                          </select>
-                        </div>
-
-                        <div className="filter-actions">
-                          <button className="filter-apply">Aplicar Filtros</button>
-                          <button
-                            className="filter-clear"
-                            onClick={() => {
-                              setCurrentSortOption("name_asc")
-                              setSelectedComplexities([])
-                            }}
-                          >
-                            Limpar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Lista de cálculos */}

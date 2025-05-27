@@ -14,7 +14,7 @@ import "./styles.css"
 export function CalculationModal({ calculation, isOpen, onClose }) {
   const [paramValues, setParamValues] = useState({})
   const [results, setResults] = useState({})
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState({})
   const [allFieldsFilled, setAllFieldsFilled] = useState(false)
   const modalRef = useRef(null)
 
@@ -152,11 +152,19 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
   }
 
   // Copia o resultado para a área de transferência
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, resultId) => {
     navigator.clipboard.writeText(text).then(
       () => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        setCopied((prev) => ({
+          ...prev,
+          [resultId]: true,
+        }))
+        setTimeout(() => {
+          setCopied((prev) => ({
+            ...prev,
+            [resultId]: false,
+          }))
+        }, 2000)
       },
       (err) => {
         console.error("Erro ao copiar texto: ", err)
@@ -276,13 +284,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                     <div className="calculation-result-value">
                       <span>{results[key].value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results[key].value?.toString() || "0")}
-                        className={`copy-button ${copied ? "copied" : ""}`}
+                        onClick={() => copyToClipboard(results[key].value?.toString() || "0", key)}
+                        className={`copy-button ${copied[key] ? "copied" : ""}`}
                         aria-label="Copiar resultado"
                         disabled={!allFieldsFilled}
                       >
-                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                        {copied[key] ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied[key] ? "Copiado" : "Copiar"}</span>
                       </button>
                     </div>
                     {results[key].description && (
@@ -301,13 +309,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                     <div className="calculation-result-value">
                       <span>{results.value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results.value?.toString() || "0")}
-                        className={`copy-button ${copied ? "copied" : ""}`}
+                        onClick={() => copyToClipboard(results.value?.toString() || "0", "main")}
+                        className={`copy-button ${copied["main"] ? "copied" : ""}`}
                         aria-label="Copiar resultado"
                         disabled={!allFieldsFilled}
                       >
-                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                        {copied["main"] ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied["main"] ? "Copiado" : "Copiar"}</span>
                       </button>
                     </div>
                   </div>
@@ -323,13 +331,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                         <div className="calculation-result-value">
                           <span>{results[result.key] || "0"}</span>
                           <button
-                            onClick={() => copyToClipboard(results[result.key]?.toString() || "0")}
-                            className={`copy-button ${copied ? "copied" : ""}`}
+                            onClick={() => copyToClipboard(results[result.key]?.toString() || "0", result.key)}
+                            className={`copy-button ${copied[result.key] ? "copied" : ""}`}
                             aria-label="Copiar resultado"
                             disabled={!allFieldsFilled}
                           >
-                            {copied ? <Check size={16} /> : <Copy size={16} />}
-                            <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                            {copied[result.key] ? <Check size={16} /> : <Copy size={16} />}
+                            <span className="copy-text">{copied[result.key] ? "Copiado" : "Copiar"}</span>
                           </button>
                         </div>
                       </div>

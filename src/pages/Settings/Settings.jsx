@@ -13,13 +13,16 @@ import {
   ShieldCheckIcon,
   BellIcon,
   CogIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@heroicons/react/24/outline"
 import { signOut } from "firebase/auth"
 import { auth, db } from "../../services/firebaseConfig"
 import { useNavigate } from "react-router-dom"
 import { useAuthState } from "react-firebase-hooks/auth"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useContext } from "react"
 import { doc, getDoc } from "firebase/firestore"
+import { AuthContext } from "../../context/AuthContext"
 
 const Settings = () => {
   const navigate = useNavigate()
@@ -28,6 +31,7 @@ const Settings = () => {
   const [userRole, setUserRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("profile")
+  const { hideFooter, toggleHideFooter } = useContext(AuthContext)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -237,7 +241,7 @@ const Settings = () => {
             {activeTab === "appearance" && (
               <div className="space-y-6 animate-fadeIn">
                 <h3 className="text-lg font-semibold text-[#00418F] mb-4">Aparência</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <button className="flex flex-col items-center p-6 bg-white rounded-lg border-2 border-[#FFEE00] shadow-md hover:shadow-lg transition-all duration-300">
                     <div className="w-16 h-16 bg-[#FFEE00] rounded-full flex items-center justify-center mb-4">
                       <SunIcon className="w-8 h-8 text-[#00418F]" />
@@ -253,6 +257,32 @@ const Settings = () => {
                     <span className="font-medium text-[#00418F]">Modo Escuro</span>
                     <p className="text-sm text-gray-500 mt-2 text-center">Interface escura para uso noturno</p>
                   </button>
+                </div>
+                
+                <h3 className="text-lg font-semibold text-[#00418F] mb-4">Elementos da Interface</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 bg-white rounded-lg border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                    <div className="flex items-center">
+                      {hideFooter ? (
+                        <EyeSlashIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                      ) : (
+                        <EyeIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                      )}
+                      <div>
+                        <span className="font-medium text-[#00418F]">Ocultar Rodapé</span>
+                        <p className="text-sm text-gray-500">Esconde o rodapé em todas as páginas</p>
+                      </div>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer" 
+                        checked={hideFooter} 
+                        onChange={(e) => toggleHideFooter(e.target.checked)}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#00418F]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00418F]"></div>
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
