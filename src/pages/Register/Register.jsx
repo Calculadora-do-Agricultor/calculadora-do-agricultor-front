@@ -1,4 +1,5 @@
 import { useState, useContext, useEffect } from "react"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { useNavigate, Link } from "react-router-dom"
 import { AuthContext } from "../../context/AuthContext"
 import { doc, setDoc } from "firebase/firestore"
@@ -101,7 +102,7 @@ const Register = () => {
 
     try {
       const result = await createUserWithEmailAndPassword(email, password)
-      
+
       if (!result) {
         throw new Error("Falha no cadastro do usuário")
       }
@@ -115,6 +116,15 @@ const Register = () => {
         createdAt: new Date(),
         role: "user",
         env: import.meta.env.VITE_ENV || "dev",
+      })
+
+
+      await addDoc(collection(db, "Logs"), {
+        userId: uid,
+        email: email,
+        acao: "Cadastro realizado com sucesso",
+        tipo: "info",
+        timestamp: serverTimestamp(),
       })
 
       localStorage.setItem("authToken", "logado")
@@ -332,9 +342,8 @@ const Register = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full ${
-                isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800"
-              } text-white py-3 rounded-lg font-semibold text-lg transition`}
+              className={`w-full ${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800"
+                } text-white py-3 rounded-lg font-semibold text-lg transition`}
             >
               {isLoading ? "Registrando..." : "Registrar"}
             </button>
