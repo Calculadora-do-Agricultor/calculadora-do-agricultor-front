@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "calculadora-agricultor-react"
-  }
+    "default": "calculadora-agricultor-react",
+  },
+  "targets": {},
+  "etags": {}
 }

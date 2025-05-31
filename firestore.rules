@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Funções de utilidade para verificação de permissões
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Regras para coleção de usuários
+    match /users/{userId} {
+      // Usuários podem ler e atualizar seus próprios dados
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Usuários podem criar seus próprios perfis durante o registro
+      allow create: if isAuthenticated() && isOwner(userId);
+      // Usuários podem atualizar seus próprios dados
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      // Ninguém pode excluir usuários (proteção contra perda de dados)
+      allow delete: if false;
+    }
+    
+    // Regras para coleção de logs (nova implementação)
+    match /logs/{logId} {
+      // Qualquer usuário autenticado pode criar logs
+      allow create: if isAuthenticated();
+      // Apenas administradores podem ler logs (privacidade)
+      allow read: if isAdmin();
+      // Ninguém pode atualizar ou excluir logs (integridade dos dados)
+      allow update, delete: if false;
+    }
+    
+    // Regras para coleção Logs (existente - manter compatibilidade)
+    match /Logs/{logId} {
+      // Qualquer usuário autenticado pode criar logs
+      allow create: if isAuthenticated();
+      // Apenas administradores podem ler logs (privacidade)
+      allow read: if isAdmin();
+      // Ninguém pode atualizar ou excluir logs (integridade dos dados)
+      allow update, delete: if false;
+    }
+    
+    // Regras para cálculos e outras coleções específicas do aplicativo
+    match /calculations/{docId} {
+      // Usuários autenticados podem ler cálculos
+      allow read: if isAuthenticated();
+      // Usuários autenticados podem criar cálculos
+      allow create: if isAuthenticated();
+      // Apenas o criador ou um administrador pode atualizar ou excluir
+      allow update, delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+    }
+    
+    // Regras padrão para outras coleções
+    match /{document=**} {
+      // Usuários autenticados podem ler documentos
+      allow read: if isAuthenticated();
+      // Restringir escrita por padrão (segurança)
+      allow write: if isAdmin();
+    }
+  }
+}
