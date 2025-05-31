@@ -1,4 +1,4 @@
-.location-permission-modal-overlay {
+.terms-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -12,13 +12,22 @@
   padding: 1rem;
 }
 
-.location-permission-modal {
+/* Classe para bloquear o scroll do body quando o modal estiver aberto */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+.terms-modal {
   background-color: white;
   border-radius: 1rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 500px;
-  overflow: hidden;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
   animation: modalFadeIn 0.3s ease-out;
 }
 
@@ -40,6 +49,9 @@
   padding: 1rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
   background-color: #f3f8ff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .header-content {
@@ -88,13 +100,13 @@
   padding: 1.5rem;
 }
 
-.location-icon-container {
+.terms-icon-container {
   display: flex;
   justify-content: center;
   margin-bottom: 1.5rem;
 }
 
-.location-icon {
+.terms-icon {
   color: #0052cc;
   background-color: #e0edff;
   padding: 1rem;
@@ -106,14 +118,73 @@
   font-weight: 600;
   color: #1e293b;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.modal-description {
-  color: #475569;
-  text-align: center;
+.terms-content {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
   margin-bottom: 1.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+}
+
+.terms-content h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.terms-content p {
+  color: #475569;
+  margin-bottom: 1rem;
   line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.checkbox-container {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+}
+
+.checkbox-container:hover {
+  background-color: #f1f5f9;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.terms-checkbox, .location-checkbox {
+  margin-right: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+.location-benefits {
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.location-benefits h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.75rem;
 }
 
 .benefits-list {
@@ -140,6 +211,7 @@
   border-radius: 0.5rem;
   padding: 1rem;
   margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
 }
 
 .info-icon {
@@ -156,29 +228,6 @@
   line-height: 1.5;
 }
 
-.permission-denied-warning {
-  display: flex;
-  align-items: flex-start;
-  background-color: #fff1f2;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-top: 1rem;
-}
-
-.warning-icon {
-  color: #e11d48;
-  margin-right: 0.75rem;
-  flex-shrink: 0;
-  margin-top: 0.125rem;
-}
-
-.permission-denied-warning p {
-  color: #881337;
-  font-size: 0.875rem;
-  margin: 0;
-  line-height: 1.5;
-}
-
 .modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -186,6 +235,9 @@
   border-top: 1px solid #e5e7eb;
   background-color: #f8fafc;
   gap: 1rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .decline-button {
@@ -202,6 +254,11 @@
 .decline-button:hover {
   background-color: #f1f5f9;
   border-color: #94a3b8;
+}
+
+.decline-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .accept-button {
@@ -244,9 +301,10 @@
 
 /* Responsividade */
 @media (max-width: 640px) {
-  .location-permission-modal {
+  .terms-modal {
     max-width: 100%;
     margin: 1rem;
+    max-height: 85vh;
   }
   
   .modal-footer {
@@ -255,5 +313,9 @@
   
   .accept-button, .decline-button {
     width: 100%;
+  }
+  
+  .terms-content {
+    max-height: 150px;
   }
 }

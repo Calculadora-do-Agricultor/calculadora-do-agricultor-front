@@ -15,7 +15,7 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import Alert from "../../components/Alert/Alert";
-import LocationPermissionModal from "../../components/LocationPermissionModal";
+import TermsOfUseModal from "../../components/TermsOfUseModal";
 import useLocationLogger from "../../hooks/useLocationLogger";
 
 const Register = () => {
@@ -31,7 +31,7 @@ const Register = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
   const [formTouched, setFormTouched] = useState({
     name: false,
@@ -205,24 +205,24 @@ const Register = () => {
     // Armazenar os dados de registro para uso após a permissão de localização
     setRegistrationData({ name, email, password });
 
-    // Mostrar o modal de permissão de localização
-    setShowLocationModal(true);
+    // Mostrar o modal de termos de uso
+    setShowTermsModal(true);
     setIsLoading(false);
   };
 
-  // Handlers para o modal de localização - Simplificado conforme solicitado
-  const handleAcceptLocation = async () => {
+  // Handlers para o modal de termos de uso
+  const handleAcceptTerms = async (acceptedLocationSharing) => {
     try {
       setIsProcessing(true);
-      console.log('Usuário aceitou compartilhar localização');
+      console.log('Usuário aceitou os termos. Compartilhar localização:', acceptedLocationSharing);
       
       // Fechando o modal antes de processar o registro
-      setShowLocationModal(false);
-      // Processa o registro com localização
-      await processRegistration(true);
+      setShowTermsModal(false);
+      // Processa o registro com a escolha de localização do usuário
+      await processRegistration(acceptedLocationSharing);
     } catch (error) {
-      console.error('Erro ao processar localização:', error);
-      setShowLocationModal(false);
+      console.error('Erro ao processar registro:', error);
+      setShowTermsModal(false);
       // Em caso de erro, continua sem localização
       await processRegistration(false);
     } finally {
@@ -230,16 +230,14 @@ const Register = () => {
     }
   };
 
-  const handleDeclineLocation = async () => {
-    setShowLocationModal(false);
-    if (registrationData) {
-      // Usuário recusou compartilhar localização
-      await processRegistration(false);
-    }
+  const handleDeclineTerms = async () => {
+    setShowTermsModal(false);
+    setIsLoading(false);
+    // Usuário recusou os termos, não prosseguimos com o registro
   };
 
-  const handleCloseLocationModal = () => {
-    setShowLocationModal(false);
+  const handleCloseTermsModal = () => {
+    setShowTermsModal(false);
     setIsLoading(false);
   };
 
@@ -256,13 +254,12 @@ const Register = () => {
 
   return (
     <div className="flex min-h-[calc(100vh-64px-40px)] items-center justify-center bg-white px-4 py-8">
-      {/* Modal de permissão de localização */}
-      <LocationPermissionModal
-        isOpen={showLocationModal}
-        onClose={handleCloseLocationModal}
-        onAccept={handleAcceptLocation}
-        onDecline={handleDeclineLocation}
-        permissionStatus={locationPermission}
+      {/* Modal de termos de uso */}
+      <TermsOfUseModal
+        isOpen={showTermsModal}
+        onClose={handleCloseTermsModal}
+        onAccept={handleAcceptTerms}
+        onDecline={handleDeclineTerms}
       />
       <div className="w-full max-w-md space-y-4 rounded-2xl border border-blue-200 bg-blue-100 p-8 shadow-xl md:p-12">
         <div className="space-y-2 text-center">
@@ -451,7 +448,7 @@ const Register = () => {
             <div className="pt-2">
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                 disabled={isLoading}
               >
                 {isLoading ? "Processando..." : "Cadastrar"}
