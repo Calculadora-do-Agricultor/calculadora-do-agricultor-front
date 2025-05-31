@@ -10,6 +10,7 @@ import PrivateRoute from './components/PrivateRoute/privateRouter'
 import ProtectedRoute from './components/ProtectedRoute'
 import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
+import LogsManagement from "./pages/LogsManagement";
 
 function App() {
   return (
@@ -40,6 +41,11 @@ function App() {
             <Route path="/edit-calculation/:id" element={
               <ProtectedRoute adminOnly={true} redirectTo="/calculator">
                 <EditCalculationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logs" element={
+              <ProtectedRoute adminOnly={true} redirectTo="/">
+                <LogsManagement />
               </ProtectedRoute>
             } />
           </Routes>

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { AuthContext } from '../../../context/AuthContext';
 
 const MobileMenu = ({ user, userName }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin } = useContext(AuthContext);
 
   const linkStyle = (path) => {
     const isActive = location.pathname === path;
@@ -83,6 +86,36 @@ const MobileMenu = ({ user, userName }) => {
                 <CalculatorIcon className="w-5 h-5 mr-2" />
                 Calculadora
               </Link>
+              
+              {isAdmin && (
+                <div className="border-b border-[#00418F]/80">
+                  <button
+                    onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                    className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname.startsWith('/admin') ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                  >
+                    <ShieldCheckIcon className="w-5 h-5 mr-2" />
+                    Administração
+                    <ChevronDownIcon className={`w-4 h-4 ml-1 transition-transform duration-200 ${adminMenuOpen ? 'transform rotate-180' : ''}`} />
+                  </button>
+                  
+                  {adminMenuOpen && (
+                    <div className="bg-[#00418F]/80 pl-6">
+                      <Link
+                        to="/admin/logs"
+                        className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/logs' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <ClipboardDocumentListIcon className="w-5 h-5 mr-2" />
+                        Gerenciar Logs
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <Link
                 to="/Settings"
                 className={`${linkStyle('/Settings')} border-b border-[#00418F]/80`}

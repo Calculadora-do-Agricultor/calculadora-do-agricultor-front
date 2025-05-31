@@ -1,0 +1,186 @@
+/* Estilos para a página de gerenciamento de logs */
+
+.logs-container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Animação de fade in */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos para o spinner de carregamento */
+.spinner {
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(0, 65, 143, 0.1);
+  border-top-color: #00418F;
+  animation: spin 1s cubic-bezier(0.76, 0.35, 0.2, 0.75) infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Efeito de destaque para itens ativos */
+.active-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.active-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #00418F, #FFEE00);
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.active-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .logs-container {
+    padding: 1rem;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 3px;
+  }
+}
+
+/* Efeitos de hover e transições */
+.hover-scale {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-scale:hover {
+  transform: scale(1.02);
+}
+
+/* Efeito de glassmorphism */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Animação de pulse para elementos de destaque */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse-animation {
+  animation: pulse 2s infinite;
+}
+
+/* Efeito de sombra suave */
+.soft-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 65, 143, 0.1),
+              0 2px 4px -1px rgba(0, 65, 143, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.soft-shadow:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 65, 143, 0.1),
+              0 4px 6px -2px rgba(0, 65, 143, 0.05);
+}
+
+.log-row {
+  transition: all 0.2s ease-in-out;
+}
+
+.log-row:hover {
+  background-color: rgba(255, 238, 0, 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 65, 143, 0.1);
+}
+
+.map-link {
+  transition: all 0.2s ease-in-out;
+}
+
+.map-link:hover {
+  color: #00418F;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 65, 143, 0.1);
+}
+
+/* Efeito de pulsação para botões */
+.pulse-effect:hover {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Efeito de destaque para itens ativos */
+.active-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.active-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #FFEE00;
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.active-item:hover::after {
+  transform: scaleX(1);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .logs-table {
+    font-size: 0.8rem;
+  }
+  
+  .logs-table th,
+  .logs-table td {
+    padding: 0.5rem;
+  }
+  
+  /* Melhorias para dispositivos móveis */
+  .logs-container {
+    padding: 0.5rem;
+  }
+  
+  .map-link {
+    padding: 0.25rem 0.5rem;
+  }
+}
