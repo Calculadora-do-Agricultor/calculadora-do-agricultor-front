@@ -156,19 +156,20 @@ const Footer = () => {
 
             {/* Newsletter */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Newsletter</h3>
-              <p className="text-gray-300">Receba nossas novidades e atualizações:</p>
+              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Sujestões de Melhorias</h3>
+              <p className="text-gray-300">Envie uma sugestão para melhorarmos 
+              sua experiência:</p>
               <form className="mt-2 space-y-2">
                 <input
                   type="email"
-                  placeholder="Seu e-mail"
+                  placeholder="Seu sugestão"
                   className="w-full px-4 py-2 rounded bg-[#00418F]/80 border border-[#00418F]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFEE00]"
                 />
                 <button
                   type="submit"
                   className="w-full bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Inscrever-se
+                  Enviar
                 </button>
               </form>
             </div>
