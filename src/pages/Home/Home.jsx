@@ -1,8 +1,11 @@
 import { CalculatorIcon, ChartBarIcon, ClockIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 import logoEscura from '../../assets/logoEscura.svg';
 import { Link } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../../services/firebaseConfig';
 
 const Home = () => {
+  const [user] = useAuthState(auth);
   return (
     <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-b from-[#00418F]/10 to-white">
       {/* Banner Principal */}
@@ -17,18 +20,30 @@ const Home = () => {
               maximize lucros e tome decisões mais assertivas no campo.
             </p>
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-              <Link
-                to="/Register"
-                className="bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105"
-              >
-                Começar Agora
-              </Link>
-              <Link
-                to="/Login"
-                className="bg-white hover:bg-gray-100 text-[#00418F] font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 border-2 border-[#00418F]"
-              >
-                Fazer Login
-              </Link>
+              {user ? (
+                <Link
+                  to="/calculator"
+                  className="bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 flex items-center gap-2"
+                >
+                  <CalculatorIcon className="w-5 h-5" />
+                  Acessar Calculadora
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to="/Register"
+                    className="bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105"
+                  >
+                    Cadastre-se Agora
+                  </Link>
+                  <Link
+                    to="/Login"
+                    className="bg-white hover:bg-gray-100 text-[#00418F] font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 border-2 border-[#00418F]"
+                  >
+                    Fazer Login
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           <div className="lg:w-1/2 flex justify-center items-center">
@@ -95,12 +110,22 @@ const Home = () => {
             de Software Multiplataforma. Este software foi desenvolvido pelos alunos
             da Fatec Matão "Luiz Marchesan", com base na planilha da empresa Marchesan.
           </p>
-          <Link
-            to="/Register"
-            className="inline-block mt-8 bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
-          >
-            Comece a Usar Gratuitamente
-          </Link>
+          {user ? (
+            <Link
+              to="/calculator"
+              className="inline-flex items-center gap-2 mt-8 bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
+            >
+              <CalculatorIcon className="w-5 h-5" />
+              Acessar Calculadora
+            </Link>
+          ) : (
+            <Link
+              to="/Register"
+              className="inline-block mt-8 bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
+            >
+              Comece a Usar
+            </Link>
+          )}
         </div>
       </section>
     </div>
