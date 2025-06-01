@@ -5,6 +5,8 @@ import { useNavigate, Link } from "react-router-dom"
 import { AuthContext } from "../../context/AuthContext"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "../../services/firebaseConfig"
+import { db } from "../../services/firebaseConfig"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
 import Alert from "../../components/Alert/Alert"
 
@@ -39,16 +41,35 @@ const Login = () => {
     e.preventDefault()
     setError("")
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return
 
     setIsLoading(true)
+
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      if (!user.emailVerified) {
+        setError("Verifique seu e-mail antes de continuar.")
+        setIsLoading(false)
+        return
+      }
+
+      // Proteção contra log duplicado por sessão
+      const sessionId = crypto.randomUUID()
+      localStorage.setItem("sessionId", sessionId)
+
+      await addDoc(collection(db, "Logs"), {
+        userId: user.uid,
+        email: user.email,
+        acao: "Login",
+        timestamp: serverTimestamp(),
+        userAgent: navigator.userAgent,
+        sessionId: sessionId
+      })
+
       localStorage.setItem("authToken", "logado")
 
-      // Save email if remember me is checked
       if (rememberMe) {
         localStorage.setItem("rememberedEmail", email)
       } else {
@@ -82,12 +103,10 @@ const Login = () => {
   }
 
   useEffect(() => {
-    // Redirect if already logged in
     if (!loading && user) {
       navigate("/Calculator", { replace: true })
     }
 
-    // Check for remembered email
     const rememberedEmail = localStorage.getItem("rememberedEmail")
     if (rememberedEmail) {
       setEmail(rememberedEmail)
@@ -108,9 +127,7 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="space-y-4 mt-6">
           <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-blue-800">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-sm font-medium text-blue-800">Email</label>
             <div className="relative">
               <input
                 id="email"
@@ -127,15 +144,8 @@ const Login = () => {
 
           <div className="space-y-1">
             <div className="flex justify-between items-center">
-              <label htmlFor="password" className="block text-sm font-medium text-blue-800">
-                Senha
-              </label>
-              <Link
-                to="/recuperar-senha"
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
-              >
-                Esqueceu a senha?
-              </Link>
+              <label htmlFor="password" className="block text-sm font-medium text-blue-800">Senha</label>
+              <Link to="/recuperar-senha" className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors">Esqueceu a senha?</Link>
             </div>
             <div className="relative">
               <input
@@ -169,9 +179,7 @@ const Login = () => {
               onChange={(e) => setRememberMe(e.target.checked)}
               className="h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-              Lembrar meu email
-            </label>
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Lembrar meu email</label>
           </div>
 
           {error && <Alert type="error" message={error} onClose={() => setError("")} />}
@@ -180,7 +188,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full ${isLoading ? "bg-blue-400" : "bg-blue-700 hover:bg-blue-800"} text-white py-3 rounded-lg font-semibold text-lg transition`}
+              className={`w-full ${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800"} text-white py-3 rounded-lg font-semibold text-lg transition`}
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </button>
@@ -199,3 +207,4 @@ const Login = () => {
 }
 
 export default Login
+

@@ -164,6 +164,10 @@ Desenvolvimento de uma calculadora agrícola baseada em fórmulas oferecidas pel
   
 
 - Registro de logs de localização (geolocalização anônima)
+  - Coleta de dados de localização durante o cadastro de usuários
+  - Armazenamento seguro em coleção dedicada no Firebase
+  - Solicitação de permissão via modal informativo
+  - Registro de logs mesmo quando a permissão é negada
 
   
 
