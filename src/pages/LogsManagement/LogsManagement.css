@@ -1,11 +1,33 @@
 /* Estilos para a página de gerenciamento de logs */
 
 .logs-container {
-  animation: fadeIn 0.5s ease-in-out;
+  animation: fadeIn 0.6s ease-out;
 }
 
-/* Animação de fade in */
+/* Animações principais */
 @keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes slideInUp {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -13,6 +35,18 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes iconBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-3px);
+  }
+  60% {
+    transform: translateY(-1px);
   }
 }
 
@@ -24,46 +58,71 @@
   border: 4px solid rgba(0, 65, 143, 0.1);
   border-top-color: #00418F;
   animation: spin 1s cubic-bezier(0.76, 0.35, 0.2, 0.75) infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Efeito de destaque para itens ativos */
-.active-item {
   position: relative;
-  overflow: hidden;
 }
 
-.active-item::after {
+.spinner::after {
   content: '';
   position: absolute;
-  bottom: 0;
-  left: 0;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: rgba(0, 65, 143, 0.3);
+  animation: spin 2s linear infinite reverse;
+}
+
+/* Cards de logs com animações melhoradas */
+.log-card {
+  animation: slideInUp 0.4s ease-out;
+  animation-fill-mode: both;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+.log-card:nth-child(1) { animation-delay: 0.1s; }
+.log-card:nth-child(2) { animation-delay: 0.15s; }
+.log-card:nth-child(3) { animation-delay: 0.2s; }
+.log-card:nth-child(4) { animation-delay: 0.25s; }
+.log-card:nth-child(5) { animation-delay: 0.3s; }
+
+.log-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 65, 143, 0.15);
+}
+
+/* Ícones com animações */
+.icon-animated {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.icon-animated:hover {
+  animation: iconBounce 0.6s ease-in-out;
+  color: #00418F;
+}
+
+/* Botão de mapa com efeito especial */
+.map-button {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
   width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, #00418F, #FFEE00);
-  transform: scaleX(0);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 65, 143, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
-.active-item:hover::after {
-  transform: scaleX(1);
-}
-
-/* Responsividade */
-@media (max-width: 768px) {
-  .logs-container {
-    padding: 1rem;
-  }
-
-  .spinner {
-    width: 36px;
-    height: 36px;
-    border-width: 3px;
-  }
+.map-button:hover::before {
+  left: 100%;
 }
 
 /* Efeitos de hover e transições */
@@ -77,18 +136,12 @@
 
 /* Efeito de glassmorphism */
 .glass-effect {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 /* Animação de pulse para elementos de destaque */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-}
-
 .pulse-animation {
   animation: pulse 2s infinite;
 }
@@ -105,82 +158,65 @@
               0 4px 6px -2px rgba(0, 65, 143, 0.05);
 }
 
-.log-row {
-  transition: all 0.2s ease-in-out;
-}
-
-.log-row:hover {
-  background-color: rgba(255, 238, 0, 0.1);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 65, 143, 0.1);
-}
-
-.map-link {
-  transition: all 0.2s ease-in-out;
-}
-
-.map-link:hover {
-  color: #00418F;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 65, 143, 0.1);
-}
-
-/* Efeito de pulsação para botões */
-.pulse-effect:hover {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Efeito de destaque para itens ativos */
-.active-item {
+/* Botões de paginação melhorados */
+.pagination-button {
   position: relative;
   overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.active-item::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background-color: #FFEE00;
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
+.pagination-button:not(:disabled):hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 65, 143, 0.2);
 }
 
-.active-item:hover::after {
-  transform: scaleX(1);
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estados de loading melhorados */
+.loading-state {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.error-state {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.empty-state {
+  animation: fadeIn 0.6s ease-out;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-  .logs-table {
-    font-size: 0.8rem;
+  .logs-container {
+    padding: 1rem;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border-width: 3px;
   }
   
-  .logs-table th,
-  .logs-table td {
-    padding: 0.5rem;
+  .log-card {
+    animation-delay: 0s !important;
   }
   
-  /* Melhorias para dispositivos móveis */
+  .log-card:hover {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+@media (max-width: 480px) {
   .logs-container {
     padding: 0.5rem;
   }
   
-  .map-link {
-    padding: 0.25rem 0.5rem;
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border-width: 2px;
   }
 }

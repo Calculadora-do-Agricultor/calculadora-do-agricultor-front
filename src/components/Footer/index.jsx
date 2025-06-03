@@ -156,9 +156,8 @@ const Footer = () => {
 
             {/* Newsletter */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Sujestões de Melhorias</h3>
-              <p className="text-gray-300">Envie uma sugestão para melhorarmos 
-              sua experiência:</p>
+              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Sugestões de Melhorias</h3>
+              <p className="text-gray-300">Envie sugestões para tornarmos sua experiência ainda melhor:</p>
               <form className="mt-2 space-y-2">
                 <input
                   type="email"

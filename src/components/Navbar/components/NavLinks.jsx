@@ -53,13 +53,13 @@ const NavLinks = ({ user }) => {
             <div className="relative" ref={adminMenuRef}>
               <button
                 onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                className={`flex items-center px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${location.pathname.startsWith('/admin') ? 'bg-[#FFEE00] text-[#00418F]' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${location.pathname.startsWith('/admin') ? 'bg-[#FFEE00] text-[#00418F]' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F] focus:ring focus:ring-[#FFEE00]'}`}
                 aria-haspopup="true"
                 aria-expanded={adminMenuOpen}
               >
-                <ShieldCheckIcon className="w-5 h-5 mr-2" />
-                Administração
-                <ChevronDownIcon className={`w-4 h-4 ml-1 transition-transform duration-200 ${adminMenuOpen ? 'transform rotate-180' : ''}`} />
+                <ShieldCheckIcon className="w-5 h-5" />
+                <span className="font-medium">Administração</span>
+                <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${adminMenuOpen ? 'transform rotate-180' : ''}`} />
               </button>
 
               {adminMenuOpen && (
@@ -69,12 +69,14 @@ const NavLinks = ({ user }) => {
                 >
                   <Link
                     to="/admin/logs"
-                    className={`block px-4 py-2 ${location.pathname === '/admin/logs' ? 'bg-[#FFEE00] text-[#00418F]' : 'text-gray-800 hover:bg-[#FFEE00] hover:text-[#00418F]'} transition-all duration-300 transform hover:scale-105 rounded-lg flex items-center mx-2 my-1`}
+                    className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
                     role="menuitem"
                     onClick={() => setAdminMenuOpen(false)}
                   >
-                    <ClipboardDocumentListIcon className="w-5 h-5 mr-2" />
-                    Gerenciar Logs
+                    <div className="flex items-center gap-2">
+                      <ClipboardDocumentListIcon className="w-5 h-5" />
+                      <span>Gerenciar Logs</span>
+                    </div>
                   </Link>
                 </div>
               )}

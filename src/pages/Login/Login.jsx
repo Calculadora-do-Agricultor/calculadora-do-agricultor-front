@@ -133,6 +133,7 @@ const Login = () => {
                 id="email"
                 type="email"
                 value={email}
+                tabIndex="1"
                 placeholder="seu@email.com"
                 className="w-full p-3 pl-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
                 onChange={(e) => setEmail(e.target.value)}
@@ -152,6 +153,7 @@ const Login = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
+                tabIndex="2"
                 placeholder="Sua senha"
                 className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 hover:border-blue-500"
                 onChange={(e) => setPassword(e.target.value)}
@@ -162,7 +164,6 @@ const Login = () => {
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
-                tabIndex="-1"
                 aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
               >
                 {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -186,6 +187,7 @@ const Login = () => {
 
           <div className="flex flex-col items-center pt-2">
             <button
+              tabIndex="3"
               type="submit"
               disabled={isLoading}
               className={`w-full ${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800"} text-white py-3 rounded-lg font-semibold text-lg transition`}
