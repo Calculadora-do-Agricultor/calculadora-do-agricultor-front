@@ -11,7 +11,7 @@ import "./styles.css"
  * @param {boolean} props.isOpen - Estado que controla se o modal está aberto
  * @param {Function} props.onClose - Função para fechar o modal
  */
-export function CalculationModal({ calculation, isOpen, onClose }) {
+const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const [paramValues, setParamValues] = useState({})
   const [results, setResults] = useState({})
   const [copied, setCopied] = useState({})
@@ -351,3 +351,5 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     </div>
   )
 }
+
+export default CalculationModal;

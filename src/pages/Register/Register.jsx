@@ -14,7 +14,7 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import Alert from "../../components/Alert/Alert";
+import Alert from "../../components/Alert";
 import TermsOfUseModal from "../../components/TermsOfUseModal";
 import useLocationLogger from "../../hooks/useLocationLogger";
 

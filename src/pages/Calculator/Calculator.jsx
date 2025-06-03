@@ -27,8 +27,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { auth, db } from "../../services/firebaseConfig"
-import { Categories } from "../../components/Categories"
-import { CalculationList } from "../../components/CalculationList"
+import { CalculationList, Categories } from "../../components"
 import CreateCategory from "../../components/CreateCategory"
 import EditCalculation from "../../components/EditCalculation"
 import logoClara from '../../assets/logoClara.svg';

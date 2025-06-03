@@ -8,7 +8,7 @@ import { auth } from "../../services/firebaseConfig"
 import { db } from "../../services/firebaseConfig"
 import { collection, addDoc, serverTimestamp } from "firebase/firestore"
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
-import Alert from "../../components/Alert/Alert"
+import Alert from "../../components/Alert"
 
 const Login = () => {
   const navigate = useNavigate()

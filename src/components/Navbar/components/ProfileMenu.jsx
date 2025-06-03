@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { BrazilFlag } from '../../../components/BrazilFlag';
+import BrazilFlag from "../../BrazilFlag";
 
 const ProfileMenu = ({ userName }) => {
   const [isOpen, setIsOpen] = useState(false);

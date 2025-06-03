@@ -5,9 +5,7 @@ import { auth, db } from '../../services/firebaseConfig.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-import NavLinks from './components/NavLinks';
-import ProfileMenu from './components/ProfileMenu';
-import MobileMenu from './components/MobileMenu';
+import { NavLinks, ProfileMenu, MobileMenu } from './components';
 
 const Navbar = () => {
   const [user] = useAuthState(auth);
