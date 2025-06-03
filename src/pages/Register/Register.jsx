@@ -1,9 +1,9 @@
 import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 import { doc, setDoc } from "firebase/firestore";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { auth, db } from "../../services/firebaseConfig";
+import { auth, db } from "@/services/firebaseConfig";
 import {
   EnvelopeIcon,
   LockClosedIcon,
@@ -13,8 +13,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Alert, TermsOfUseModal } from "../../components";
-import useLocationLogger from "../../hooks/useLocationLogger";
+import { Alert, TermsOfUseModal } from "@/components";
+import useLocationLogger from "@/hooks/useLocationLogger";
 
 const Register = () => {
   const navigate = useNavigate();

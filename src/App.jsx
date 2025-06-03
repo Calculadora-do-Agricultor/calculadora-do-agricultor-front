@@ -1,12 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Navbar, Footer } from "./components";
+import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Settings from "./pages/Settings/Settings";
 import Calculator from "./pages/Calculator/Calculator.jsx";
 import React from "react";
-import { PrivateRoute, ProtectedRoute } from "./components";
 import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
 import LogsManagement from "./pages/LogsManagement";

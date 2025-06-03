@@ -15,7 +15,7 @@ Este componente implementa um modal genérico para exibir e interagir com cálcu
 
 ```jsx
 import { useState } from "react";
-import { CalculationModal } from "../components/CalculationModal";
+import { CalculationModal } from "@/components/CalculationModal";
 
 function SeuComponente() {
   const [isModalOpen, setIsModalOpen] = useState(false);

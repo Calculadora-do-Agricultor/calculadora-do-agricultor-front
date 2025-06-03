@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import CreateCalculation from "../../components/CreateCalculation";
+import CreateCalculation from "@/components/CreateCalculation";
 
 const CreateCalculationPage = () => {
   const navigate = useNavigate();

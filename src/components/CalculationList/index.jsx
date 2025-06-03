@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, useContext } from "react"
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"

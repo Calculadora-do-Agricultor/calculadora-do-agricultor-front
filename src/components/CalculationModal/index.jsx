@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState, useEffect, useRef } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"

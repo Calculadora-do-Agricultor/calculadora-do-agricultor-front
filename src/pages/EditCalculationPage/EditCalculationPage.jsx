@@ -1,10 +1,8 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
-import { EditCalculation } from "../../components";
+import { EditCalculation } from "@/components";
 import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
 
 const EditCalculationPage = () => {

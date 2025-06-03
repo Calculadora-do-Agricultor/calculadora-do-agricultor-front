@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -12,7 +12,7 @@ import {
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
-import { Alert } from "../../components";
+import { Alert } from "@/components";
 
 const Login = () => {
   const navigate = useNavigate();
