@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, useContext } from "react"
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
@@ -20,19 +18,19 @@ import {
   AlertCircle,
   Eye,
 } from "lucide-react"
-import { CalculationModal } from "../CalculationModal"
+import CalculationModal  from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
 import "./styles.css"
 import CalculationActions from "../CalculationActions"
 
-export function CalculationList({
+const CalculationList = ({
   category,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
   complexityFilters = [],
   onEditCalculation,
-}) {
+}) =>{
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
 
@@ -461,3 +459,4 @@ export function CalculationList({
     </div>
   )
 }
+export default CalculationList;

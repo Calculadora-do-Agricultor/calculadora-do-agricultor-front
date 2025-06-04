@@ -1,10 +1,9 @@
 import { useState, useContext, useEffect } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
-import { AuthContext } from "../../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 import { doc, setDoc } from "firebase/firestore";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { auth, db } from "../../services/firebaseConfig";
+import { auth, db } from "@/services/firebaseConfig";
 import {
   EnvelopeIcon,
   LockClosedIcon,
@@ -14,9 +13,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import Alert from "../../components/Alert/Alert";
-import TermsOfUseModal from "../../components/TermsOfUseModal";
-import useLocationLogger from "../../hooks/useLocationLogger";
+import { Alert, TermsOfUseModal } from "@/components";
+import useLocationLogger from "@/hooks/useLocationLogger";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -117,13 +115,16 @@ const Register = () => {
   const processRegistration = async (shouldRequestLocation) => {
     try {
       setIsLoading(true);
-      console.log('Iniciando processRegistration, shouldRequestLocation:', shouldRequestLocation);
-      
+      console.log(
+        "Iniciando processRegistration, shouldRequestLocation:",
+        shouldRequestLocation,
+      );
+
       // Verificar se temos os dados de registro
       if (!registrationData) {
         throw new Error("Dados de registro não encontrados");
       }
-      
+
       // Primeiro, criar o usuário no Firebase Authentication
       const result = await createUserWithEmailAndPassword(
         registrationData.email,
@@ -148,10 +149,15 @@ const Register = () => {
 
       // Registrar o log de usuário com ou sem localização
       try {
-        console.log('Registrando log de usuário com ID:', uid, 'Aceitou localização:', shouldRequestLocation);
+        console.log(
+          "Registrando log de usuário com ID:",
+          uid,
+          "Aceitou localização:",
+          shouldRequestLocation,
+        );
         await logUserRegistration(uid, shouldRequestLocation);
       } catch (logError) {
-        console.error('Erro ao registrar log:', logError);
+        console.error("Erro ao registrar log:", logError);
         // Mesmo com erro no log, continuamos o fluxo de registro
       }
 
@@ -181,8 +187,7 @@ const Register = () => {
           errorMsg = "Muitas tentativas. Aguarde alguns minutos.";
           break;
         default:
-          errorMsg =
-            "Erro no cadastro. Tente novamente ou contate o suporte.";
+          errorMsg = "Erro no cadastro. Tente novamente ou contate o suporte.";
       }
       setErrorMessage(errorMsg);
       console.error("Erro ao processar registro:", err);
@@ -214,14 +219,17 @@ const Register = () => {
   const handleAcceptTerms = async (acceptedLocationSharing) => {
     try {
       setIsProcessing(true);
-      console.log('Usuário aceitou os termos. Compartilhar localização:', acceptedLocationSharing);
-      
+      console.log(
+        "Usuário aceitou os termos. Compartilhar localização:",
+        acceptedLocationSharing,
+      );
+
       // Fechando o modal antes de processar o registro
       setShowTermsModal(false);
       // Processa o registro com a escolha de localização do usuário
       await processRegistration(acceptedLocationSharing);
     } catch (error) {
-      console.error('Erro ao processar registro:', error);
+      console.error("Erro ao processar registro:", error);
       setShowTermsModal(false);
       // Em caso de erro, continua sem localização
       await processRegistration(false);
@@ -274,197 +282,199 @@ const Register = () => {
           </div>
         </div>
 
-          <form onSubmit={handleRegister} className="mt-6 space-y-4">
-            <div className="space-y-1">
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-blue-800"
-              >
-                Nome
-              </label>
-              <div className="relative">
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  placeholder="Seu nome completo"
-                  className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                  onChange={(e) => setName(e.target.value)}
-                  onFocus={() => handleInputFocus("name")}
-                  required
-                />
-                <UserIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-              </div>
+        <form onSubmit={handleRegister} className="mt-6 space-y-4">
+          <div className="space-y-1">
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-blue-800"
+            >
+              Nome
+            </label>
+            <div className="relative">
+              <input
+                id="name"
+                type="text"
+                value={name}
+                placeholder="Seu nome completo"
+                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                onChange={(e) => setName(e.target.value)}
+                onFocus={() => handleInputFocus("name")}
+                required
+              />
+              <UserIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-blue-800"
-              >
-                Email
-              </label>
-              <div className="relative">
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  placeholder="seu@email.com"
-                  className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                  onChange={(e) => setEmail(e.target.value)}
-                  onFocus={() => handleInputFocus("email")}
-                  required
-                />
-                <EnvelopeIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-              </div>
+          <div className="space-y-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-blue-800"
+            >
+              Email
+            </label>
+            <div className="relative">
+              <input
+                id="email"
+                type="email"
+                value={email}
+                placeholder="seu@email.com"
+                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => handleInputFocus("email")}
+                required
+              />
+              <EnvelopeIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-blue-800"
-              >
-                Senha
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  placeholder="Sua senha"
-                  className="w-full rounded-lg border border-gray-400 p-3 pl-10 pr-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => handleInputFocus("password")}
-                  required
-                />
-                <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-                <button
-                  type="button"
-                  className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {showPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-
-              {formTouched.password && (
-                <div className="mt-2 space-y-1 text-xs">
-                  <div className="flex items-center">
-                    {hasMinLength ? (
-                      <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                    )}
-                    <span
-                      className={`${hasMinLength ? "text-green-600" : "text-red-600"}`}
-                    >
-                      Mínimo de 6 caracteres
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    {hasUpperCase ? (
-                      <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                    )}
-                    <span
-                      className={`${hasUpperCase ? "text-green-600" : "text-red-600"}`}
-                    >
-                      Pelo menos uma letra maiúscula
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    {hasNumber ? (
-                      <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                    )}
-                    <span
-                      className={`${hasNumber ? "text-green-600" : "text-red-600"}`}
-                    >
-                      Pelo menos um número
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-blue-800"
-              >
-                Confirmar Senha
-              </label>
-              <div className="relative">
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  placeholder="Confirme sua senha"
-                  className="w-full rounded-lg border border-gray-400 p-3 pl-10 pr-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onFocus={() => handleInputFocus("confirmPassword")}
-                  required
-                />
-                <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-                <button
-                  type="button"
-                  className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
-                >
-                  {showConfirmPassword ? (
-                    <EyeSlashIcon className="h-5 w-5" />
-                  ) : (
-                    <EyeIcon className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-              {formTouched.confirmPassword && (
-                <div className="mt-2 flex items-center text-xs">
-                  {passwordsMatch ? (
-                    <>
-                      <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                      <span className="text-green-600">Senhas coincidem</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                      <span className="text-red-600">Senhas não coincidem</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {errorMessage && <Alert message={errorMessage} type="error" />}
-
-            <div className="pt-2">
+          <div className="space-y-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-blue-800"
+            >
+              Senha
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                placeholder="Sua senha"
+                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => handleInputFocus("password")}
+                required
+              />
+              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
               <button
-                type="submit"
-                className="w-full rounded-lg bg-blue-700 px-4 py-3 text-center font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-                disabled={isLoading}
+                type="button"
+                className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               >
-                {isLoading ? "Processando..." : "Cadastrar"}
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
               </button>
             </div>
 
-            <div className="mt-4 text-center text-sm">
-              <span className="text-gray-600">Já tem uma conta?</span>{" "}
-              <Link
-                to="/login"
-                className="font-medium text-blue-700 hover:text-blue-800"
+            {formTouched.password && (
+              <div className="mt-2 space-y-1 text-xs">
+                <div className="flex items-center">
+                  {hasMinLength ? (
+                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                  )}
+                  <span
+                    className={`${hasMinLength ? "text-green-600" : "text-red-600"}`}
+                  >
+                    Mínimo de 6 caracteres
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  {hasUpperCase ? (
+                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                  )}
+                  <span
+                    className={`${hasUpperCase ? "text-green-600" : "text-red-600"}`}
+                  >
+                    Pelo menos uma letra maiúscula
+                  </span>
+                </div>
+                <div className="flex items-center">
+                  {hasNumber ? (
+                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                  ) : (
+                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                  )}
+                  <span
+                    className={`${hasNumber ? "text-green-600" : "text-red-600"}`}
+                  >
+                    Pelo menos um número
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-blue-800"
+            >
+              Confirmar Senha
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                placeholder="Confirme sua senha"
+                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onFocus={() => handleInputFocus("confirmPassword")}
+                required
+              />
+              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
+              <button
+                type="button"
+                className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={
+                  showConfirmPassword ? "Ocultar senha" : "Mostrar senha"
+                }
               >
-                Faça login
-              </Link>
+                {showConfirmPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
             </div>
-          </form>
+            {formTouched.confirmPassword && (
+              <div className="mt-2 flex items-center text-xs">
+                {passwordsMatch ? (
+                  <>
+                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                    <span className="text-green-600">Senhas coincidem</span>
+                  </>
+                ) : (
+                  <>
+                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                    <span className="text-red-600">Senhas não coincidem</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {errorMessage && <Alert message={errorMessage} type="error" />}
+
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full cursor-pointer rounded-lg bg-blue-700 px-4 py-3 text-center font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Processando..." : "Cadastrar"}
+            </button>
+          </div>
+
+          <div className="mt-4 text-center text-sm">
+            <span className="text-gray-600">Já tem uma conta?</span>{" "}
+            <Link
+              to="/login"
+              className="font-medium text-blue-700 hover:text-blue-800"
+            >
+              Faça login
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -472,41 +482,45 @@ const Register = () => {
 
 export default Register;
 
+// Função para processar o registro
+const processRegistration = async (data, acceptedLocationSharing = false) => {
+  try {
+    setIsLoading(true);
+    setErrorMessage("");
 
-  // Função para processar o registro
-  const processRegistration = async (data, acceptedLocationSharing = false) => {
+    // Criar usuário no Firebase Authentication
+    const res = await createUser(data.email, data.password);
+    const { uid } = res.user;
+
+    // Criar documento do usuário no Firestore
+    await insertDocument({
+      name: data.name,
+      email: data.email,
+      uid,
+      createdAt: new Date(),
+    });
+
+    // Registrar log de registro com localização se aceito
     try {
-      setIsLoading(true);
-      setErrorMessage('');
-
-      // Criar usuário no Firebase Authentication
-      const res = await createUser(data.email, data.password);
-      const { uid } = res.user;
-
-      // Criar documento do usuário no Firestore
-      await insertDocument({
-        name: data.name,
-        email: data.email,
+      console.log(
+        "Registrando log de usuário com ID:",
         uid,
-        createdAt: new Date(),
-      });
-
-      // Registrar log de registro com localização se aceito
-      try {
-        console.log('Registrando log de usuário com ID:', uid, 'Aceitou localização:', acceptedLocationSharing);
-        await logUserRegistration(uid, acceptedLocationSharing);
-      } catch (logError) {
-        console.error('Erro ao registrar log:', logError);
-        // Continuar com o registro mesmo se houver erro no log
-      }
-
-      // Limpar formulário e redirecionar
-      reset();
-      setIsLoading(false);
-      navigate('/login');
-    } catch (error) {
-      console.error('Erro durante o registro:', error);
-      setErrorMessage(getErrorMessage(error.message));
-      setIsLoading(false);
+        "Aceitou localização:",
+        acceptedLocationSharing,
+      );
+      await logUserRegistration(uid, acceptedLocationSharing);
+    } catch (logError) {
+      console.error("Erro ao registrar log:", logError);
+      // Continuar com o registro mesmo se houver erro no log
     }
-  };
+
+    // Limpar formulário e redirecionar
+    reset();
+    setIsLoading(false);
+    navigate("/login");
+  } catch (error) {
+    console.error("Erro durante o registro:", error);
+    setErrorMessage(getErrorMessage(error.message));
+    setIsLoading(false);
+  }
+};

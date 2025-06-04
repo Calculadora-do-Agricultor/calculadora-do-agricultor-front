@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Search, Filter, Loader2 } from "lucide-react"
 import "./styles.css"
 
-export function Categories({ categories, onSelect, selectedCategory }) {
+const Categories = ({ categories, onSelect, selectedCategory }) => {
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
   const [filterOption, setFilterOption] = useState("all")
@@ -109,3 +109,5 @@ export function Categories({ categories, onSelect, selectedCategory }) {
     </div>
   )
 }
+
+export default Categories

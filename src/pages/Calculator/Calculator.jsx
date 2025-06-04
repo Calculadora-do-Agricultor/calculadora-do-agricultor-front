@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useState, useEffect, useRef, useContext } from "react"
 import { useNavigate } from "react-router-dom"
@@ -27,11 +27,8 @@ import {
   Loader2,
 } from "lucide-react"
 import { auth, db } from "../../services/firebaseConfig"
-import { Categories } from "../../components/Categories"
-import { CalculationList } from "../../components/CalculationList"
-import CreateCategory from "../../components/CreateCategory"
-import EditCalculation from "../../components/EditCalculation"
-import logoClara from '../../assets/logoClara.svg';
+import { CalculationList, Categories, CreateCategory, EditCalculation } from "@/components"
+import logoClara from '@/assets/logoClara.svg';
 import "./Calculator.css"
 
 export default function Calculator() {
