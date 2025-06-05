@@ -8,11 +8,10 @@ import {
   Search,
   Calendar,
   Clock,
-  Star,
   LayoutGrid,
   ListIcon,
   SlidersHorizontal,
-  BookmarkPlus,
+
   Share2,
   ChevronDown,
   AlertCircle,
@@ -48,7 +47,7 @@ const CalculationList = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sortOption, setSortOption] = useState(initialSortOption)
   const [showSortOptions, setShowSortOptions] = useState(false)
-  const [favorites, setFavorites] = useState([])
+
 
   useEffect(() => {
     const fetchCalculations = async () => {
@@ -83,13 +82,7 @@ const CalculationList = ({
     }
   }, [category])
 
-  // Load favorites from localStorage
-  useEffect(() => {
-    const storedFavorites = localStorage.getItem("calculationFavorites")
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites))
-    }
-  }, [])
+
 
   // Filter calculations based on search term
   useEffect(() => {
@@ -139,16 +132,7 @@ const CalculationList = ({
     }
   }
 
-  const toggleFavorite = (id) => {
-    let newFavorites
-    if (favorites.includes(id)) {
-      newFavorites = favorites.filter((favId) => favId !== id)
-    } else {
-      newFavorites = [...favorites, id]
-    }
-    setFavorites(newFavorites)
-    localStorage.setItem("calculationFavorites", JSON.stringify(newFavorites))
-  }
+
 
   const getTimeAgo = (date) => {
     const now = new Date()
@@ -346,12 +330,7 @@ const CalculationList = ({
                 />
               </div>
             )}
-            {favorites.includes(calculation.id) && (
-              <div className="favorite-badge">
-                <Star size={12} />
-                <span>Favorito</span>
-              </div>
-            )}
+
 
             <div className="calculation-content">
               <div className="calculation-header">
@@ -393,22 +372,7 @@ const CalculationList = ({
 
             <div className="calculation-footer">
               <div className="calculation-actions">
-                <Tooltip
-                  content={favorites.includes(calculation.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                >
-                  <button
-                    className={`action-button favorite-button ${favorites.includes(calculation.id) ? "is-favorite" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleFavorite(calculation.id)
-                    }}
-                    aria-label={
-                      favorites.includes(calculation.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"
-                    }
-                  >
-                    <BookmarkPlus size={16} />
-                  </button>
-                </Tooltip>
+
                 <Tooltip content="Compartilhar">
                   <button
                     className="action-button share-button"

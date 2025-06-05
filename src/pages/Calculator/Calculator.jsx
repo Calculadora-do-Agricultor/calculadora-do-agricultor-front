@@ -15,15 +15,8 @@ import {
   Info,
   CalculatorIcon,
   BookOpen,
-  TrendingUp,
-  Star,
-  Clock,
-  Calendar,
   Users,
   ChevronDown,
-  Bookmark,
-  History,
-  Award,
   Loader2,
 } from "lucide-react"
 import { auth, db } from "../../services/firebaseConfig"
@@ -43,9 +36,7 @@ export default function Calculator() {
   const [viewMode, setViewMode] = useState("grid") // grid ou list
   const [showFilters, setShowFilters] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showFeaturedCalculations, setShowFeaturedCalculations] = useState(true)
-  const [recentCalculations, setRecentCalculations] = useState([])
-  const [popularCalculations, setPopularCalculations] = useState([])
+
   const [userCount, setUserCount] = useState(0)
   const [showUserCount, setShowUserCount] = useState(false)
   const searchInputRef = useRef(null)
@@ -87,8 +78,7 @@ export default function Calculator() {
         setCategoriaSelecionada(categoriasComCalculos[0].name)
       }
 
-      // Buscar cálculos recentes e populares
-      fetchFeaturedCalculations()
+
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error)
     } finally {
@@ -96,37 +86,7 @@ export default function Calculator() {
     }
   }
 
-  const fetchFeaturedCalculations = async () => {
-    try {
-      // Buscar cálculos recentes
-      const recentQuery = query(collection(db, "calculations"), where("createdAt", "!=", null))
-      const recentSnapshot = await getDocs(recentQuery)
-      const recentCalcs = recentSnapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        .sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
-        .slice(0, 4)
 
-      setRecentCalculations(recentCalcs)
-
-      // Buscar cálculos populares (baseado em visualizações)
-      const popularQuery = query(collection(db, "calculations"))
-      const popularSnapshot = await getDocs(popularQuery)
-      const popularCalcs = popularSnapshot.docs
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        .sort((a, b) => (b.views || 0) - (a.views || 0))
-        .slice(0, 4)
-
-      setPopularCalculations(popularCalcs)
-    } catch (error) {
-      console.error("Erro ao buscar cálculos em destaque:", error)
-    }
-  }
 
   // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
@@ -177,15 +137,7 @@ export default function Calculator() {
   // Encontrar a categoria selecionada
   const categoriaAtual = categorias.find((cat) => cat.name === categoriaSelecionada)
 
-  // Função para formatar data
-  const formatDate = (date) => {
-    if (!date) return ""
-    return new Date(date).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  }
+
 
 
 
@@ -280,154 +232,7 @@ export default function Calculator() {
           </div>
         </div>
 
-        {/* Cálculos em destaque (visível apenas na página inicial) */}
-        {showFeaturedCalculations && !categoriaSelecionada && (
-          <div className="featured-calculations">
-            <div className="featured-section">
-              <div className="section-header">
-                <h2>
-                  <Clock size={20} /> Cálculos Recentes
-                </h2>
-                <button className="view-all-button">
-                  Ver todos <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="featured-grid">
-                {recentCalculations.length > 0 ? (
-                  recentCalculations.map((calc) => (
-                    <div key={calc.id} className="featured-card">
-                      <div className="featured-card-content">
-                        <h3>{calc.name}</h3>
-                        <p>{calc.description}</p>
-                        <div className="featured-card-meta">
-                          <span>
-                            <Calendar size={14} /> {formatDate(calc.createdAt?.toDate())}
-                          </span>
-                          <span>
-                            <BookOpen size={14} /> {calc.category}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="featured-card-actions">
-                        <button
-                          className="featured-card-button"
-                          onClick={() => {
-                            setCategoriaSelecionada(calc.category)
-                            setShowFeaturedCalculations(false)
-                            // Scroll para a lista de cálculos
-                            document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
-                          }}
-                        >
-                          Acessar <ArrowUpRight size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="featured-loading">
-                    <Loader2 size={24} className="animate-spin" />
-                    <p>Carregando cálculos recentes...</p>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            <div className="featured-section">
-              <div className="section-header">
-                <h2>
-                  <Star size={20} /> Cálculos Populares
-                </h2>
-                <button className="view-all-button">
-                  Ver todos <ChevronRight size={16} />
-                </button>
-              </div>
-              <div className="featured-grid">
-                {popularCalculations.length > 0 ? (
-                  popularCalculations.map((calc) => (
-                    <div key={calc.id} className="featured-card">
-                      <div className="featured-card-content">
-                        <h3>{calc.name}</h3>
-                        <p>{calc.description}</p>
-                        <div className="featured-card-meta">
-                          <span>
-                            <TrendingUp size={14} /> {calc.views || 0} visualizações
-                          </span>
-                          <span>
-                            <BookOpen size={14} /> {calc.category}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="featured-card-actions">
-                        <button
-                          className="featured-card-button"
-                          onClick={() => {
-                            setCategoriaSelecionada(calc.category)
-                            setShowFeaturedCalculations(false)
-                            // Scroll para a lista de cálculos
-                            document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
-                          }}
-                        >
-                          Acessar <ArrowUpRight size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="featured-loading">
-                    <Loader2 size={24} className="animate-spin" />
-                    <p>Carregando cálculos populares...</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Seção de categorias em destaque */}
-            <div className="categories-highlight">
-              <h2>Categorias de Cálculos</h2>
-              <p>Explore nossa coleção de cálculos organizados por categorias especializadas</p>
-
-              <div className="categories-grid">
-                {categorias.slice(0, 6).map((categoria) => (
-                  <button
-                    key={categoria.id}
-                    className="category-card"
-                    onClick={() => {
-                      setCategoriaSelecionada(categoria.name)
-                      setShowFeaturedCalculations(false)
-                      // Scroll para a lista de cálculos
-                      document.getElementById("calculations-list")?.scrollIntoView({ behavior: "smooth" })
-                    }}
-                  >
-                    <div className="category-icon">{categoria.icon || <CalculatorIcon size={24} />}</div>
-                    <div className="category-info">
-                      <h3>{categoria.name}</h3>
-                      <span className="category-count">
-                        {categoria.calculos?.length || 0} cálculo{categoria.calculos?.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <ChevronRight size={20} className="category-arrow" />
-                  </button>
-                ))}
-              </div>
-
-              {categorias.length > 6 && (
-                <div className="categories-more">
-                  <button
-                    className="view-all-categories"
-                    onClick={() => {
-                      const sidebar = document.querySelector(".sidebar")
-                      if (sidebar) {
-                        sidebar.scrollIntoView({ behavior: "smooth" })
-                      }
-                    }}
-                  >
-                    Ver todas as categorias ({categorias.length})
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* Conteúdo principal com sidebar e lista de cálculos */}
         <div className="content-container" id="calculations-list">
@@ -450,28 +255,9 @@ export default function Calculator() {
                     categories={categorias}
                     onSelect={(category) => {
                       setCategoriaSelecionada(category)
-                      setShowFeaturedCalculations(false)
                     }}
                     selectedCategory={categoriaSelecionada}
                   />
-                </div>
-                {/* Links rápidos */}
-                <div className="quick-links">
-                  <h3 className="quick-links-header">Links Rápidos</h3>
-                  <div className="quick-links-content">
-                    <a href="#" className="quick-link">
-                      <Bookmark size={16} />
-                      <span>Favoritos</span>
-                    </a>
-                    <a href="#" className="quick-link">
-                      <History size={16} />
-                      <span>Histórico</span>
-                    </a>
-                    <a href="#" className="quick-link">
-                      <Award size={16} />
-                      <span>Mais Usados</span>
-                    </a>
-                  </div>
                 </div>
               </>
             )}

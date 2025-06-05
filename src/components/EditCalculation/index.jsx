@@ -21,7 +21,7 @@ import {
   Sliders,
   FileText,
   Edit,
-  History,
+
 } from "lucide-react"
 import "./styles.css"
 
@@ -72,9 +72,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     results: {},
   })
 
-  // Histórico de alterações
-  const [changeHistory, setChangeHistory] = useState([])
-  const [showHistory, setShowHistory] = useState(false)
+
 
   // Carregar categorias para o dropdown
   const [categories, setCategories] = useState([])
@@ -123,8 +121,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             setResults(calculationData.results)
           }
 
-          // Adicionar entrada no histórico de alterações
-          addToChangeHistory("Carregamento inicial do cálculo")
+
+      
         } else {
           setError("Cálculo não encontrado.")
         }
@@ -157,26 +155,19 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     fetchCategories()
   }, [calculationId])
 
-  // Adicionar entrada ao histórico de alterações
-  const addToChangeHistory = (description) => {
-    const newEntry = {
-      timestamp: new Date(),
-      description,
-    }
-    setChangeHistory((prev) => [newEntry, ...prev])
-  }
+
 
   // Funções para manipular parâmetros
   const addParameter = () => {
     setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
-    addToChangeHistory("Adicionado novo parâmetro")
+
   }
 
   const removeParameter = (index) => {
     const paramName = parameters[index].name
     const updatedParameters = parameters.filter((_, i) => i !== index)
     setParameters(updatedParameters)
-    addToChangeHistory(`Removido parâmetro: ${paramName || `Parâmetro ${index + 1}`}`)
+
 
     // Atualizar expressões de resultados que usam este parâmetro
     const paramRegex = new RegExp(paramName, "g")
@@ -212,7 +203,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         return result
       })
       setResults(updatedResults)
-      addToChangeHistory(`Renomeado parâmetro: ${oldName} → ${newName}`)
+  
     }
 
     updatedParameters[index][field] = value
@@ -226,7 +217,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     }
     updatedParameters[paramIndex].options.push({ label: "", value: "" })
     setParameters(updatedParameters)
-    addToChangeHistory(`Adicionada opção ao parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`)
+
   }
 
   const updateParameterOption = (paramIndex, optionIndex, field, value) => {
@@ -240,9 +231,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     const optionLabel = updatedParameters[paramIndex].options[optionIndex].label
     updatedParameters[paramIndex].options = updatedParameters[paramIndex].options.filter((_, i) => i !== optionIndex)
     setParameters(updatedParameters)
-    addToChangeHistory(
-      `Removida opção "${optionLabel}" do parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`,
-    )
+
   }
 
   // Funções para manipular resultados
@@ -258,14 +247,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         isMainResult: false,
       },
     ])
-    addToChangeHistory("Adicionado novo resultado")
+
   }
 
   const removeResult = (index) => {
     const resultName = results[index].name
     const updatedResults = results.filter((_, i) => i !== index)
     setResults(updatedResults)
-    addToChangeHistory(`Removido resultado: ${resultName || `Resultado ${index + 1}`}`)
+
   }
 
   const updateResult = (index, field, value) => {
@@ -278,16 +267,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           result.isMainResult = false
         }
       })
-      addToChangeHistory(
-        `Definido "${updatedResults[index].name || `Resultado ${index + 1}`}" como resultado principal`,
-      )
+
     }
 
     updatedResults[index][field] = value
     setResults(updatedResults)
 
     if (field === "expression") {
-      addToChangeHistory(`Atualizada expressão do resultado: ${updatedResults[index].name || `Resultado ${index + 1}`}`)
+
     }
   }
 
@@ -310,14 +297,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       setTags([...tags, currentTag.trim()])
       setCurrentTag("")
-      addToChangeHistory(`Adicionada tag: ${currentTag.trim()}`)
+  
     }
   }
 
   // Função para remover uma tag
   const removeTag = (tagToRemove) => {
     setTags(tags.filter((tag) => tag !== tagToRemove))
-    addToChangeHistory(`Removida tag: ${tagToRemove}`)
+
   }
 
   // Validação por etapa
@@ -573,16 +560,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     {loading ? "Atualizando..." : "Atualizar Cálculo"}
   </button>
 
-  // Formatar data para exibição
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
+
 
   // Renderizar o indicador de progresso
   const renderProgressIndicator = () => (
@@ -632,14 +610,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         </div>
 
         <div className="header-actions">
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className={`history-button ${showHistory ? "active" : ""}`}
-            title="Histórico de alterações"
-          >
-            <History size={18} />
-            <span>Histórico</span>
-          </button>
+
 
           {step < totalSteps && (
             <button
@@ -652,31 +623,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         </div>
       </div>
 
-      {/* Histórico de alterações */}
-      {showHistory && (
-        <div className="history-panel">
-          <div className="history-header">
-            <h3>Histórico de Alterações</h3>
-            <button onClick={() => setShowHistory(false)} className="close-history-button">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="history-content">
-            {changeHistory.length > 0 ? (
-              <ul className="history-list">
-                {changeHistory.map((entry, index) => (
-                  <li key={index} className="history-item">
-                    <span className="history-timestamp">{formatDate(entry.timestamp)}</span>
-                    <span className="history-description">{entry.description}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-history">Nenhuma alteração registrada.</p>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Mensagens de feedback */}
       {error && (
