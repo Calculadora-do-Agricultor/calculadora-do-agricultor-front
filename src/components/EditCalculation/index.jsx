@@ -281,7 +281,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
     const updatedResults = [...results]
-    updatedResults[resultIndex].expression += paramName
+    updatedResults[resultIndex].expression += `@[${paramName}]`
     setResults(updatedResults)
   }
 
@@ -432,9 +432,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         .replace(/Math\.exp\(/g, "Math.exp(")
         .replace(/Math\.PI/g, "Math.PI")
 
-      // Substitui os nomes dos parâmetros pelos valores
+      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
       Object.keys(values).forEach((key) => {
-        const regex = new RegExp(key, "g")
+        const regex = new RegExp(`@\\[${key}\\]`, "g")
         expressionToEval = expressionToEval.replace(regex, values[key])
       })
 
@@ -1117,7 +1117,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
                     <textarea
                       id={`result-expression-${resultIndex}`}
-                      placeholder="Ex: param1 * param2 / 100"
+                      placeholder="Ex: @[param1] * @[param2] / 100"
                       value={result.expression}
                       onChange={(e) => updateResult(resultIndex, "expression", e.target.value)}
                       className={`expression-input ${validationErrors.results[resultIndex]?.expression ? "input-error" : ""}`}

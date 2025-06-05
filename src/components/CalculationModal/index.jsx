@@ -126,11 +126,11 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         context[key] = Number.parseFloat(values[key]) || 0
       })
 
-      // Substitui os nomes dos parâmetros na expressão pelos valores
+      // Substitui os nomes dos parâmetros na expressão pelos valores usando o formato @[nome do campo]
       let expressionToEval = expression
       Object.keys(context).forEach((key) => {
         // Substitui todas as ocorrências do nome do parâmetro pelo seu valor
-        const regex = new RegExp(key, "g")
+        const regex = new RegExp(`@\\[${key}\\]`, "g")
         expressionToEval = expressionToEval.replace(regex, context[key])
       })
 
