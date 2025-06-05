@@ -31,7 +31,7 @@ const Settings = () => {
   const [userRole, setUserRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("profile")
-  const { hideFooter, toggleHideFooter } = useContext(AuthContext)
+  const { preferences, updatePreferences, hideFooter, toggleHideFooter } = useContext(AuthContext)
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -242,16 +242,38 @@ const Settings = () => {
               <div className="space-y-6 animate-fadeIn">
                 <h3 className="text-lg font-semibold text-[#00418F] mb-4">Aparência</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <button className="flex flex-col items-center p-6 bg-white rounded-lg border-2 border-[#FFEE00] shadow-md hover:shadow-lg transition-all duration-300">
-                    <div className="w-16 h-16 bg-[#FFEE00] rounded-full flex items-center justify-center mb-4">
+                  <button 
+                    onClick={() => updatePreferences({ theme: "light" })}
+                    className={`flex flex-col items-center p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${
+                      preferences.theme === "light" 
+                        ? "bg-white border-2 border-[#FFEE00]" 
+                        : "bg-[#00418F]/5 border border-[#00418F]/10 hover:border-[#00418F]/30"
+                    }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                      preferences.theme === "light" 
+                        ? "bg-[#FFEE00]" 
+                        : "bg-[#00418F]/10"
+                    }`}>
                       <SunIcon className="w-8 h-8 text-[#00418F]" />
                     </div>
                     <span className="font-medium text-[#00418F]">Modo Claro</span>
                     <p className="text-sm text-gray-500 mt-2 text-center">Interface clara para uso diurno</p>
                   </button>
 
-                  <button className="flex flex-col items-center p-6 bg-[#00418F]/5 rounded-lg border border-[#00418F]/10 hover:border-[#00418F]/30 hover:shadow-lg transition-all duration-300">
-                    <div className="w-16 h-16 bg-[#00418F]/10 rounded-full flex items-center justify-center mb-4">
+                  <button 
+                    onClick={() => updatePreferences({ theme: "dark" })}
+                    className={`flex flex-col items-center p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ${
+                      preferences.theme === "dark" 
+                        ? "bg-white border-2 border-[#FFEE00]" 
+                        : "bg-[#00418F]/5 border border-[#00418F]/10 hover:border-[#00418F]/30"
+                    }`}
+                  >
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${
+                      preferences.theme === "dark" 
+                        ? "bg-[#FFEE00]" 
+                        : "bg-[#00418F]/10"
+                    }`}>
                       <MoonIcon className="w-8 h-8 text-[#00418F]" />
                     </div>
                     <span className="font-medium text-[#00418F]">Modo Escuro</span>

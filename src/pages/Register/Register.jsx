@@ -144,7 +144,26 @@ const Register = () => {
         email: registrationData.email,
         createdAt: new Date(),
         role: "user",
-        env: import.meta.env.VITE_ENV || "dev",
+        preferences: {
+          theme: "light",
+          hideFooter: false,
+          language: "pt-BR",
+          notifications: {
+            email: true,
+            push: true,
+            marketing: false
+          },
+          accessibility: {
+            highContrast: false,
+            fontSize: "medium",
+            reducedMotion: false
+          },
+          privacy: {
+            shareLocation: false,
+            shareUsageData: true,
+            profileVisibility: "private"
+          }
+        },
       });
 
       // Registrar o log de usuário com ou sem localização
