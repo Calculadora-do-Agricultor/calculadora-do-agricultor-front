@@ -1313,101 +1313,165 @@
   }
   
   /* Área de administração */
-  .admin-button {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 9999px;
-    background: linear-gradient(135deg, #00418f, #0066cc);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 65, 143, 0.3);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    z-index: 50;
+.admin-button {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #00418f, #0066cc);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 65, 143, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 50;
+}
+
+.admin-button:hover {
+  transform: scale(1.1) rotate(15deg);
+  box-shadow: 0 10px 30px rgba(0, 65, 143, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.admin-button:active {
+  transform: scale(1.05) rotate(10deg);
+}
+
+.admin-menu {
+  position: fixed;
+  bottom: 6.5rem;
+  right: 2rem;
+  width: 18rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  z-index: 50;
+  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 65, 143, 0.1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.95);
   }
-  
-  .admin-button:hover {
-    transform: scale(1.1) rotate(15deg);
-    box-shadow: 0 8px 20px rgba(0, 65, 143, 0.4);
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
-  
-  .admin-menu {
-    position: fixed;
-    bottom: 6rem;
-    right: 2rem;
-    width: 16rem;
-    background-color: white;
-    border-radius: 0.75rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    overflow: hidden;
-    z-index: 50;
-    animation: slideUp 0.3s ease;
-  }
-  
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(1rem);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .admin-menu-header {
-    background: linear-gradient(135deg, #00418f, #0066cc);
-    padding: 1rem 1.25rem;
-  }
-  
-  .admin-menu-header h3 {
-    color: white;
-    font-size: 1.125rem;
-    font-weight: 600;
-    margin: 0;
-  }
-  
-  .admin-menu-options {
-    padding: 0.75rem;
-  }
-  
-  .admin-option {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: none;
-    border: none;
-    border-radius: 0.5rem;
-    text-align: left;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  
-  .admin-option:hover {
-    background-color: #f3f4f6;
-  }
-  
-  .admin-option.create-category {
-    color: #00418f;
-  }
-  
-  .admin-option.create-calculation {
-    color: #00418f;
-  }
-  
-  .admin-option svg {
-    color: #ffee00;
-  }
+}
+
+.admin-menu-header {
+  background: linear-gradient(135deg, #00418f, #0066cc);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+}
+
+.admin-menu-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.admin-menu-header h3 {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.admin-menu-options {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 65, 143, 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.admin-option:hover {
+  background: linear-gradient(135deg, rgba(0, 65, 143, 0.05), rgba(0, 65, 143, 0.02));
+  border-color: rgba(0, 65, 143, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 65, 143, 0.1);
+}
+
+.admin-option:hover::before {
+  left: 100%;
+}
+
+.admin-option:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 65, 143, 0.15);
+}
+
+.admin-option.create-category {
+  color: #00418f;
+}
+
+.admin-option.create-calculation {
+  color: #00418f;
+}
+
+.admin-option svg {
+  color: #00418f;
+  background: linear-gradient(135deg, #ffee00, #ffd700);
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  width: 2rem;
+  height: 2rem;
+  box-shadow: 0 2px 8px rgba(255, 238, 0, 0.3);
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.admin-option:hover svg {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(255, 238, 0, 0.4);
+}
+
+.admin-option span {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
   
   /* Responsividade */
   @media (max-width: 1024px) {

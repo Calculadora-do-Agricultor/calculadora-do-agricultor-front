@@ -18,6 +18,8 @@ import {
   Users,
   ChevronDown,
   Loader2,
+  Tags,
+  FileSpreadsheet,
 } from "lucide-react"
 import { auth, db } from "../../services/firebaseConfig"
 import { CalculationList, Categories, CreateCategory, EditCalculation } from "@/components"
@@ -382,7 +384,7 @@ export default function Calculator() {
                   }}
                   className="admin-option create-category"
                 >
-                  <PlusCircle size={20} />
+                  <Tags size={20} />
                   <span>Criar Categoria</span>
                 </button>
                 <button
@@ -392,7 +394,7 @@ export default function Calculator() {
                   }}
                   className="admin-option create-calculation"
                 >
-                  <PlusCircle size={20} />
+                  <FileSpreadsheet size={20} />
                   <span>Criar Cálculo</span>
                 </button>
               </div>
