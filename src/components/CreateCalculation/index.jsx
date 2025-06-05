@@ -179,16 +179,91 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
     const updatedResults = [...results]
-    updatedResults[resultIndex].expression += `@[${paramName}]`
-    setResults(updatedResults)
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const currentExpression = updatedResults[resultIndex].expression
+      const paramText = `@[${paramName}]`
+      
+      // Insere o parâmetro na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + paramText + currentExpression.substring(end)
+      updatedResults[resultIndex].expression = newExpression
+      
+      setResults(updatedResults)
+      
+      // Reposiciona o cursor após o parâmetro inserido
+      setTimeout(() => {
+        const newCursorPosition = start + paramText.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      updatedResults[resultIndex].expression += `@[${paramName}]`
+      setResults(updatedResults)
+    }
   }
 
   // Função para inserir uma função matemática na expressão
   const insertMathFunction = (resultIndex, funcName) => {
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
     const updatedResults = [...results]
-    updatedResults[resultIndex].expression += `${funcName}()`
-    setResults(updatedResults)
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const currentExpression = updatedResults[resultIndex].expression
+      const funcText = `${funcName}()`
+      
+      // Insere a função na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + funcText + currentExpression.substring(end)
+      updatedResults[resultIndex].expression = newExpression
+      
+      setResults(updatedResults)
+      
+      // Reposiciona o cursor dentro dos parênteses da função
+      setTimeout(() => {
+        const newCursorPosition = start + funcText.length - 1 // Posiciona dentro dos parênteses
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      updatedResults[resultIndex].expression += `${funcName}()`
+      setResults(updatedResults)
+    }
+  }
+
+  // Função para inserir operador na posição do cursor
+  const insertOperatorInExpression = (resultIndex, operator) => {
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const updatedResults = [...results]
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const currentExpression = updatedResults[resultIndex].expression
+      
+      // Insere o operador na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + operator + currentExpression.substring(end)
+      updatedResults[resultIndex].expression = newExpression
+      
+      setResults(updatedResults)
+      
+      // Reposiciona o cursor após o operador inserido
+      setTimeout(() => {
+        const newCursorPosition = start + operator.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      updatedResults[resultIndex].expression += operator
+      setResults(updatedResults)
+    }
   }
 
   // Função para adicionar uma tag
@@ -895,7 +970,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                             <button
                               key={op}
                               type="button"
-                              onClick={() => updateResult(resultIndex, "expression", result.expression + op)}
+                              onClick={() => insertOperatorInExpression(resultIndex, op)}
                               className="operator-button"
                             >
                               {op}
