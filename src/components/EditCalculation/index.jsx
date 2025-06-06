@@ -21,7 +21,8 @@ import {
   Sliders,
   FileText,
   Edit,
-
+  Undo2,
+  Redo2,
 } from "lucide-react"
 import "./styles.css"
 
@@ -55,6 +56,94 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       isMainResult: true,
     },
   ])
+
+  // Estados para histórico de undo/redo das expressões
+  const [expressionHistory, setExpressionHistory] = useState({})
+  const [expressionHistoryIndex, setExpressionHistoryIndex] = useState({})
+
+  // Função para salvar estado no histórico
+  const saveExpressionToHistory = (resultIndex, expression) => {
+    setExpressionHistory(prev => {
+      const history = prev[resultIndex] || []
+      const currentIndex = expressionHistoryIndex[resultIndex] || 0
+      
+      // Remove itens após o índice atual (quando fazemos uma nova ação após undo)
+      const newHistory = history.slice(0, currentIndex + 1)
+      newHistory.push(expression)
+      
+      // Limita o histórico a 50 itens
+      if (newHistory.length > 50) {
+        newHistory.shift()
+      }
+      
+      return {
+        ...prev,
+        [resultIndex]: newHistory
+      }
+    })
+    
+    setExpressionHistoryIndex(prev => {
+      const history = expressionHistory[resultIndex] || []
+      const newIndex = Math.min(history.length, 49)
+      return {
+        ...prev,
+        [resultIndex]: newIndex
+      }
+    })
+  }
+
+  // Função para desfazer alteração na expressão
+  const undoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1
+      const previousExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = previousExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para refazer alteração na expressão
+  const redoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1
+      const nextExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = nextExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para atualizar expressão com histórico
+  const updateExpressionWithHistory = (resultIndex, newExpression) => {
+    const updatedResults = [...results]
+    const oldExpression = updatedResults[resultIndex].expression
+    
+    // Só salva no histórico se a expressão realmente mudou
+    if (oldExpression !== newExpression) {
+      saveExpressionToHistory(resultIndex, oldExpression)
+      updatedResults[resultIndex].expression = newExpression
+      setResults(updatedResults)
+    }
+  }
 
   // Dados de visualização
   const [previewMode, setPreviewMode] = useState(false)
@@ -281,19 +370,16 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
     const textarea = document.getElementById(`result-expression-${resultIndex}`)
-    const updatedResults = [...results]
+    const currentExpression = results[resultIndex].expression
     
     if (textarea) {
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-      const currentExpression = updatedResults[resultIndex].expression
       const paramText = `@[${paramName}]`
       
       // Insere o parâmetro na posição do cursor
       const newExpression = currentExpression.substring(0, start) + paramText + currentExpression.substring(end)
-      updatedResults[resultIndex].expression = newExpression
-      
-      setResults(updatedResults)
+      updateExpressionWithHistory(resultIndex, newExpression)
       
       // Reposiciona o cursor após o parâmetro inserido
       setTimeout(() => {
@@ -303,27 +389,24 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       }, 0)
     } else {
       // Fallback: adiciona no final se não conseguir encontrar o textarea
-      updatedResults[resultIndex].expression += `@[${paramName}]`
-      setResults(updatedResults)
+      const newExpression = currentExpression + `@[${paramName}]`
+      updateExpressionWithHistory(resultIndex, newExpression)
     }
   }
 
   // Função para inserir uma função matemática na expressão
   const insertMathFunction = (resultIndex, funcName) => {
     const textarea = document.getElementById(`result-expression-${resultIndex}`)
-    const updatedResults = [...results]
+    const currentExpression = results[resultIndex].expression
     
     if (textarea) {
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-      const currentExpression = updatedResults[resultIndex].expression
       const funcText = `${funcName}()`
       
       // Insere a função na posição do cursor
       const newExpression = currentExpression.substring(0, start) + funcText + currentExpression.substring(end)
-      updatedResults[resultIndex].expression = newExpression
-      
-      setResults(updatedResults)
+      updateExpressionWithHistory(resultIndex, newExpression)
       
       // Reposiciona o cursor dentro dos parênteses da função
       setTimeout(() => {
@@ -333,26 +416,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       }, 0)
     } else {
       // Fallback: adiciona no final se não conseguir encontrar o textarea
-      updatedResults[resultIndex].expression += `${funcName}()`
-      setResults(updatedResults)
+      const newExpression = currentExpression + `${funcName}()`
+      updateExpressionWithHistory(resultIndex, newExpression)
     }
   }
 
   // Função para inserir operador na posição do cursor
   const insertOperatorInExpression = (resultIndex, operator) => {
     const textarea = document.getElementById(`result-expression-${resultIndex}`)
-    const updatedResults = [...results]
+    const currentExpression = results[resultIndex].expression
     
     if (textarea) {
       const start = textarea.selectionStart
       const end = textarea.selectionEnd
-      const currentExpression = updatedResults[resultIndex].expression
       
       // Insere o operador na posição do cursor
       const newExpression = currentExpression.substring(0, start) + operator + currentExpression.substring(end)
-      updatedResults[resultIndex].expression = newExpression
-      
-      setResults(updatedResults)
+      updateExpressionWithHistory(resultIndex, newExpression)
       
       // Reposiciona o cursor após o operador inserido
       setTimeout(() => {
@@ -362,8 +442,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       }, 0)
     } else {
       // Fallback: adiciona no final se não conseguir encontrar o textarea
-      updatedResults[resultIndex].expression += operator
-      setResults(updatedResults)
+      const newExpression = currentExpression + operator
+      updateExpressionWithHistory(resultIndex, newExpression)
     }
   }
 
@@ -1190,11 +1270,34 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       </div>
                     </div>
 
+                    <div className="expression-controls">
+                      <div className="undo-redo-buttons">
+                        <button
+                          type="button"
+                          onClick={() => undoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] <= 0}
+                          title="Desfazer (Ctrl+Z)"
+                        >
+                          <Undo2 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => redoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] >= (expressionHistory[resultIndex]?.length - 1 || 0)}
+                          title="Refazer (Ctrl+Y)"
+                        >
+                          <Redo2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
                     <textarea
                       id={`result-expression-${resultIndex}`}
                       placeholder="Ex: @[param1] * @[param2] / 100"
                       value={result.expression}
-                      onChange={(e) => updateResult(resultIndex, "expression", e.target.value)}
+                      onChange={(e) => updateExpressionWithHistory(resultIndex, e.target.value)}
                       className={`expression-input ${validationErrors.results[resultIndex]?.expression ? "input-error" : ""}`}
                       rows={3}
                     />
