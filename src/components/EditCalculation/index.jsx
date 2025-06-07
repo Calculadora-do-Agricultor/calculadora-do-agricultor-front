@@ -820,14 +820,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         <div className="header-actions">
 
 
-          {step < totalSteps && (
-            <button
-              onClick={() => setPreviewMode(!previewMode)}
-              className={`preview-toggle-button ${previewMode ? "active" : ""}`}
-            >
-              {previewMode ? "Editar" : "Visualizar"}
-            </button>
-          )}
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+          >
+            {previewMode ? "Editar" : "Visualizar"}
+          </button>
         </div>
       </div>
 
@@ -1587,12 +1585,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 ))}
               </div>
 
-              <div className="preview-calculate">
-                <button onClick={updatePreview} className="calculate-button">
-                  <Calculator size={16} />
-                  <span>Calcular</span>
-                </button>
-              </div>
+
             </div>
           </div>
         )}
