@@ -6,43 +6,80 @@
 
 .draggable-item {
   display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  align-items: stretch;
+  gap: 0;
   position: relative;
   transition: all 0.2s ease;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.draggable-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 
 .draggable-item.dragging {
   z-index: 1000;
-  transform: rotate(2deg);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: rotate(1deg) scale(1.02);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15), 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .drag-handle {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  min-height: 100%;
   cursor: grab;
-  border-radius: 4px;
+  background-color: #f8fafc;
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
   transition: all 0.2s ease;
-  margin-top: 0.5rem;
   flex-shrink: 0;
+  position: relative;
+}
+
+.drag-handle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, #e2e8f0, #cbd5e1, #e2e8f0);
+  opacity: 0.4;
+}
+
+.drag-handle svg {
+  color: #94a3b8;
+  transition: color 0.2s ease;
 }
 
 .drag-handle:hover {
-  background-color: #f3f4f6;
+  background-color: #f1f5f9;
+}
+
+.drag-handle:hover::before {
+  background: linear-gradient(to bottom, #00418f, #0052cc, #00418f);
+  opacity: 0.6;
+}
+
+.drag-handle:hover svg {
+  color: #00418f;
 }
 
 .drag-handle:active {
   cursor: grabbing;
-  background-color: #e5e7eb;
+  background-color: #e2e8f0;
 }
 
 .draggable-content {
   flex: 1;
   min-width: 0;
+  padding: 0;
 }
 
 /* Indicador visual para área de drop */
@@ -65,20 +102,53 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
-  .drag-handle {
-    width: 20px;
-    height: 20px;
+  .draggable-item {
+    flex-direction: column;
   }
   
-  .draggable-item {
-    gap: 0.5rem;
+  .drag-handle {
+    width: 100%;
+    min-width: 100%;
+    height: 32px;
+    min-height: 32px;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  
+  .drag-handle::before {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: auto;
+    width: auto;
+    height: 3px;
+    background: linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0);
+  }
+  
+  .drag-handle:hover::before {
+    background: linear-gradient(to right, #00418f, #0052cc, #00418f);
+  }
+  
+  .draggable-content {
+    padding: 0;
   }
 }
 
-/* Estados de foco para acessibilidade */
+@media (max-width: 480px) {
+  .drag-handle {
+    height: 36px;
+    min-height: 36px;
+  }
+  
+  .draggable-list {
+    gap: 0.75rem;
+  }
+}
+
+/* Estados de foco para acessibilidade - borda apenas do lado esquerdo */
 .drag-handle:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: inset 3px 0 0 #3b82f6;
 }
 
 /* Animação suave para reordenação */

@@ -402,9 +402,9 @@ const CalculationList = ({
                   setSelectedCalculation(calculation)
                   setIsModalOpen(true)
                 }}
-                aria-label="Ver detalhes do cálculo"
+                aria-label="Abrir cálculo"
               >
-                <span>Ver detalhes</span>
+                <span>Abrir cálculo</span>
                 <ArrowRight size={16} />
               </button>
             </div>

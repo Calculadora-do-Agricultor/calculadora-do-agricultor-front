@@ -1,7 +1,10 @@
 
 
-import { useState, useEffect, useRef } from "react"
-import { X, Copy, Calculator, Check, Info } from "lucide-react"
+import React, { useState, useEffect, useRef } from "react"
+import { X, Copy, Calculator, Check, Info, FileText, Calendar, User, Eye } from "lucide-react"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
+import DraggableList from "../DraggableList"
 import "./styles.css"
 
 /**
@@ -172,7 +175,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
     )
   }
 
-  // Fecha o modal ao pressionar ESC
+  // Fecha o modal ao pressionar ESC e controla o scroll do body
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") onClose()
@@ -180,10 +183,17 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
 
     if (isOpen) {
       window.addEventListener("keydown", handleEsc)
+      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Restaura o scroll do body quando o modal é fechado
+      document.body.style.overflow = 'unset'
     }
 
+    // Cleanup function para garantir que o scroll seja restaurado
     return () => {
       window.removeEventListener("keydown", handleEsc)
+      document.body.style.overflow = 'unset'
     }
   }, [isOpen, onClose])
 
@@ -253,7 +263,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                     ) : (
                       <input
                         id={`param-${index}`}
-                        type={param.type === "number" ? "number" : "text"}
+                        type="number"
                         value={paramValues[param.name] || ""}
                         onChange={(e) => handleParamChange(param.name, e.target.value)}
                         placeholder={`Digite ${param.name.toLowerCase()}`}

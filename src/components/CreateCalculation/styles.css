@@ -339,11 +339,11 @@
 
 /* Parâmetros */
 .parameter-card {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  overflow: hidden;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  overflow: visible;
 }
 
 .parameter-card-header {
@@ -388,6 +388,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 1rem;
   gap: 8px;
   width: 100%;
   padding: 12px;
@@ -484,11 +485,11 @@
 
 /* Resultados */
 .result-card {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  overflow: hidden;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  overflow: visible;
 }
 
 .result-card-header {
@@ -1096,9 +1097,28 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
+  .create-calculation-container {
+    padding: 15px;
+    margin: 10px;
+  }
+
   .form-row {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .parameter-form,
+  .result-form {
+    padding: 12px;
+  }
+
+  .parameter-card-header,
+  .result-card-header {
+    padding: 12px 16px;
   }
 
   .expression-header {
@@ -1129,6 +1149,55 @@
   .create-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .tags-container {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-calculation-container {
+    padding: 10px;
+    margin: 5px;
+  }
+
+  .create-calculation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .create-calculation-header h1 {
+    font-size: 20px;
+  }
+
+  .parameter-form,
+  .result-form {
+    padding: 10px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Evita zoom no iOS */
+  }
+
+  .help-box {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .add-parameter-button,
+  .add-result-button {
+    padding: 10px;
+    font-size: 14px;
   }
 }
 
@@ -1751,9 +1820,28 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
+  .create-calculation-container {
+    padding: 15px;
+    margin: 10px;
+  }
+
   .form-row {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .parameter-form,
+  .result-form {
+    padding: 12px;
+  }
+
+  .parameter-card-header,
+  .result-card-header {
+    padding: 12px 16px;
   }
 
   .expression-header {
@@ -1784,5 +1872,54 @@
   .create-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .tags-container {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .create-calculation-container {
+    padding: 10px;
+    margin: 5px;
+  }
+
+  .create-calculation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .create-calculation-header h1 {
+    font-size: 20px;
+  }
+
+  .parameter-form,
+  .result-form {
+    padding: 10px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Evita zoom no iOS */
+  }
+
+  .help-box {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .add-parameter-button,
+  .add-result-button {
+    padding: 10px;
+    font-size: 14px;
   }
 }

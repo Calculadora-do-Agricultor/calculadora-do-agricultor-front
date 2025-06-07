@@ -402,6 +402,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       ordem: index + 1
     }))
     setResults(resultsWithOrder)
+    // Não fazer scroll automático durante reordenação
   }
 
   // Função para inserir um parâmetro na expressão
@@ -1045,7 +1046,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                         onChange={(e) => updateParameter(index, "type", e.target.value)}
                       >
                         <option value="number">Número</option>
-                        <option value="text">Texto</option>
                         <option value="select">Seleção</option>
                       </select>
                     </div>
@@ -1448,7 +1448,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   <div className="review-parameter-header">
                     <span className="parameter-name">{param.name}</span>
                     <span className="parameter-type">
-                      {param.type === "number" ? "Número" : param.type === "text" ? "Texto" : "Seleção"}
+                      {param.type === "number" ? "Número" : "Seleção"}
                       {param.unit && ` (${param.unit})`}
                     </span>
                   </div>
