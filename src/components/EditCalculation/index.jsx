@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
-import { collection, doc, getDoc, updateDoc, getDocs, query, where } from "firebase/firestore"
+import { collection, doc, getDoc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore"
 import {
   PlusCircle,
   X,
@@ -24,6 +24,8 @@ import {
   Undo2,
   Redo2,
 } from "lucide-react"
+import DraggableList from "../DraggableList"
+import "../DraggableList/styles.css"
 import "./styles.css"
 
 const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
@@ -203,11 +205,19 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
           // Parâmetros e resultados
           if (calculationData.parameters && calculationData.parameters.length > 0) {
-            setParameters(calculationData.parameters)
+            const parametersWithIds = calculationData.parameters.map((param, index) => ({
+              ...param,
+              id: param.id || `param-${Date.now()}-${index}`
+            }))
+            setParameters(parametersWithIds)
           }
 
           if (calculationData.results && calculationData.results.length > 0) {
-            setResults(calculationData.results)
+            const resultsWithIds = calculationData.results.map((result, index) => ({
+              ...result,
+              id: result.id || `result-${Date.now()}-${index}`
+            }))
+            setResults(resultsWithIds)
           }
 
 
@@ -248,8 +258,15 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   // Funções para manipular parâmetros
   const addParameter = () => {
-    setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
-
+    setParameters([...parameters, { 
+      id: `param-${Date.now()}-${Math.random()}`,
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [] 
+    }])
   }
 
   const removeParameter = (index) => {
@@ -323,11 +340,22 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   }
 
+  // Função para reordenar parâmetros
+  const reorderParameters = (newParameters) => {
+    // Adiciona campo ordem aos parâmetros reordenados
+    const parametersWithOrder = newParameters.map((param, index) => ({
+      ...param,
+      ordem: index + 1
+    }))
+    setParameters(parametersWithOrder)
+  }
+
   // Funções para manipular resultados
   const addResult = () => {
     setResults([
       ...results,
       {
+        id: `result-${Date.now()}-${Math.random()}`,
         name: "",
         description: "",
         expression: "",
@@ -336,7 +364,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         isMainResult: false,
       },
     ])
-
   }
 
   const removeResult = (index) => {
@@ -365,6 +392,16 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     if (field === "expression") {
 
     }
+  }
+
+  // Função para reordenar resultados
+  const reorderResults = (newResults) => {
+    // Adiciona campo ordem aos resultados reordenados
+    const resultsWithOrder = newResults.map((result, index) => ({
+      ...result,
+      ordem: index + 1
+    }))
+    setResults(resultsWithOrder)
   }
 
   // Função para inserir um parâmetro na expressão
@@ -688,7 +725,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   const handleUpdateCalculation = async () => {
     try {
       setLoading(true);
-      // Validate input data here
+      
+      // Prepara parâmetros com ordem
+      const parametersWithOrder = parameters.map((param, index) => ({
+        ...param,
+        ordem: param.ordem || index + 1,
+        lastModified: new Date(),
+        tipo: 'parameter'
+      }))
+
+      // Prepara resultados com ordem
+      const resultsWithOrder = results.map((result, index) => ({
+        ...result,
+        ordem: result.ordem || index + 1,
+        lastModified: new Date(),
+        tipo: 'result'
+      }))
+      
       // Update the Firestore document
       const calculationRef = doc(db, "calculations", calculationId);
       await updateDoc(calculationRef, {
@@ -696,8 +749,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         description: calculationDescription,
         category: selectedCategory,
         tags: tags,
-        parameters: parameters,
-        results: results,
+        parameters: parametersWithOrder,
+        results: resultsWithOrder,
         lastModified: new Date(),
       });
       setSuccess(true);
@@ -946,22 +999,26 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
               </div>
             </div>
 
-            {parameters.map((param, index) => (
-              <div key={index} className="parameter-card">
-                <div className="parameter-card-header">
-                  <h3>Parâmetro {index + 1}</h3>
-                  {parameters.length > 1 && (
-                    <button
-                      onClick={() => removeParameter(index)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover parâmetro"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
+            <DraggableList
+              items={parameters}
+              onReorder={reorderParameters}
+              keyExtractor={(param, index) => param.id || `param-${Date.now()}-${index}`}
+              renderItem={(param, index) => (
+                <div className="parameter-card">
+                  <div className="parameter-card-header">
+                    <h3>Parâmetro {index + 1}</h3>
+                    {parameters.length > 1 && (
+                      <button
+                        onClick={() => removeParameter(index)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover parâmetro"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
+                  </div>
 
                 <div className="parameter-form">
                   <div className="form-row">
@@ -1102,7 +1159,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   )}
                 </div>
               </div>
-            ))}
+              )}
+            />
 
             <button onClick={addParameter} className="add-parameter-button" type="button">
               <PlusCircle size={18} />
@@ -1134,25 +1192,29 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
               </div>
             )}
 
-            {results.map((result, resultIndex) => (
-              <div key={resultIndex} className="result-card">
-                <div className="result-card-header">
-                  <div className="flex items-center">
-                    <h3>Resultado {resultIndex + 1}</h3>
-                    {result.isMainResult && <span className="main-result-badge">Principal</span>}
+            <DraggableList
+              items={results}
+              onReorder={reorderResults}
+              keyExtractor={(result, index) => result.id || `result-${Date.now()}-${index}`}
+              renderItem={(result, resultIndex) => (
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <div className="flex items-center">
+                      <h3>Resultado {resultIndex + 1}</h3>
+                      {result.isMainResult && <span className="main-result-badge">Principal</span>}
+                    </div>
+                    {results.length > 1 && (
+                      <button
+                        onClick={() => removeResult(resultIndex)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover resultado"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
                   </div>
-                  {results.length > 1 && (
-                    <button
-                      onClick={() => removeResult(resultIndex)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover resultado"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
 
                 <div className="result-form">
                   <div className="form-row">
@@ -1335,7 +1397,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   </div>
                 </div>
               </div>
-            ))}
+              )}
+            />
 
             <button onClick={addResult} className="add-result-button" type="button">
               <PlusCircle size={18} />

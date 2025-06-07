@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore"
+import { collection, addDoc, getDocs, query, where, writeBatch, doc } from "firebase/firestore"
 import {
   PlusCircle,
   X,
@@ -23,6 +23,8 @@ import {
   Undo2,
   Redo2,
 } from "lucide-react"
+import DraggableList from "../DraggableList"
+import "../DraggableList/styles.css"
 import "./styles.css"
 
 const CreateCalculation = ({ onCreate, onCancel }) => {
@@ -196,7 +198,15 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   // Funções para manipular parâmetros
   const addParameter = () => {
-    setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
+    setParameters([...parameters, { 
+      id: `param-${Date.now()}-${Math.random()}`,
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [] 
+    }])
   }
 
   const removeParameter = (index) => {
@@ -231,11 +241,22 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     setParameters(updatedParameters)
   }
 
+  // Função para reordenar parâmetros
+  const reorderParameters = (newParameters) => {
+    // Adiciona campo ordem aos parâmetros reordenados
+    const parametersWithOrder = newParameters.map((param, index) => ({
+      ...param,
+      ordem: index + 1
+    }))
+    setParameters(parametersWithOrder)
+  }
+
   // Funções para manipular resultados
   const addResult = () => {
     setResults([
       ...results,
       {
+        id: `result-${Date.now()}-${Math.random()}`,
         name: "",
         description: "",
         expression: "",
@@ -265,6 +286,16 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     }
 
     setResults(updatedResults)
+  }
+
+  // Função para reordenar resultados
+  const reorderResults = (newResults) => {
+    // Adiciona campo ordem aos resultados reordenados
+    const resultsWithOrder = newResults.map((result, index) => ({
+      ...result,
+      ordem: index + 1
+    }))
+    setResults(resultsWithOrder)
   }
 
   // Função para inserir um parâmetro na expressão
@@ -550,12 +581,28 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     try {
       setLoading(true)
 
+      // Prepara os parâmetros com ordem baseada na posição atual ou timestamp
+      const parametersWithOrder = parameters.map((param, index) => ({
+        ...param,
+        ordem: param.ordem || index + 1,
+        createdAt: param.createdAt || new Date(),
+        tipo: 'parametro'
+      }))
+
+      // Prepara os resultados com ordem baseada na posição atual ou timestamp
+      const resultsWithOrder = results.map((result, index) => ({
+        ...result,
+        ordem: result.ordem || index + 1,
+        createdAt: result.createdAt || new Date(),
+        tipo: 'resultado'
+      }))
+
       await addDoc(collection(db, "calculations"), {
         name: calculationName,
         description: calculationDescription,
         category: selectedCategory,
-        parameters,
-        results,
+        parameters: parametersWithOrder,
+        results: resultsWithOrder,
         tags,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -775,22 +822,26 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
               </div>
             </div>
 
-            {parameters.map((param, index) => (
-              <div key={index} className="parameter-card">
-                <div className="parameter-card-header">
-                  <h3>Parâmetro {index + 1}</h3>
-                  {parameters.length > 1 && (
-                    <button
-                      onClick={() => removeParameter(index)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover parâmetro"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
+            <DraggableList
+              items={parameters}
+              onReorder={reorderParameters}
+              keyExtractor={(param, index) => param.id || `param-${Date.now()}-${index}`}
+              renderItem={(param, index) => (
+                <div className="parameter-card">
+                  <div className="parameter-card-header">
+                    <h3>Parâmetro {index + 1}</h3>
+                    {parameters.length > 1 && (
+                      <button
+                        onClick={() => removeParameter(index)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover parâmetro"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
+                  </div>
 
                 <div className="parameter-form">
                   <div className="form-row">
@@ -931,7 +982,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   )}
                 </div>
               </div>
-            ))}
+            )}
+            />
 
             <button onClick={addParameter} className="add-parameter-button" type="button">
               <PlusCircle size={18} />
@@ -963,25 +1015,29 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
               </div>
             )}
 
-            {results.map((result, resultIndex) => (
-              <div key={resultIndex} className="result-card">
-                <div className="result-card-header">
-                  <div className="flex items-center">
-                    <h3>Resultado {resultIndex + 1}</h3>
-                    {result.isMainResult && <span className="main-result-badge">Principal</span>}
+            <DraggableList
+              items={results}
+              onReorder={reorderResults}
+              keyExtractor={(result, index) => result.id || `result-${Date.now()}-${index}`}
+              renderItem={(result, resultIndex) => (
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <div className="flex items-center">
+                      <h3>Resultado {resultIndex + 1}</h3>
+                      {result.isMainResult && <span className="main-result-badge">Principal</span>}
+                    </div>
+                    {results.length > 1 && (
+                      <button
+                        onClick={() => removeResult(resultIndex)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover resultado"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
                   </div>
-                  {results.length > 1 && (
-                    <button
-                      onClick={() => removeResult(resultIndex)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover resultado"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
 
                 <div className="result-form">
                   <div className="form-row">
@@ -1164,7 +1220,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   </div>
                 </div>
               </div>
-            ))}
+            )}
+            />
 
             <button onClick={addResult} className="add-result-button" type="button">
               <PlusCircle size={18} />
