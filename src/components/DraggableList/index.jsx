@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -6,6 +6,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverlay,
 } from '@dnd-kit/core'
 import {
   arrayMove,
@@ -20,7 +21,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 
 // Componente para item arrastável
-const SortableItem = ({ id, children }) => {
+const SortableItem = React.memo(({ id, children }) => {
   const {
     attributes,
     listeners,
@@ -28,12 +29,19 @@ const SortableItem = ({ id, children }) => {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id })
+  } = useSortable({ 
+    id,
+    transition: {
+      duration: 150,
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+    },
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
   }
 
   return (
@@ -42,7 +50,14 @@ const SortableItem = ({ id, children }) => {
       style={style}
       className={`draggable-item ${isDragging ? 'dragging' : ''}`}
     >
-      <div className="drag-handle" {...attributes} {...listeners}>
+      <div 
+        className="drag-handle" 
+        {...attributes} 
+        {...listeners}
+        role="button"
+        aria-label="Arrastar para reordenar"
+        tabIndex={0}
+      >
         <GripVertical size={16} className="text-gray-400 hover:text-gray-600" />
       </div>
       <div className="draggable-content">
@@ -50,26 +65,37 @@ const SortableItem = ({ id, children }) => {
       </div>
     </div>
   )
-}
+})
 
 // Componente principal da lista arrastável
 const DraggableList = ({ items, onReorder, renderItem, keyExtractor }) => {
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   )
 
+  // Memoiza os IDs para evitar recriações desnecessárias
+  const itemIds = useMemo(() => {
+    return items.map((item, index) => keyExtractor(item, index))
+  }, [items, keyExtractor])
+
   const handleDragEnd = (event) => {
     const { active, over } = event
 
-    if (active.id !== over?.id) {
-      const oldIndex = items.findIndex((item, index) => keyExtractor(item, index) === active.id)
-      const newIndex = items.findIndex((item, index) => keyExtractor(item, index) === over.id)
+    if (active.id !== over?.id && over?.id) {
+      const oldIndex = itemIds.indexOf(active.id)
+      const newIndex = itemIds.indexOf(over.id)
       
-      const newItems = arrayMove(items, oldIndex, newIndex)
-      onReorder(newItems)
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(items, oldIndex, newIndex)
+        onReorder(newItems)
+      }
     }
   }
 
@@ -80,15 +106,18 @@ const DraggableList = ({ items, onReorder, renderItem, keyExtractor }) => {
       onDragEnd={handleDragEnd}
     >
       <SortableContext
-        items={items.map((item, index) => keyExtractor(item, index))}
+        items={itemIds}
         strategy={verticalListSortingStrategy}
       >
         <div className="draggable-list">
-          {items.map((item, index) => (
-            <SortableItem key={keyExtractor(item, index)} id={keyExtractor(item, index)}>
-              {renderItem(item, index)}
-            </SortableItem>
-          ))}
+          {items.map((item, index) => {
+            const itemId = keyExtractor(item, index)
+            return (
+              <SortableItem key={itemId} id={itemId}>
+                {renderItem(item, index)}
+              </SortableItem>
+            )
+          })}
         </div>
       </SortableContext>
     </DndContext>

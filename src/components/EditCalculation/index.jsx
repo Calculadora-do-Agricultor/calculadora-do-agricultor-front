@@ -258,22 +258,29 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   // Funções para manipular parâmetros
   const addParameter = () => {
-    setParameters([...parameters, { 
+    const newParam = { 
       id: `param-${Date.now()}-${Math.random()}`,
       name: "", 
       type: "number", 
       unit: "", 
       description: "", 
       required: true, 
-      options: [] 
-    }])
+      options: [],
+      ordem: parameters.length + 1
+    }
+    setParameters([...parameters, newParam])
   }
 
   const removeParameter = (index) => {
     const paramName = parameters[index].name
     const updatedParameters = parameters.filter((_, i) => i !== index)
-    setParameters(updatedParameters)
-
+    
+    // Reordena os parâmetros restantes
+    const reorderedParameters = updatedParameters.map((param, i) => ({
+      ...param,
+      ordem: i + 1
+    }))
+    setParameters(reorderedParameters)
 
     // Atualizar expressões de resultados que usam este parâmetro
     const paramRegex = new RegExp(paramName, "g")
@@ -341,36 +348,44 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   }
 
   // Função para reordenar parâmetros
-  const reorderParameters = (newParameters) => {
+  const reorderParameters = useCallback((newParameters) => {
     // Adiciona campo ordem aos parâmetros reordenados
     const parametersWithOrder = newParameters.map((param, index) => ({
       ...param,
       ordem: index + 1
     }))
     setParameters(parametersWithOrder)
-  }
+  }, [])
 
   // Funções para manipular resultados
   const addResult = () => {
-    setResults([
-      ...results,
-      {
-        id: `result-${Date.now()}-${Math.random()}`,
-        name: "",
-        description: "",
-        expression: "",
-        unit: "",
-        precision: 2,
-        isMainResult: false,
-      },
-    ])
+    const newResult = {
+      id: `result-${Date.now()}-${Math.random()}`,
+      name: "",
+      description: "",
+      expression: "",
+      unit: "",
+      precision: 2,
+      isMainResult: false,
+      ordem: results.length + 1
+    }
+    setResults([...results, newResult])
   }
 
   const removeResult = (index) => {
     const resultName = results[index].name
     const updatedResults = results.filter((_, i) => i !== index)
-    setResults(updatedResults)
-
+    
+    // Reordena os resultados restantes e ajusta o resultado principal se necessário
+    const reorderedResults = updatedResults.map((result, i) => {
+      const newResult = { ...result, ordem: i + 1 }
+      // Se não há resultado principal, torna o primeiro como principal
+      if (i === 0 && !updatedResults.some(r => r.isMainResult)) {
+        newResult.isMainResult = true
+      }
+      return newResult
+    })
+    setResults(reorderedResults)
   }
 
   const updateResult = (index, field, value) => {
@@ -395,7 +410,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   }
 
   // Função para reordenar resultados
-  const reorderResults = (newResults) => {
+  const reorderResults = useCallback((newResults) => {
     // Adiciona campo ordem aos resultados reordenados
     const resultsWithOrder = newResults.map((result, index) => ({
       ...result,
@@ -403,7 +418,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     }))
     setResults(resultsWithOrder)
     // Não fazer scroll automático durante reordenação
-  }
+  }, [])
 
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
@@ -1001,7 +1016,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             <DraggableList
               items={parameters}
               onReorder={reorderParameters}
-              keyExtractor={(param, index) => param.id || `param-${Date.now()}-${index}`}
+              keyExtractor={(param) => param.id}
               renderItem={(param, index) => (
                 <div className="parameter-card">
                   <div className="parameter-card-header">
@@ -1193,7 +1208,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             <DraggableList
               items={results}
               onReorder={reorderResults}
-              keyExtractor={(result, index) => result.id || `result-${Date.now()}-${index}`}
+              keyExtractor={(result) => result.id}
               renderItem={(result, resultIndex) => (
                 <div className="result-card">
                   <div className="result-card-header">
