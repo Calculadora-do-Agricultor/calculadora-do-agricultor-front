@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
-import { collection, doc, getDoc, updateDoc, getDocs, query, where } from "firebase/firestore"
+import { collection, doc, getDoc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore"
 import {
   PlusCircle,
   X,
@@ -21,8 +21,11 @@ import {
   Sliders,
   FileText,
   Edit,
-  History,
+  Undo2,
+  Redo2,
 } from "lucide-react"
+import DraggableList from "../DraggableList"
+import "../DraggableList/styles.css"
 import "./styles.css"
 
 const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
@@ -56,6 +59,94 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     },
   ])
 
+  // Estados para histórico de undo/redo das expressões
+  const [expressionHistory, setExpressionHistory] = useState({})
+  const [expressionHistoryIndex, setExpressionHistoryIndex] = useState({})
+
+  // Função para salvar estado no histórico
+  const saveExpressionToHistory = (resultIndex, expression) => {
+    setExpressionHistory(prev => {
+      const history = prev[resultIndex] || []
+      const currentIndex = expressionHistoryIndex[resultIndex] || 0
+      
+      // Remove itens após o índice atual (quando fazemos uma nova ação após undo)
+      const newHistory = history.slice(0, currentIndex + 1)
+      newHistory.push(expression)
+      
+      // Limita o histórico a 50 itens
+      if (newHistory.length > 50) {
+        newHistory.shift()
+      }
+      
+      return {
+        ...prev,
+        [resultIndex]: newHistory
+      }
+    })
+    
+    setExpressionHistoryIndex(prev => {
+      const history = expressionHistory[resultIndex] || []
+      const newIndex = Math.min(history.length, 49)
+      return {
+        ...prev,
+        [resultIndex]: newIndex
+      }
+    })
+  }
+
+  // Função para desfazer alteração na expressão
+  const undoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1
+      const previousExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = previousExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para refazer alteração na expressão
+  const redoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1
+      const nextExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = nextExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para atualizar expressão com histórico
+  const updateExpressionWithHistory = (resultIndex, newExpression) => {
+    const updatedResults = [...results]
+    const oldExpression = updatedResults[resultIndex].expression
+    
+    // Só salva no histórico se a expressão realmente mudou
+    if (oldExpression !== newExpression) {
+      saveExpressionToHistory(resultIndex, oldExpression)
+      updatedResults[resultIndex].expression = newExpression
+      setResults(updatedResults)
+    }
+  }
+
   // Dados de visualização
   const [previewMode, setPreviewMode] = useState(false)
   const [previewValues, setPreviewValues] = useState({})
@@ -72,9 +163,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     results: {},
   })
 
-  // Histórico de alterações
-  const [changeHistory, setChangeHistory] = useState([])
-  const [showHistory, setShowHistory] = useState(false)
+
 
   // Carregar categorias para o dropdown
   const [categories, setCategories] = useState([])
@@ -116,15 +205,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
           // Parâmetros e resultados
           if (calculationData.parameters && calculationData.parameters.length > 0) {
-            setParameters(calculationData.parameters)
+            const parametersWithIds = calculationData.parameters.map((param, index) => ({
+              ...param,
+              id: param.id || `param-${Date.now()}-${index}`
+            }))
+            setParameters(parametersWithIds)
           }
 
           if (calculationData.results && calculationData.results.length > 0) {
-            setResults(calculationData.results)
+            const resultsWithIds = calculationData.results.map((result, index) => ({
+              ...result,
+              id: result.id || `result-${Date.now()}-${index}`
+            }))
+            setResults(resultsWithIds)
           }
 
-          // Adicionar entrada no histórico de alterações
-          addToChangeHistory("Carregamento inicial do cálculo")
+
+      
         } else {
           setError("Cálculo não encontrado.")
         }
@@ -157,26 +254,33 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     fetchCategories()
   }, [calculationId])
 
-  // Adicionar entrada ao histórico de alterações
-  const addToChangeHistory = (description) => {
-    const newEntry = {
-      timestamp: new Date(),
-      description,
-    }
-    setChangeHistory((prev) => [newEntry, ...prev])
-  }
+
 
   // Funções para manipular parâmetros
   const addParameter = () => {
-    setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
-    addToChangeHistory("Adicionado novo parâmetro")
+    const newParam = { 
+      id: `param-${Date.now()}-${Math.random()}`,
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [],
+      ordem: parameters.length + 1
+    }
+    setParameters([...parameters, newParam])
   }
 
   const removeParameter = (index) => {
     const paramName = parameters[index].name
     const updatedParameters = parameters.filter((_, i) => i !== index)
-    setParameters(updatedParameters)
-    addToChangeHistory(`Removido parâmetro: ${paramName || `Parâmetro ${index + 1}`}`)
+    
+    // Reordena os parâmetros restantes
+    const reorderedParameters = updatedParameters.map((param, i) => ({
+      ...param,
+      ordem: i + 1
+    }))
+    setParameters(reorderedParameters)
 
     // Atualizar expressões de resultados que usam este parâmetro
     const paramRegex = new RegExp(paramName, "g")
@@ -212,7 +316,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         return result
       })
       setResults(updatedResults)
-      addToChangeHistory(`Renomeado parâmetro: ${oldName} → ${newName}`)
+  
     }
 
     updatedParameters[index][field] = value
@@ -226,7 +330,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     }
     updatedParameters[paramIndex].options.push({ label: "", value: "" })
     setParameters(updatedParameters)
-    addToChangeHistory(`Adicionada opção ao parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`)
+
   }
 
   const updateParameterOption = (paramIndex, optionIndex, field, value) => {
@@ -240,32 +344,48 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     const optionLabel = updatedParameters[paramIndex].options[optionIndex].label
     updatedParameters[paramIndex].options = updatedParameters[paramIndex].options.filter((_, i) => i !== optionIndex)
     setParameters(updatedParameters)
-    addToChangeHistory(
-      `Removida opção "${optionLabel}" do parâmetro: ${parameters[paramIndex].name || `Parâmetro ${paramIndex + 1}`}`,
-    )
+
   }
+
+  // Função para reordenar parâmetros
+  const reorderParameters = useCallback((newParameters) => {
+    // Adiciona campo ordem aos parâmetros reordenados
+    const parametersWithOrder = newParameters.map((param, index) => ({
+      ...param,
+      ordem: index + 1
+    }))
+    setParameters(parametersWithOrder)
+  }, [])
 
   // Funções para manipular resultados
   const addResult = () => {
-    setResults([
-      ...results,
-      {
-        name: "",
-        description: "",
-        expression: "",
-        unit: "",
-        precision: 2,
-        isMainResult: false,
-      },
-    ])
-    addToChangeHistory("Adicionado novo resultado")
+    const newResult = {
+      id: `result-${Date.now()}-${Math.random()}`,
+      name: "",
+      description: "",
+      expression: "",
+      unit: "",
+      precision: 2,
+      isMainResult: false,
+      ordem: results.length + 1
+    }
+    setResults([...results, newResult])
   }
 
   const removeResult = (index) => {
     const resultName = results[index].name
     const updatedResults = results.filter((_, i) => i !== index)
-    setResults(updatedResults)
-    addToChangeHistory(`Removido resultado: ${resultName || `Resultado ${index + 1}`}`)
+    
+    // Reordena os resultados restantes e ajusta o resultado principal se necessário
+    const reorderedResults = updatedResults.map((result, i) => {
+      const newResult = { ...result, ordem: i + 1 }
+      // Se não há resultado principal, torna o primeiro como principal
+      if (i === 0 && !updatedResults.some(r => r.isMainResult)) {
+        newResult.isMainResult = true
+      }
+      return newResult
+    })
+    setResults(reorderedResults)
   }
 
   const updateResult = (index, field, value) => {
@@ -278,31 +398,106 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           result.isMainResult = false
         }
       })
-      addToChangeHistory(
-        `Definido "${updatedResults[index].name || `Resultado ${index + 1}`}" como resultado principal`,
-      )
+
     }
 
     updatedResults[index][field] = value
     setResults(updatedResults)
 
     if (field === "expression") {
-      addToChangeHistory(`Atualizada expressão do resultado: ${updatedResults[index].name || `Resultado ${index + 1}`}`)
+
     }
   }
 
+  // Função para reordenar resultados
+  const reorderResults = useCallback((newResults) => {
+    // Adiciona campo ordem aos resultados reordenados
+    const resultsWithOrder = newResults.map((result, index) => ({
+      ...result,
+      ordem: index + 1
+    }))
+    setResults(resultsWithOrder)
+    // Não fazer scroll automático durante reordenação
+  }, [])
+
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
-    const updatedResults = [...results]
-    updatedResults[resultIndex].expression += paramName
-    setResults(updatedResults)
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const paramText = `@[${paramName}]`
+      
+      // Insere o parâmetro na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + paramText + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor após o parâmetro inserido
+      setTimeout(() => {
+        const newCursorPosition = start + paramText.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + `@[${paramName}]`
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
   }
 
   // Função para inserir uma função matemática na expressão
   const insertMathFunction = (resultIndex, funcName) => {
-    const updatedResults = [...results]
-    updatedResults[resultIndex].expression += `${funcName}()`
-    setResults(updatedResults)
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const funcText = `${funcName}()`
+      
+      // Insere a função na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + funcText + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor dentro dos parênteses da função
+      setTimeout(() => {
+        const newCursorPosition = start + funcText.length - 1 // Posiciona dentro dos parênteses
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + `${funcName}()`
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
+  }
+
+  // Função para inserir operador na posição do cursor
+  const insertOperatorInExpression = (resultIndex, operator) => {
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      
+      // Insere o operador na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + operator + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor após o operador inserido
+      setTimeout(() => {
+        const newCursorPosition = start + operator.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + operator
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
   }
 
   // Função para adicionar uma tag
@@ -310,14 +505,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     if (currentTag.trim() && !tags.includes(currentTag.trim())) {
       setTags([...tags, currentTag.trim()])
       setCurrentTag("")
-      addToChangeHistory(`Adicionada tag: ${currentTag.trim()}`)
+  
     }
   }
 
   // Função para remover uma tag
   const removeTag = (tagToRemove) => {
     setTags(tags.filter((tag) => tag !== tagToRemove))
-    addToChangeHistory(`Removida tag: ${tagToRemove}`)
+
   }
 
   // Validação por etapa
@@ -445,9 +640,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         .replace(/Math\.exp\(/g, "Math.exp(")
         .replace(/Math\.PI/g, "Math.PI")
 
-      // Substitui os nomes dos parâmetros pelos valores
+      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
       Object.keys(values).forEach((key) => {
-        const regex = new RegExp(key, "g")
+        const regex = new RegExp(`@\\[${key}\\]`, "g")
         expressionToEval = expressionToEval.replace(regex, values[key])
       })
 
@@ -546,7 +741,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   const handleUpdateCalculation = async () => {
     try {
       setLoading(true);
-      // Validate input data here
+      
+      // Prepara parâmetros com ordem
+      const parametersWithOrder = parameters.map((param, index) => ({
+        ...param,
+        ordem: param.ordem || index + 1,
+        lastModified: new Date(),
+        tipo: 'parameter'
+      }))
+
+      // Prepara resultados com ordem
+      const resultsWithOrder = results.map((result, index) => ({
+        ...result,
+        ordem: result.ordem || index + 1,
+        lastModified: new Date(),
+        tipo: 'result'
+      }))
+      
       // Update the Firestore document
       const calculationRef = doc(db, "calculations", calculationId);
       await updateDoc(calculationRef, {
@@ -554,8 +765,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         description: calculationDescription,
         category: selectedCategory,
         tags: tags,
-        parameters: parameters,
-        results: results,
+        parameters: parametersWithOrder,
+        results: resultsWithOrder,
         lastModified: new Date(),
       });
       setSuccess(true);
@@ -573,16 +784,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     {loading ? "Atualizando..." : "Atualizar Cálculo"}
   </button>
 
-  // Formatar data para exibição
-  const formatDate = (date) => {
-    return new Date(date).toLocaleString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  }
+
 
   // Renderizar o indicador de progresso
   const renderProgressIndicator = () => (
@@ -632,51 +834,18 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         </div>
 
         <div className="header-actions">
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            className={`history-button ${showHistory ? "active" : ""}`}
-            title="Histórico de alterações"
-          >
-            <History size={18} />
-            <span>Histórico</span>
-          </button>
 
-          {step < totalSteps && (
-            <button
-              onClick={() => setPreviewMode(!previewMode)}
-              className={`preview-toggle-button ${previewMode ? "active" : ""}`}
-            >
-              {previewMode ? "Editar" : "Visualizar"}
-            </button>
-          )}
+
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+          >
+            {previewMode ? "Editar" : "Visualizar"}
+          </button>
         </div>
       </div>
 
-      {/* Histórico de alterações */}
-      {showHistory && (
-        <div className="history-panel">
-          <div className="history-header">
-            <h3>Histórico de Alterações</h3>
-            <button onClick={() => setShowHistory(false)} className="close-history-button">
-              <X size={18} />
-            </button>
-          </div>
-          <div className="history-content">
-            {changeHistory.length > 0 ? (
-              <ul className="history-list">
-                {changeHistory.map((entry, index) => (
-                  <li key={index} className="history-item">
-                    <span className="history-timestamp">{formatDate(entry.timestamp)}</span>
-                    <span className="history-description">{entry.description}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="no-history">Nenhuma alteração registrada.</p>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Mensagens de feedback */}
       {error && (
@@ -844,22 +1013,26 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
               </div>
             </div>
 
-            {parameters.map((param, index) => (
-              <div key={index} className="parameter-card">
-                <div className="parameter-card-header">
-                  <h3>Parâmetro {index + 1}</h3>
-                  {parameters.length > 1 && (
-                    <button
-                      onClick={() => removeParameter(index)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover parâmetro"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
+            <DraggableList
+              items={parameters}
+              onReorder={reorderParameters}
+              keyExtractor={(param) => param.id}
+              renderItem={(param, index) => (
+                <div className="parameter-card">
+                  <div className="parameter-card-header">
+                    <h3>Parâmetro {index + 1}</h3>
+                    {parameters.length > 1 && (
+                      <button
+                        onClick={() => removeParameter(index)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover parâmetro"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
+                  </div>
 
                 <div className="parameter-form">
                   <div className="form-row">
@@ -888,7 +1061,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                         onChange={(e) => updateParameter(index, "type", e.target.value)}
                       >
                         <option value="number">Número</option>
-                        <option value="text">Texto</option>
                         <option value="select">Seleção</option>
                       </select>
                     </div>
@@ -1000,7 +1172,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   )}
                 </div>
               </div>
-            ))}
+              )}
+            />
 
             <button onClick={addParameter} className="add-parameter-button" type="button">
               <PlusCircle size={18} />
@@ -1032,25 +1205,29 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
               </div>
             )}
 
-            {results.map((result, resultIndex) => (
-              <div key={resultIndex} className="result-card">
-                <div className="result-card-header">
-                  <div className="flex items-center">
-                    <h3>Resultado {resultIndex + 1}</h3>
-                    {result.isMainResult && <span className="main-result-badge">Principal</span>}
+            <DraggableList
+              items={results}
+              onReorder={reorderResults}
+              keyExtractor={(result) => result.id}
+              renderItem={(result, resultIndex) => (
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <div className="flex items-center">
+                      <h3>Resultado {resultIndex + 1}</h3>
+                      {result.isMainResult && <span className="main-result-badge">Principal</span>}
+                    </div>
+                    {results.length > 1 && (
+                      <button
+                        onClick={() => removeResult(resultIndex)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover resultado"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
                   </div>
-                  {results.length > 1 && (
-                    <button
-                      onClick={() => removeResult(resultIndex)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover resultado"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
 
                 <div className="result-form">
                   <div className="form-row">
@@ -1120,7 +1297,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                             <button
                               key={op}
                               type="button"
-                              onClick={() => updateResult(resultIndex, "expression", result.expression + op)}
+                              onClick={() => insertOperatorInExpression(resultIndex, op)}
                               className="operator-button"
                             >
                               {op}
@@ -1168,11 +1345,34 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       </div>
                     </div>
 
+                    <div className="expression-controls">
+                      <div className="undo-redo-buttons">
+                        <button
+                          type="button"
+                          onClick={() => undoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] <= 0}
+                          title="Desfazer (Ctrl+Z)"
+                        >
+                          <Undo2 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => redoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] >= (expressionHistory[resultIndex]?.length - 1 || 0)}
+                          title="Refazer (Ctrl+Y)"
+                        >
+                          <Redo2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
                     <textarea
                       id={`result-expression-${resultIndex}`}
-                      placeholder="Ex: param1 * param2 / 100"
+                      placeholder="Ex: @[param1] * @[param2] / 100"
                       value={result.expression}
-                      onChange={(e) => updateResult(resultIndex, "expression", e.target.value)}
+                      onChange={(e) => updateExpressionWithHistory(resultIndex, e.target.value)}
                       className={`expression-input ${validationErrors.results[resultIndex]?.expression ? "input-error" : ""}`}
                       rows={3}
                     />
@@ -1210,7 +1410,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   </div>
                 </div>
               </div>
-            ))}
+              )}
+            />
 
             <button onClick={addResult} className="add-result-button" type="button">
               <PlusCircle size={18} />
@@ -1262,7 +1463,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                   <div className="review-parameter-header">
                     <span className="parameter-name">{param.name}</span>
                     <span className="parameter-type">
-                      {param.type === "number" ? "Número" : param.type === "text" ? "Texto" : "Seleção"}
+                      {param.type === "number" ? "Número" : "Seleção"}
                       {param.unit && ` (${param.unit})`}
                     </span>
                   </div>
@@ -1399,12 +1600,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 ))}
               </div>
 
-              <div className="preview-calculate">
-                <button onClick={updatePreview} className="calculate-button">
-                  <Calculator size={16} />
-                  <span>Calcular</span>
-                </button>
-              </div>
+
             </div>
           </div>
         )}

@@ -1,9 +1,8 @@
-import { useState, useContext } from "react";
+import React, { useState, useContext, useRef, useEffect } from "react";
 import {
   Edit,
   Trash2,
   MoreVertical,
-  Copy,
   Share2,
   AlertTriangle,
   Lock,
@@ -18,9 +17,27 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin, user } = useContext(AuthContext);
+  const menuRef = useRef(null);
   
   // Verifica se o usuário atual é o criador do cálculo ou um administrador
   const canEdit = isAdmin || (user && calculation.createdBy === user.uid);
+
+  // Fecha o menu ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const handleEdit = () => {
     setShowMenu(false);
@@ -41,11 +58,7 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
     }
   };
 
-  const handleDuplicate = () => {
-    // Implementação futura
-    setShowMenu(false);
-    alert("Funcionalidade de duplicação será implementada em breve.");
-  };
+
 
   // const handleShare = () => {
   //   // Implementação futura
@@ -54,7 +67,7 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
   // };
 
   return (
-    <div className="calculation-actions">
+    <div className="calculation-actions" ref={menuRef}>
       <button
         className="actions-toggle"
         onClick={() => setShowMenu(!showMenu)}
@@ -70,10 +83,6 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
               <button className="action-item" onClick={handleEdit}>
                 <Edit size={16} />
                 <span>Editar</span>
-              </button>
-              <button className="action-item" onClick={handleDuplicate}>
-                <Copy size={16} />
-                <span>Duplicar</span>
               </button>
               {/* <button className="action-item" onClick={handleShare}>
                 <Share2 size={16} />
