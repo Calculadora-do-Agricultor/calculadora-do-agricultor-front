@@ -1037,14 +1037,118 @@
     border-bottom: 1px solid #f3f4f6;
   }
   
+  .category-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
   .category-info h2 {
     font-size: 1.5rem;
     font-weight: 600;
     color: #00418f;
-    margin: 0 0 0.5rem 0;
+    margin: 0;
   }
   
-  .category-info p {
+  .category-description-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #e0f2fe;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .category-description-indicator:hover {
+    background-color: #b3e5fc;
+    transform: scale(1.1);
+  }
+  
+  .category-description-indicator:focus {
+    outline: 2px solid #00418f;
+    outline-offset: 2px;
+  }
+  
+  .category-description-indicator.active {
+    background-color: #00418f;
+    transform: rotate(180deg);
+  }
+  
+  .category-description-indicator.active:hover {
+    background-color: #003366;
+  }
+  
+  .category-description-indicator.active .info-icon {
+    color: white;
+  }
+  
+  .info-icon {
+    color: #0277bd;
+    transition: color 0.2s ease;
+    margin: 0;
+  }
+  
+
+  
+  .category-description-container {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 0 2rem;
+  }
+  
+  .category-description {
+    font-size: 0.875rem;
+    color: #374151;
+    margin: 0;
+    line-height: 1.5;
+    font-style: italic;
+    background-color: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #00418f;
+    max-height: 150px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    animation: slideDown 0.3s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .category-description::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .category-description::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  .category-description::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .category-description::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+  
+  .category-info p:not(.category-description) {
     font-size: 0.875rem;
     color: #6b7280;
     margin: 0;
