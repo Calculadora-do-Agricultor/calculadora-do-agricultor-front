@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react"
-import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore"
+import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
@@ -11,16 +11,16 @@ import {
   LayoutGrid,
   ListIcon,
   SlidersHorizontal,
-
   Share2,
   ChevronDown,
   AlertCircle,
   Eye,
+  AlertTriangle,
 } from "lucide-react"
 import CalculationModal  from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
-import "./styles.css"
 import CalculationActions from "../CalculationActions"
+import "./styles.css"
 
 const CalculationList = ({
   category,
@@ -47,6 +47,27 @@ const CalculationList = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sortOption, setSortOption] = useState(initialSortOption)
   const [showSortOptions, setShowSortOptions] = useState(false)
+  
+  // Estados para o modal de exclusão global
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [calculationToDelete, setCalculationToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Efeito para bloquear/desbloquear scroll do body quando o modal de exclusão está aberto
+  useEffect(() => {
+    if (showDeleteModal) {
+      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Restaura o scroll do body quando o modal é fechado
+      document.body.style.overflow = 'unset'
+    }
+
+    // Cleanup function para garantir que o scroll seja restaurado
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [showDeleteModal])
 
 
   useEffect(() => {
@@ -144,6 +165,41 @@ const CalculationList = ({
     if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} semanas atrás`
     if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} meses atrás`
     return `${Math.floor(diffInDays / 365)} anos atrás`
+  }
+
+  // Função para abrir o modal de exclusão
+  const handleDeleteClick = (calculation) => {
+    setCalculationToDelete(calculation)
+    setShowDeleteModal(true)
+  }
+
+  // Função para confirmar a exclusão
+  const handleConfirmDelete = async () => {
+    if (!calculationToDelete) return
+
+    try {
+      setIsDeleting(true)
+      await deleteDoc(doc(db, "calculations", calculationToDelete.id))
+      
+      // Remover o cálculo da lista
+      setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
+      setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
+      
+      // Fechar o modal
+      setShowDeleteModal(false)
+      setCalculationToDelete(null)
+    } catch (error) {
+      console.error("Erro ao excluir cálculo:", error)
+      alert("Erro ao excluir cálculo. Tente novamente.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Função para cancelar a exclusão
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false)
+    setCalculationToDelete(null)
   }
 
   // Skeleton loading component
@@ -323,10 +379,7 @@ const CalculationList = ({
                 <CalculationActions
                   calculation={calculation}
                   onEdit={onEditCalculation}
-                  onDeleted={(deletedId) => {
-                    // Remover o cálculo excluído da lista
-                    setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== deletedId))
-                  }}
+                  onDelete={() => handleDeleteClick(calculation)}
                 />
               </div>
             )}
@@ -419,6 +472,42 @@ const CalculationList = ({
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />
+      )}
+
+      {/* Modal de Exclusão Global */}
+      {showDeleteModal && calculationToDelete && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <div className="delete-modal-header">
+              <AlertTriangle className="delete-modal-icon" size={48} />
+              <h2>Confirmar exclusão</h2>
+            </div>
+            <div className="delete-modal-content">
+              <p>
+                Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
+              </p>
+              <p className="delete-modal-warning">
+                Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            <div className="delete-modal-actions">
+              <button 
+                className="delete-modal-cancel" 
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </button>
+              <button 
+                className="delete-modal-confirm" 
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Excluindo..." : "Sim, excluir"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

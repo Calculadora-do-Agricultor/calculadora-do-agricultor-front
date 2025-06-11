@@ -234,7 +234,7 @@
     z-index: 100;
     display: flex;
     flex-direction: column;
-    animation: slideInLeft 0.3s ease;
+    animation: slideInLeft 0.2s ease;
   }
   
   @keyframes slideInLeft {
@@ -873,6 +873,7 @@
     border-radius: 0.75rem;
     border: 1px solid #e5e7eb;
     overflow: hidden;
+    background-color: transparent;
   }
   
   .categories-header {
@@ -1334,7 +1335,7 @@
   border: 2px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 6px 20px rgba(0, 65, 143, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 50;
 }
 
@@ -1358,14 +1359,14 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 50;
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(0, 65, 143, 0.1);
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(1.5rem) scale(0.95);
+    transform: translateY(0.75rem) scale(0.98);
   }
   to {
     opacity: 1;
@@ -1417,7 +1418,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
@@ -1430,7 +1431,7 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(0, 65, 143, 0.05), transparent);
-  transition: left 0.5s ease;
+  transition: left 0.3s ease;
 }
 
 .admin-option:hover {
@@ -1465,7 +1466,7 @@
   width: 2rem;
   height: 2rem;
   box-shadow: 0 2px 8px rgba(255, 238, 0, 0.3);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 

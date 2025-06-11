@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
 import BrazilFlag from "../../BrazilFlag";
-import { ChevronDownIcon, UserIcon, CogIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, UserCircleIcon, CogIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const ProfileMenu = ({ userName }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +28,7 @@ const ProfileMenu = ({ userName }) => {
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <UserIcon className="w-5 h-5" />
+        <UserCircleIcon className="w-5 h-5" />
         <span className="font-medium">Olá {userName}!</span>
         <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
       </button>

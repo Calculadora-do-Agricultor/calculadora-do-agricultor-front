@@ -7,7 +7,7 @@
 
 /* Cards de métricas com transições básicas */
 .metric-card {
-  transition: border-color 200ms ease;
+  transition: border-color 150ms ease;
 }
 
 .metric-card:hover {
@@ -17,12 +17,12 @@
 /* Filtros com transições suaves */
 .filter-input,
 .filter-select {
-  transition: border-color 200ms ease;
+  transition: border-color 150ms ease;
 }
 
 /* Cards de logs com transições básicas */
 .log-card {
-  transition: border-color 200ms ease;
+  transition: border-color 150ms ease;
   opacity: 1;
 }
 
@@ -32,7 +32,7 @@
 
 /* Botões com feedback visual simples */
 .btn-primary {
-  transition: background-color 200ms ease;
+  transition: background-color 150ms ease;
 }
 
 .btn-primary:hover {
@@ -41,7 +41,7 @@
 
 /* Ícones sem animações complexas */
 .icon-hover {
-  transition: color 200ms ease;
+  transition: color 150ms ease;
 }
 
 .icon-hover:hover {
@@ -50,7 +50,7 @@
 
 /* Paginação com transições simples */
 .pagination-btn {
-  transition: background-color 200ms ease;
+  transition: background-color 150ms ease;
 }
 
 .pagination-btn:hover {
@@ -68,7 +68,7 @@
 }
 
 .fade-in {
-  animation: fadeIn 300ms ease;
+  animation: fadeIn 200ms ease;
 }
 
 /* Classe para reduzir movimento em dispositivos com preferência */
