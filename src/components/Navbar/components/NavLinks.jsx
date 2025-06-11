@@ -69,7 +69,7 @@ const NavLinks = ({ user }) => {
                 >
                   <Link
                     to="/admin/logs"
-                    className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
+                    className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/logs' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
                     role="menuitem"
                     onClick={() => setAdminMenuOpen(false)}
                   >
