@@ -1,7 +1,9 @@
 export { default as Alert } from './Alert';
 
 export { default as BrazilFlag } from './BrazilFlag';
-export { default as CalculationActions } from './CalculationActions';
+export { default as CalculationActions } from "./CalculationActions"
+export { default as CategoryActions } from "./CategoryActions"
+export { default as EditCategory } from "./EditCategory"
 export { default as CalculationList } from './CalculationList';
 export { default as CalculationModal } from './CalculationModal';
 export { default as Categories } from './Categories';
