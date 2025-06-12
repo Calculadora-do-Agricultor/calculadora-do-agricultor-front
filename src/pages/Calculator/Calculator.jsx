@@ -50,6 +50,7 @@ export default function Calculator() {
   const [currentSortOption, setCurrentSortOption] = useState("name_asc")
   const [selectedComplexities, setSelectedComplexities] = useState([])
   const [showCategoryDescription, setShowCategoryDescription] = useState(false)
+  const [calculos, setCalculos] = useState([])
 
   const fetchCategorias = async () => {
     try {
@@ -156,39 +157,6 @@ export default function Calculator() {
 
   return (
     <div className="calculator-page">
-      {/* Menu móvel */}
-      {showMobileMenu && (
-        <div className="mobile-menu">
-          <div className="mobile-menu-header">
-            <h3>Menu</h3>
-            <button onClick={() => setShowMobileMenu(false)} aria-label="Fechar menu">
-              <X size={24} />
-            </button>
-          </div>
-          <div className="mobile-menu-content">
-            <div className="mobile-menu-section">
-              <h4>Categorias</h4>
-              <ul className="mobile-categories">
-                {categorias.map((categoria) => (
-                  <li key={categoria.id}>
-                    <button
-                      className={categoriaSelecionada === categoria.name ? "active" : ""}
-                      onClick={() => {
-                        setCategoriaSelecionada(categoria.name)
-                        setShowMobileMenu(false)
-                      }}
-                    >
-                      {categoria.name}
-                      <ChevronRight size={16} />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="main-content">
         {/* Banner principal */}
         <div className="main-banner">
@@ -235,7 +203,19 @@ export default function Calculator() {
           </div>
         </div>
 
-
+        {/* Categorias móveis */}
+        <div className="mobile-categories-section">
+          <div className="mobile-categories-header">
+            <h3>Categorias</h3>
+          </div>
+          <div className="mobile-categories-content">
+            <Categories
+              categories={categorias}
+              onSelect={setCategoriaSelecionada}
+              selectedCategory={categoriaSelecionada}
+            />
+          </div>
+        </div>
 
         {/* Conteúdo principal com sidebar e lista de cálculos */}
         <div className="content-container" id="calculations-list">
