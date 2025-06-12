@@ -210,10 +210,11 @@ export default function Calculator() {
           </div>
           <div className="mobile-categories-content">
             <Categories
-              categories={categorias}
-              onSelect={setCategoriaSelecionada}
-              selectedCategory={categoriaSelecionada}
-            />
+                categories={categorias}
+                onSelect={setCategoriaSelecionada}
+                selectedCategory={categoriaSelecionada}
+                onCategoryUpdated={fetchCategorias}
+              />
           </div>
         </div>
 
@@ -240,6 +241,7 @@ export default function Calculator() {
                       setCategoriaSelecionada(category)
                     }}
                     selectedCategory={categoriaSelecionada}
+                    onCategoryUpdated={fetchCategorias}
                   />
                 </div>
               </>
