@@ -161,7 +161,7 @@ const Footer = () => {
               <form className="mt-2 space-y-2">
                 <input
                   type="email"
-                  placeholder="Seu sugestão"
+                  placeholder="Sua sugestão"
                   className="w-full px-4 py-2 rounded bg-[#00418F]/80 border border-[#00418F]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFEE00]"
                 />
                 <button

@@ -37,7 +37,7 @@ const Navbar = () => {
 
       <div className="flex items-center space-x-4">
         <NavLinks user={user} />
-        {user !== null && <ProfileMenu userName={userName} />}
+        {user !== null && <div className="hidden lg:block"><ProfileMenu userName={userName} /></div>}
         <MobileMenu user={user} userName={userName} />
       </div>
     </nav>

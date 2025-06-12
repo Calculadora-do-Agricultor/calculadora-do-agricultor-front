@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
 import BrazilFlag from "../../BrazilFlag";
+import { ChevronDownIcon, UserCircleIcon, CogIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const ProfileMenu = ({ userName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -22,19 +24,13 @@ const ProfileMenu = ({ userName }) => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-white px-3 py-1 rounded-lg transition-all duration-300 transform hover:scale-105 text-base hover:bg-[#00418F] focus:ring focus:ring-[#FFEE00]"
+        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${location.pathname === '/Settings' ? 'bg-[#FFEE00] text-[#00418F]' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F] focus:ring focus:ring-[#FFEE00]'}`}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
+        <UserCircleIcon className="w-5 h-5" />
         <span className="font-medium">Olá {userName}!</span>
-        <svg
-          className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -44,11 +40,12 @@ const ProfileMenu = ({ userName }) => {
         >
           <Link
             to="/Settings"
-            className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
+            className={`flex items-center gap-2 px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/Settings' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
             role="menuitem"
             onClick={() => setIsOpen(false)}
           >
-            Configurações
+            <CogIcon className="w-5 h-5" />
+            <span>Configurações</span>
           </Link>
           <div className="block px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg cursor-pointer">
             <div className="flex items-center gap-2">
@@ -61,10 +58,11 @@ const ProfileMenu = ({ userName }) => {
               handleLogout();
               setIsOpen(false);
             }}
-            className="block w-full text-left px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00] transition-all duration-300 transform hover:scale-105 rounded-lg"
             role="menuitem"
           >
-            Sair
+            <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            <span>Sair</span>
           </button>
         </div>
       )}

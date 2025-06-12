@@ -4,18 +4,13 @@ import {
   Trash2,
   MoreVertical,
   Share2,
-  AlertTriangle,
   Lock,
 } from "lucide-react";
-import { doc, deleteDoc } from "firebase/firestore";
-import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
 import "./styles.css";
 
-const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
+const CalculationActions = ({ calculation, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const { isAdmin, user } = useContext(AuthContext);
   const menuRef = useRef(null);
   
@@ -44,17 +39,10 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
     window.location.href = `/edit-calculation/${calculation.id}`;
   };
 
-  const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteDoc(doc(db, "calculations", calculation.id));
-      setShowDeleteConfirm(false);
-      if (onDeleted) onDeleted(calculation.id);
-    } catch (error) {
-      console.error("Erro ao excluir cálculo:", error);
-      alert("Erro ao excluir cálculo. Tente novamente.");
-    } finally {
-      setIsDeleting(false);
+  const handleDeleteClick = () => {
+    setShowMenu(false);
+    if (onDelete) {
+      onDelete(calculation);
     }
   };
 
@@ -90,10 +78,7 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
               </button> */}
               <button
                 className="action-item delete"
-                onClick={() => {
-                  setShowDeleteConfirm(true);
-                  setShowMenu(false);
-                }}
+                onClick={handleDeleteClick}
               >
                 <Trash2 size={16} />
                 <span>Excluir</span>
@@ -105,38 +90,6 @@ const CalculationActions = ({ calculation, onEdit, onDeleted }) => {
               <span>Acesso restrito a administradores</span>
             </div>
           )}
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div className="delete-confirmation">
-          <div className="delete-confirmation-content">
-            <div className="delete-icon">
-              <AlertTriangle size={24} />
-            </div>
-            <h3>Confirmar exclusão</h3>
-            <p>
-              Tem certeza que deseja excluir o cálculo "{calculation.name}"?
-            </p>
-            <p className="delete-warning">Esta ação não pode ser desfeita.</p>
-
-            <div className="delete-actions">
-              <button
-                className="cancel-button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </button>
-              <button
-                className="confirm-button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Excluindo..." : "Sim, excluir"}
-              </button>
-            </div>
-          </div>
         </div>
       )}
     </div>

@@ -120,12 +120,6 @@ export const Tooltip = ({ children, content, position = "top", delay = 300 }) =>
           }}
         >
           {content}
-          <style jsx>{`
-            @keyframes tooltipFadeIn {
-              from { opacity: 0; }
-              to { opacity: 0.9; }
-            }
-          `}</style>
         </div>
       )}
     </>
