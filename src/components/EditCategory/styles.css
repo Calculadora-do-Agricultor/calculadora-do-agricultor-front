@@ -129,11 +129,21 @@
 
 .edit-category-modal .modal-footer {
   display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: space-between;
   padding: 16px 20px;
   border-top: 1px solid #e5e7eb;
   background-color: #f9fafb;
+}
+
+.edit-category-modal .modal-footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.edit-category-modal .modal-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .edit-category-modal .cancel-button {
@@ -172,9 +182,29 @@
 }
 
 .edit-category-modal .update-button:disabled,
-.edit-category-modal .cancel-button:disabled {
+.edit-category-modal .cancel-button:disabled,
+.edit-category-modal .delete-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.edit-category-modal .delete-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #fff;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-category-modal .delete-button:hover {
+  background-color: #fee2e2;
 }
 
 .edit-category-modal .animate-spin {

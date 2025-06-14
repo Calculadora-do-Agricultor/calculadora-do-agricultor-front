@@ -193,7 +193,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated 
                     <CategoryActions
                       category={category}
                       onEdit={() => handleEditCategory(category)}
-                      onDelete={() => handleDeleteClick(category)}
                     />
                   </div>
                 )}
@@ -213,6 +212,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated 
           category={categoryToEdit}
           onUpdate={handleUpdateCategory}
           onCancel={handleCloseEditModal}
+          onDelete={handleDeleteClick}
         />
       )}
 

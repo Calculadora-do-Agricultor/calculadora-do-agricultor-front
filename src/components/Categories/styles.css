@@ -206,7 +206,7 @@
 .category-actions-wrapper {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: 12px;
   transform: translateY(-50%);
   z-index: 5;
   display: flex;
@@ -238,7 +238,7 @@
   font-weight: 600;
   transition: all 0.2s ease;
   border: 1px solid #d1e2ff;
-  margin-right: 30px; /* Adicionado espaço à direita para afastar dos três pontos */
+  margin-right: 40px; /* Espaço à direita para afastar do botão de edição */
 }
 
 /* Estilos para o modal de exclusão */
