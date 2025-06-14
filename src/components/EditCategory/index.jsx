@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
 import { doc, updateDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
-import { X, Save, AlertCircle, Loader2 } from "lucide-react"
+import { X, Save, AlertCircle, Loader2, Trash2 } from "lucide-react"
 import "./styles.css"
 
-const EditCategory = ({ category, onUpdate, onCancel }) => {
+const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
   const [categoryName, setCategoryName] = useState("")
   const [categoryDescription, setCategoryDescription] = useState("")
   const [error, setError] = useState("")
@@ -101,22 +101,36 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
         </div>
 
         <div className="modal-footer">
-          <button onClick={onCancel} className="cancel-button" disabled={isSubmitting} type="button">
-            Cancelar
-          </button>
-          <button onClick={handleUpdateCategory} className="update-button" disabled={isSubmitting} type="button">
-            {isSubmitting ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                <span>Atualizando...</span>
-              </>
-            ) : (
-              <>
-                <Save size={16} />
-                <span>Salvar Alterações</span>
-              </>
-            )}
-          </button>
+          <div className="modal-footer-left">
+            <button 
+              onClick={() => onDelete && onDelete(category)} 
+              className="delete-button" 
+              disabled={isSubmitting} 
+              type="button"
+              aria-label="Excluir categoria"
+            >
+              <Trash2 size={16} />
+              <span>Excluir</span>
+            </button>
+          </div>
+          <div className="modal-footer-right">
+            <button onClick={onCancel} className="cancel-button" disabled={isSubmitting} type="button">
+              Cancelar
+            </button>
+            <button onClick={handleUpdateCategory} className="update-button" disabled={isSubmitting} type="button">
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Atualizando...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={16} />
+                  <span>Salvar Alterações</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
