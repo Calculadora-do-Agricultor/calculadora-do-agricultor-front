@@ -9,6 +9,7 @@ import React from "react";
 import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
 import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
 import LogsManagement from "./pages/LogsManagement";
+import UserManagement from "./pages/UserManagement";
 
 function App() {
   return (
@@ -64,6 +65,14 @@ function App() {
               element={
                 <ProtectedRoute adminOnly={true} redirectTo="/">
                   <LogsManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute adminOnly={true} redirectTo="/">
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />

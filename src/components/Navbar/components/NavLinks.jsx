@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, CalculatorIcon, CogIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const NavLinks = ({ user }) => {
@@ -76,6 +76,17 @@ const NavLinks = ({ user }) => {
                     <div className="flex items-center gap-2">
                       <ClipboardDocumentListIcon className="w-5 h-5" />
                       <span>Gerenciar Logs</span>
+                    </div>
+                  </Link>
+                  <Link
+                    to="/admin/users"
+                    className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/users' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
+                    role="menuitem"
+                    onClick={() => setAdminMenuOpen(false)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="w-5 h-5" />
+                      <span>Gerenciar Usuários</span>
                     </div>
                   </Link>
                 </div>

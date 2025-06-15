@@ -15,6 +15,8 @@ import {
   CogIcon,
   EyeIcon,
   EyeSlashIcon,
+  ClipboardDocumentListIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline"
 import { signOut } from "firebase/auth"
 import { auth, db } from "../../services/firebaseConfig"
@@ -31,6 +33,7 @@ const Settings = () => {
   const [userRole, setUserRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("profile")
+  const [isAdmin, setIsAdmin] = useState(false)
   const { preferences, updatePreferences, hideFooter, toggleHideFooter } = useContext(AuthContext)
 
   useEffect(() => {
@@ -48,8 +51,10 @@ const Settings = () => {
             // Determinar o cargo do usuário
             if (userData.role === "admin") {
               setUserRole("Administrador")
+              setIsAdmin(true)
             } else {
               setUserRole("Usuário")
+              setIsAdmin(false)
             }
           }
         } catch (error) {
@@ -164,6 +169,10 @@ const Settings = () => {
                 <LockClosedIcon className="w-5 h-5 mr-3" />
                 <span className="font-medium">Segurança</span>
               </button>
+
+              {/* Removida a seção de Administração */}
+
+              {/* Seção de Administração removida */}
             </nav>
 
             <div className="mt-8 pt-6 border-t border-[#00418F]/10">
