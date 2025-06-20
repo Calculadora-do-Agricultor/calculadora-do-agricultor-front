@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Eye,
   AlertTriangle,
+  CheckCircle,
+  Loader2,
 } from "lucide-react"
 import CalculationModal  from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
@@ -52,6 +54,8 @@ const CalculationList = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [calculationToDelete, setCalculationToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+  const [deleteSuccess, setDeleteSuccess] = useState(false)
 
   // Efeito para bloquear/desbloquear scroll do body quando o modal de exclusão está aberto
   useEffect(() => {
@@ -61,6 +65,9 @@ const CalculationList = ({
     } else {
       // Restaura o scroll do body quando o modal é fechado
       document.body.style.overflow = 'unset'
+      // Limpa os estados de erro e sucesso quando o modal é fechado
+      setDeleteError(null)
+      setDeleteSuccess(false)
     }
 
     // Cleanup function para garantir que o scroll seja restaurado
@@ -179,18 +186,28 @@ const CalculationList = ({
 
     try {
       setIsDeleting(true)
+      setDeleteError(null)
+      
+      // Adicionar um pequeno atraso para mostrar o estado de loading
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       await deleteDoc(doc(db, "calculations", calculationToDelete.id))
       
       // Remover o cálculo da lista
       setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       
-      // Fechar o modal
-      setShowDeleteModal(false)
-      setCalculationToDelete(null)
+      // Mostrar mensagem de sucesso antes de fechar o modal
+      setDeleteSuccess(true)
+      
+      // Fechar o modal após um breve delay para mostrar a mensagem de sucesso
+      setTimeout(() => {
+        setShowDeleteModal(false)
+        setCalculationToDelete(null)
+      }, 1500)
     } catch (error) {
       console.error("Erro ao excluir cálculo:", error)
-      alert("Erro ao excluir cálculo. Tente novamente.")
+      setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
     } finally {
       setIsDeleting(false)
     }
@@ -476,36 +493,62 @@ const CalculationList = ({
 
       {/* Modal de Exclusão Global */}
       {showDeleteModal && calculationToDelete && (
-        <div className="delete-modal-overlay">
+        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
           <div className="delete-modal">
-            <div className="delete-modal-header">
-              <AlertTriangle className="delete-modal-icon" size={48} />
-              <h2>Confirmar exclusão</h2>
-            </div>
-            <div className="delete-modal-content">
-              <p>
-                Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
-              </p>
-              <p className="delete-modal-warning">
-                Esta ação não pode ser desfeita.
-              </p>
-            </div>
-            <div className="delete-modal-actions">
-              <button 
-                className="delete-modal-cancel" 
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="delete-modal-confirm" 
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Excluindo..." : "Sim, excluir"}
-              </button>
-            </div>
+            {deleteSuccess ? (
+              <div className="delete-modal-success">
+                <CheckCircle className="delete-modal-success-icon" size={48} />
+                <h2 id="delete-modal-title">Cálculo excluído</h2>
+                <p>O cálculo foi excluído com sucesso.</p>
+              </div>
+            ) : (
+              <>
+                <div className="delete-modal-header">
+                  <AlertTriangle className="delete-modal-icon" size={48} />
+                  <h2 id="delete-modal-title">Confirmar exclusão</h2>
+                </div>
+                <div className="delete-modal-content">
+                  <p>
+                    Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
+                  </p>
+                  <p className="delete-modal-warning">
+                    Esta ação não pode ser desfeita.
+                  </p>
+                  
+                  {deleteError && (
+                    <div className="delete-modal-error">
+                      <AlertCircle size={16} />
+                      <span>{deleteError}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="delete-modal-actions">
+                  <button 
+                    className="delete-modal-cancel" 
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                    aria-label="Cancelar exclusão"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    className="delete-modal-confirm" 
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    aria-label="Confirmar exclusão"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Excluindo...</span>
+                      </>
+                    ) : (
+                      "Sim, excluir"
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
