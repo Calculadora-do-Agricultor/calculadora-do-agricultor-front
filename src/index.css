@@ -1,1 +1,7 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+/* Tooltip animation */
+@keyframes tooltipFadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.9; }
+}

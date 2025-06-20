@@ -1,114 +1,150 @@
-"use client"
+;
 
-import { useState, useContext, useEffect } from "react"
-import { useNavigate, Link } from "react-router-dom"
-import { AuthContext } from "../../context/AuthContext"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "../../services/firebaseConfig"
-import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
-import Alert from "../../components/Alert/Alert"
+import { useState, useContext, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth, db } from "../../services/firebaseConfig";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {
+  EnvelopeIcon,
+  LockClosedIcon,
+  EyeIcon,
+  EyeSlashIcon,
+} from "@heroicons/react/24/outline";
+import { Alert } from "@/components";
 
 const Login = () => {
-  const navigate = useNavigate()
-  const { user, loading } = useContext(AuthContext)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [rememberMe, setRememberMe] = useState(false)
+  const navigate = useNavigate();
+  const { user, loading } = useContext(AuthContext);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const validateForm = () => {
     if (!email.trim()) {
-      setError("Por favor, insira seu email.")
-      return false
+      setError("Por favor, insira seu email.");
+      return false;
     }
     if (!password.trim()) {
-      setError("Por favor, insira sua senha.")
-      return false
+      setError("Por favor, insira sua senha.");
+      return false;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError("Por favor, insira um email válido.")
-      return false
+      setError("Por favor, insira um email válido.");
+      return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    if (!validateForm()) {
-      return
-    }
+    if (!validateForm()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
+
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      localStorage.setItem("authToken", "logado")
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
 
-      // Save email if remember me is checked
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email)
-      } else {
-        localStorage.removeItem("rememberedEmail")
+      if (!user.emailVerified) {
+        setError("Verifique seu e-mail antes de continuar.");
+        setIsLoading(false);
+        return;
       }
 
-      navigate("/Calculator")
+      // Proteção contra log duplicado por sessão
+      const sessionId = crypto.randomUUID();
+      localStorage.setItem("sessionId", sessionId);
+
+      await addDoc(collection(db, "Logs"), {
+        userId: user.uid,
+        email: user.email,
+        acao: "Login",
+        timestamp: serverTimestamp(),
+        userAgent: navigator.userAgent,
+        sessionId: sessionId,
+      });
+
+      localStorage.setItem("authToken", "logado");
+
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
+      navigate("/Calculator");
     } catch (error) {
-      let errorMessage = ""
+      let errorMessage = "";
       switch (error.code) {
         case "auth/wrong-password":
         case "auth/user-not-found":
-          errorMessage = "Email ou senha incorretos."
-          break
+          errorMessage = "Email ou senha incorretos.";
+          break;
         case "auth/invalid-email":
-          errorMessage = "Email inválido."
-          break
+          errorMessage = "Email inválido.";
+          break;
         case "auth/too-many-requests":
-          errorMessage = "Muitas tentativas de login. Por favor, tente novamente mais tarde."
-          break
+          errorMessage =
+            "Muitas tentativas de login. Por favor, tente novamente mais tarde.";
+          break;
         case "auth/network-request-failed":
-          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente."
-          break
+          errorMessage =
+            "Erro de conexão. Verifique sua internet e tente novamente.";
+          break;
         default:
-          errorMessage = "Ocorreu um erro ao fazer login. Tente novamente."
+          errorMessage = "Ocorreu um erro ao fazer login. Tente novamente.";
       }
-      setError(errorMessage)
+      setError(errorMessage);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    // Redirect if already logged in
     if (!loading && user) {
-      navigate("/Calculator", { replace: true })
+      navigate("/Calculator", { replace: true });
     }
 
-    // Check for remembered email
-    const rememberedEmail = localStorage.getItem("rememberedEmail")
+    const rememberedEmail = localStorage.getItem("rememberedEmail");
     if (rememberedEmail) {
-      setEmail(rememberedEmail)
-      setRememberMe(true)
+      setEmail(rememberedEmail);
+      setRememberMe(true);
     }
-  }, [user, loading, navigate])
+  }, [user, loading, navigate]);
 
   return (
-    <div className="flex items-center justify-center bg-white px-4 h-[calc(100vh-64px-40px)]">
-      <div className="bg-blue-100 p-8 md:p-12 rounded-2xl shadow-xl w-full max-w-md space-y-4 border border-blue-200">
-        <div className="text-center space-y-2">
+    <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center bg-white px-4">
+      <div className="w-full max-w-md space-y-4 rounded-2xl border border-blue-200 bg-blue-100 p-8 shadow-xl md:p-12">
+        <div className="space-y-2 text-center">
           <h2 className="text-3xl font-bold text-blue-800">Entrar</h2>
           <div className="mt-3">
-            <h3 className="text-lg text-blue-700 font-semibold">Bem-vindo de volta!</h3>
-            <p className="text-sm text-gray-600">Preencha as informações abaixo para entrar:</p>
+            <h3 className="text-lg font-semibold text-blue-700">
+              Bem-vindo de volta!
+            </h3>
+            <p className="text-sm text-gray-600">
+              Preencha as informações abaixo para entrar:
+            </p>
           </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4 mt-6">
+        <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div className="space-y-1">
-            <label htmlFor="email" className="block text-sm font-medium text-blue-800">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-blue-800"
+            >
               Email
             </label>
             <div className="relative">
@@ -116,23 +152,27 @@ const Login = () => {
                 id="email"
                 type="email"
                 value={email}
+                tabIndex="1"
                 placeholder="seu@email.com"
-                className="w-full p-3 pl-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200"
+                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <EnvelopeIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+              <EnvelopeIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
             </div>
           </div>
 
           <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <label htmlFor="password" className="block text-sm font-medium text-blue-800">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-blue-800"
+              >
                 Senha
               </label>
               <Link
                 to="/recuperar-senha"
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                className="text-sm text-blue-600 transition-colors hover:text-blue-800 hover:underline"
               >
                 Esqueceu a senha?
               </Link>
@@ -142,20 +182,24 @@ const Login = () => {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
+                tabIndex="2"
                 placeholder="Sua senha"
-                className="w-full p-3 pl-10 pr-10 border border-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 hover:border-blue-500"
+                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 hover:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <LockClosedIcon className="w-5 h-5 text-gray-500 absolute left-3 top-3.5" />
+              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-3.5 text-gray-500 hover:text-blue-600 transition-colors duration-200"
-                tabIndex="-1"
+                className="absolute top-3.5 right-3 text-gray-500 transition-colors duration-200 hover:text-blue-600"
                 aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
               >
-                {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>
@@ -167,35 +211,44 @@ const Login = () => {
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 text-blue-700 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
             />
-            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Lembrar meu email
             </label>
           </div>
 
-          {error && <Alert type="error" message={error} onClose={() => setError("")} />}
+          {error && (
+            <Alert type="error" message={error} onClose={() => setError("")} />
+          )}
 
           <div className="flex flex-col items-center pt-2">
             <button
+              tabIndex="3"
               type="submit"
               disabled={isLoading}
-              className={`w-full ${isLoading ? "bg-blue-400" : "bg-blue-700 hover:bg-blue-800"} text-white py-3 rounded-lg font-semibold text-lg transition`}
+              className={`w-full ${isLoading ? "cursor-not-allowed bg-blue-400" : "bg-blue-700 hover:bg-blue-800"} rounded-lg py-3 text-lg font-semibold text-white transition`}
             >
               {isLoading ? "Entrando..." : "Entrar"}
             </button>
           </div>
 
-          <div className="text-center text-sm text-gray-600 pt-2">
+          <div className="pt-2 text-center text-sm text-gray-600">
             Não tem uma conta?{" "}
-            <Link to="/Register" className="text-blue-600 hover:text-blue-800 hover:underline font-medium">
+            <Link
+              to="/Register"
+              className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+            >
               Cadastre-se
             </Link>
           </div>
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

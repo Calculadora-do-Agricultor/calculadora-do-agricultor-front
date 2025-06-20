@@ -1,0 +1,69 @@
+.calculation-actions {
+    position: relative;
+  }
+  
+  .actions-toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  
+  .actions-toggle:hover {
+    background-color: #f3f4f6;
+    color: #00418f;
+  }
+  
+  .actions-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 10;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08);
+    width: 160px;
+    overflow: hidden;
+  }
+  
+  .action-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .action-item:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .action-item.delete {
+  color: #ef4444;
+}
+
+.action-item.delete:hover {
+  background-color: #fee2e2;
+}
+
+.action-item.disabled {
+  color: #9ca3af;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.action-item.disabled:hover {
+  background-color: transparent;
+}
+  

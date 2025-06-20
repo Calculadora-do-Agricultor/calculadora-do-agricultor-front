@@ -1,7 +1,10 @@
-"use client"
 
-import { useState, useEffect, useRef } from "react"
-import { X, Copy, Calculator, Check, Info } from "lucide-react"
+
+import React, { useState, useEffect, useRef } from "react"
+import { X, Copy, Calculator, Check, Info, FileText, Calendar, User, Eye } from "lucide-react"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
+import DraggableList from "../DraggableList"
 import "./styles.css"
 
 /**
@@ -11,10 +14,10 @@ import "./styles.css"
  * @param {boolean} props.isOpen - Estado que controla se o modal está aberto
  * @param {Function} props.onClose - Função para fechar o modal
  */
-export function CalculationModal({ calculation, isOpen, onClose }) {
+const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const [paramValues, setParamValues] = useState({})
   const [results, setResults] = useState({})
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState({})
   const [allFieldsFilled, setAllFieldsFilled] = useState(false)
   const modalRef = useRef(null)
 
@@ -126,11 +129,11 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
         context[key] = Number.parseFloat(values[key]) || 0
       })
 
-      // Substitui os nomes dos parâmetros na expressão pelos valores
+      // Substitui os nomes dos parâmetros na expressão pelos valores usando o formato @[nome do campo]
       let expressionToEval = expression
       Object.keys(context).forEach((key) => {
         // Substitui todas as ocorrências do nome do parâmetro pelo seu valor
-        const regex = new RegExp(key, "g")
+        const regex = new RegExp(`@\\[${key}\\]`, "g")
         expressionToEval = expressionToEval.replace(regex, context[key])
       })
 
@@ -152,11 +155,19 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
   }
 
   // Copia o resultado para a área de transferência
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, resultId) => {
     navigator.clipboard.writeText(text).then(
       () => {
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
+        setCopied((prev) => ({
+          ...prev,
+          [resultId]: true,
+        }))
+        setTimeout(() => {
+          setCopied((prev) => ({
+            ...prev,
+            [resultId]: false,
+          }))
+        }, 2000)
       },
       (err) => {
         console.error("Erro ao copiar texto: ", err)
@@ -164,7 +175,7 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     )
   }
 
-  // Fecha o modal ao pressionar ESC
+  // Fecha o modal ao pressionar ESC e controla o scroll do body
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") onClose()
@@ -172,10 +183,17 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
 
     if (isOpen) {
       window.addEventListener("keydown", handleEsc)
+      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Restaura o scroll do body quando o modal é fechado
+      document.body.style.overflow = 'unset'
     }
 
+    // Cleanup function para garantir que o scroll seja restaurado
     return () => {
       window.removeEventListener("keydown", handleEsc)
+      document.body.style.overflow = 'unset'
     }
   }, [isOpen, onClose])
 
@@ -245,7 +263,7 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                     ) : (
                       <input
                         id={`param-${index}`}
-                        type={param.type === "number" ? "number" : "text"}
+                        type="number"
                         value={paramValues[param.name] || ""}
                         onChange={(e) => handleParamChange(param.name, e.target.value)}
                         placeholder={`Digite ${param.name.toLowerCase()}`}
@@ -276,13 +294,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                     <div className="calculation-result-value">
                       <span>{results[key].value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results[key].value?.toString() || "0")}
-                        className={`copy-button ${copied ? "copied" : ""}`}
+                        onClick={() => copyToClipboard(results[key].value?.toString() || "0", key)}
+                        className={`copy-button ${copied[key] ? "copied" : ""}`}
                         aria-label="Copiar resultado"
                         disabled={!allFieldsFilled}
                       >
-                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                        {copied[key] ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied[key] ? "Copiado" : "Copiar"}</span>
                       </button>
                     </div>
                     {results[key].description && (
@@ -301,13 +319,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                     <div className="calculation-result-value">
                       <span>{results.value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results.value?.toString() || "0")}
-                        className={`copy-button ${copied ? "copied" : ""}`}
+                        onClick={() => copyToClipboard(results.value?.toString() || "0", "main")}
+                        className={`copy-button ${copied["main"] ? "copied" : ""}`}
                         aria-label="Copiar resultado"
                         disabled={!allFieldsFilled}
                       >
-                        {copied ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                        {copied["main"] ? <Check size={16} /> : <Copy size={16} />}
+                        <span className="copy-text">{copied["main"] ? "Copiado" : "Copiar"}</span>
                       </button>
                     </div>
                   </div>
@@ -323,13 +341,13 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
                         <div className="calculation-result-value">
                           <span>{results[result.key] || "0"}</span>
                           <button
-                            onClick={() => copyToClipboard(results[result.key]?.toString() || "0")}
-                            className={`copy-button ${copied ? "copied" : ""}`}
+                            onClick={() => copyToClipboard(results[result.key]?.toString() || "0", result.key)}
+                            className={`copy-button ${copied[result.key] ? "copied" : ""}`}
                             aria-label="Copiar resultado"
                             disabled={!allFieldsFilled}
                           >
-                            {copied ? <Check size={16} /> : <Copy size={16} />}
-                            <span className="copy-text">{copied ? "Copiado" : "Copiar"}</span>
+                            {copied[result.key] ? <Check size={16} /> : <Copy size={16} />}
+                            <span className="copy-text">{copied[result.key] ? "Copiado" : "Copiar"}</span>
                           </button>
                         </div>
                       </div>
@@ -343,3 +361,5 @@ export function CalculationModal({ calculation, isOpen, onClose }) {
     </div>
   )
 }
+
+export default CalculationModal;

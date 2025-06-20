@@ -1,11 +1,15 @@
-"use client"
 
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+
+import { useState, useEffect, useContext } from "react"
+import { Link, useLocation } from "react-router-dom"
 import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail, MapPin, ChevronUp, Wheat } from 'lucide-react'
+import { AuthContext } from "../../context/AuthContext"
 
 const Footer = () => {
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const location = useLocation()
+  const isCalculatorPage = location.pathname.includes('/calculator')
+  const { hideFooter, user } = useContext(AuthContext)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -27,13 +31,30 @@ const Footer = () => {
     })
   }
 
+  // Se o rodapé estiver oculto E o usuário estiver logado, apenas renderiza o botão de voltar ao topo
+  if (user && hideFooter) {
+    return (
+      <>
+        {showScrollTop && (
+          <button
+            onClick={scrollToTop}
+            className={`fixed ${isCalculatorPage ? 'right-25' : 'right-6'} bottom-6  bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50`}
+            aria-label="Voltar ao topo"
+          >
+            <ChevronUp className="h-5 w-5" />
+          </button>
+        )}
+      </>
+    );
+  }
+
   return (
     <>
       {/* Botão de voltar ao topo */}
       {showScrollTop && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50"
+          className={`fixed ${isCalculatorPage ? 'right-25' : 'right-6'} bottom-6  bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] p-3 rounded-full shadow-lg transition-all duration-300 z-50`}
           aria-label="Voltar ao topo"
         >
           <ChevronUp className="h-5 w-5" />
@@ -135,19 +156,19 @@ const Footer = () => {
 
             {/* Newsletter */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Newsletter</h3>
-              <p className="text-gray-300">Receba nossas novidades e atualizações:</p>
+              <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Sugestões de Melhorias</h3>
+              <p className="text-gray-300">Envie sugestões para tornarmos sua experiência ainda melhor:</p>
               <form className="mt-2 space-y-2">
                 <input
                   type="email"
-                  placeholder="Seu e-mail"
+                  placeholder="Sua sugestão"
                   className="w-full px-4 py-2 rounded bg-[#00418F]/80 border border-[#00418F]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFEE00]"
                 />
                 <button
                   type="submit"
                   className="w-full bg-[#FFEE00] hover:bg-[#FFEE00]/80 text-[#00418F] font-medium py-2 px-4 rounded transition-colors"
                 >
-                  Inscrever-se
+                  Enviar
                 </button>
               </form>
             </div>

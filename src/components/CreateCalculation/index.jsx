@@ -1,8 +1,8 @@
-"use client"
+
 
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore"
+import { collection, addDoc, getDocs, query, where, writeBatch, doc } from "firebase/firestore"
 import {
   PlusCircle,
   X,
@@ -20,7 +20,11 @@ import {
   Loader2,
   Sliders,
   FileText,
+  Undo2,
+  Redo2,
 } from "lucide-react"
+import DraggableList from "../DraggableList"
+import "../DraggableList/styles.css"
 import "./styles.css"
 
 const CreateCalculation = ({ onCreate, onCancel }) => {
@@ -37,20 +41,119 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   // Dados dos parâmetros
   const [parameters, setParameters] = useState([
-    { name: "", type: "number", unit: "", description: "", required: true, options: [] },
+    { 
+      id: `param-${Date.now()}-${Math.random()}`,
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [],
+      ordem: 1
+    },
   ])
 
   // Dados dos resultados
   const [results, setResults] = useState([
     {
+      id: `result-${Date.now()}-${Math.random()}`,
       name: "",
       description: "",
       expression: "",
       unit: "",
       precision: 2,
       isMainResult: true,
+      ordem: 1
     },
   ])
+
+  // Estados para histórico de undo/redo das expressões
+  const [expressionHistory, setExpressionHistory] = useState({})
+  const [expressionHistoryIndex, setExpressionHistoryIndex] = useState({})
+
+  // Função para salvar estado no histórico
+  const saveExpressionToHistory = (resultIndex, expression) => {
+    setExpressionHistory(prev => {
+      const history = prev[resultIndex] || []
+      const currentIndex = expressionHistoryIndex[resultIndex] || 0
+      
+      // Remove itens após o índice atual (quando fazemos uma nova ação após undo)
+      const newHistory = history.slice(0, currentIndex + 1)
+      newHistory.push(expression)
+      
+      // Limita o histórico a 50 itens
+      if (newHistory.length > 50) {
+        newHistory.shift()
+      }
+      
+      return {
+        ...prev,
+        [resultIndex]: newHistory
+      }
+    })
+    
+    setExpressionHistoryIndex(prev => {
+      const history = expressionHistory[resultIndex] || []
+      const newIndex = Math.min(history.length, 49)
+      return {
+        ...prev,
+        [resultIndex]: newIndex
+      }
+    })
+  }
+
+  // Função para desfazer alteração na expressão
+  const undoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex > 0) {
+      const newIndex = currentIndex - 1
+      const previousExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = previousExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para refazer alteração na expressão
+  const redoExpression = (resultIndex) => {
+    const history = expressionHistory[resultIndex] || []
+    const currentIndex = expressionHistoryIndex[resultIndex] || 0
+    
+    if (currentIndex < history.length - 1) {
+      const newIndex = currentIndex + 1
+      const nextExpression = history[newIndex]
+      
+      const updatedResults = [...results]
+      updatedResults[resultIndex].expression = nextExpression
+      setResults(updatedResults)
+      
+      setExpressionHistoryIndex(prev => ({
+        ...prev,
+        [resultIndex]: newIndex
+      }))
+    }
+  }
+
+  // Função para atualizar expressão com histórico
+  const updateExpressionWithHistory = (resultIndex, newExpression) => {
+    const updatedResults = [...results]
+    const oldExpression = updatedResults[resultIndex].expression
+    
+    // Só salva no histórico se a expressão realmente mudou
+    if (oldExpression !== newExpression) {
+      saveExpressionToHistory(resultIndex, oldExpression)
+      updatedResults[resultIndex].expression = newExpression
+      setResults(updatedResults)
+    }
+  }
 
   // Dados de visualização
   const [previewMode, setPreviewMode] = useState(false)
@@ -106,12 +209,27 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   // Funções para manipular parâmetros
   const addParameter = () => {
-    setParameters([...parameters, { name: "", type: "number", unit: "", description: "", required: true, options: [] }])
+    const newParam = { 
+      id: `param-${Date.now()}-${Math.random()}`,
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [],
+      ordem: parameters.length + 1
+    }
+    setParameters([...parameters, newParam])
   }
 
   const removeParameter = (index) => {
     const updatedParameters = parameters.filter((_, i) => i !== index)
-    setParameters(updatedParameters)
+    // Reordena os parâmetros restantes
+    const reorderedParameters = updatedParameters.map((param, i) => ({
+      ...param,
+      ordem: i + 1
+    }))
+    setParameters(reorderedParameters)
   }
 
   const updateParameter = (index, field, value) => {
@@ -141,24 +259,45 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     setParameters(updatedParameters)
   }
 
+  // Função para reordenar parâmetros
+  const reorderParameters = useCallback((newParameters) => {
+    // Adiciona campo ordem aos parâmetros reordenados
+    const parametersWithOrder = newParameters.map((param, index) => ({
+      ...param,
+      ordem: index + 1
+    }))
+    setParameters(parametersWithOrder)
+  }, [])
+
   // Funções para manipular resultados
   const addResult = () => {
     setResults([
       ...results,
       {
+        id: `result-${Date.now()}-${Math.random()}`,
         name: "",
         description: "",
         expression: "",
         unit: "",
         precision: 2,
         isMainResult: false,
+        ordem: results.length + 1
       },
     ])
   }
 
   const removeResult = (index) => {
     const updatedResults = results.filter((_, i) => i !== index)
-    setResults(updatedResults)
+    // Reordena os resultados restantes e ajusta o resultado principal se necessário
+    const reorderedResults = updatedResults.map((result, i) => {
+      const newResult = { ...result, ordem: i + 1 }
+      // Se não há resultado principal, torna o primeiro como principal
+      if (i === 0 && !updatedResults.some(r => r.isMainResult)) {
+        newResult.isMainResult = true
+      }
+      return newResult
+    })
+    setResults(reorderedResults)
   }
 
   const updateResult = (index, field, value) => {
@@ -177,18 +316,95 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     setResults(updatedResults)
   }
 
+  // Função para reordenar resultados
+  const reorderResults = useCallback((newResults) => {
+    // Adiciona campo ordem aos resultados reordenados
+    const resultsWithOrder = newResults.map((result, index) => ({
+      ...result,
+      ordem: index + 1
+    }))
+    setResults(resultsWithOrder)
+    // Não fazer scroll automático durante reordenação
+  }, [])
+
   // Função para inserir um parâmetro na expressão
   const insertParameterInExpression = (resultIndex, paramName) => {
-    const updatedResults = [...results]
-    updatedResults[resultIndex].expression += paramName
-    setResults(updatedResults)
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const paramText = `@[${paramName}]`
+      
+      // Insere o parâmetro na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + paramText + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor após o parâmetro inserido
+      setTimeout(() => {
+        const newCursorPosition = start + paramText.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + `@[${paramName}]`
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
   }
 
   // Função para inserir uma função matemática na expressão
   const insertMathFunction = (resultIndex, funcName) => {
-    const updatedResults = [...results]
-    updatedResults[resultIndex].expression += `${funcName}()`
-    setResults(updatedResults)
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const funcText = `${funcName}()`
+      
+      // Insere a função na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + funcText + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor dentro dos parênteses da função
+      setTimeout(() => {
+        const newCursorPosition = start + funcText.length - 1 // Posiciona dentro dos parênteses
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + `${funcName}()`
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
+  }
+
+  // Função para inserir operador na posição do cursor
+  const insertOperatorInExpression = (resultIndex, operator) => {
+    const textarea = document.getElementById(`result-expression-${resultIndex}`)
+    const currentExpression = results[resultIndex].expression
+    
+    if (textarea) {
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      
+      // Insere o operador na posição do cursor
+      const newExpression = currentExpression.substring(0, start) + operator + currentExpression.substring(end)
+      updateExpressionWithHistory(resultIndex, newExpression)
+      
+      // Reposiciona o cursor após o operador inserido
+      setTimeout(() => {
+        const newCursorPosition = start + operator.length
+        textarea.setSelectionRange(newCursorPosition, newCursorPosition)
+        textarea.focus()
+      }, 0)
+    } else {
+      // Fallback: adiciona no final se não conseguir encontrar o textarea
+      const newExpression = currentExpression + operator
+      updateExpressionWithHistory(resultIndex, newExpression)
+    }
   }
 
   // Função para adicionar uma tag
@@ -329,9 +545,9 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         .replace(/Math\.exp\(/g, "Math.exp(")
         .replace(/Math\.PI/g, "Math.PI")
 
-      // Substitui os nomes dos parâmetros pelos valores
+      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
       Object.keys(values).forEach((key) => {
-        const regex = new RegExp(key, "g")
+        const regex = new RegExp(`@\\[${key}\\]`, "g")
         expressionToEval = expressionToEval.replace(regex, values[key])
       })
 
@@ -394,12 +610,28 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     try {
       setLoading(true)
 
+      // Prepara os parâmetros com ordem baseada na posição atual ou timestamp
+      const parametersWithOrder = parameters.map((param, index) => ({
+        ...param,
+        ordem: param.ordem || index + 1,
+        createdAt: param.createdAt || new Date(),
+        tipo: 'parametro'
+      }))
+
+      // Prepara os resultados com ordem baseada na posição atual ou timestamp
+      const resultsWithOrder = results.map((result, index) => ({
+        ...result,
+        ordem: result.ordem || index + 1,
+        createdAt: result.createdAt || new Date(),
+        tipo: 'resultado'
+      }))
+
       await addDoc(collection(db, "calculations"), {
         name: calculationName,
         description: calculationDescription,
         category: selectedCategory,
-        parameters,
-        results,
+        parameters: parametersWithOrder,
+        results: resultsWithOrder,
         tags,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -451,17 +683,15 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
           <button onClick={onCancel} className="back-button mr-4" aria-label="Voltar">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-primary">Criar Novo Cálculo</h1>
+          <h1 className="text-2xl font-bold text-primary">Etapas de criação</h1>
         </div>
 
-        {step < totalSteps && (
-          <button
-            onClick={() => setPreviewMode(!previewMode)}
-            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
-          >
-            {previewMode ? "Editar" : "Visualizar"}
-          </button>
-        )}
+        <button
+          onClick={() => setPreviewMode(!previewMode)}
+          className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+        >
+          {previewMode ? "Editar" : "Visualizar"}
+        </button>
       </div>
 
       {/* Mensagens de feedback */}
@@ -619,22 +849,26 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
               </div>
             </div>
 
-            {parameters.map((param, index) => (
-              <div key={index} className="parameter-card">
-                <div className="parameter-card-header">
-                  <h3>Parâmetro {index + 1}</h3>
-                  {parameters.length > 1 && (
-                    <button
-                      onClick={() => removeParameter(index)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover parâmetro"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
+            <DraggableList
+              items={parameters}
+              onReorder={reorderParameters}
+              keyExtractor={(param) => param.id}
+              renderItem={(param, index) => (
+                <div className="parameter-card">
+                  <div className="parameter-card-header">
+                    <h3>Parâmetro {index + 1}</h3>
+                    {parameters.length > 1 && (
+                      <button
+                        onClick={() => removeParameter(index)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover parâmetro"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
+                  </div>
 
                 <div className="parameter-form">
                   <div className="form-row">
@@ -663,7 +897,6 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                         onChange={(e) => updateParameter(index, "type", e.target.value)}
                       >
                         <option value="number">Número</option>
-                        <option value="text">Texto</option>
                         <option value="select">Seleção</option>
                       </select>
                     </div>
@@ -775,7 +1008,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   )}
                 </div>
               </div>
-            ))}
+            )}
+            />
 
             <button onClick={addParameter} className="add-parameter-button" type="button">
               <PlusCircle size={18} />
@@ -807,25 +1041,29 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
               </div>
             )}
 
-            {results.map((result, resultIndex) => (
-              <div key={resultIndex} className="result-card">
-                <div className="result-card-header">
-                  <div className="flex items-center">
-                    <h3>Resultado {resultIndex + 1}</h3>
-                    {result.isMainResult && <span className="main-result-badge">Principal</span>}
+            <DraggableList
+              items={results}
+              onReorder={reorderResults}
+              keyExtractor={(result) => result.id}
+              renderItem={(result, resultIndex) => (
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <div className="flex items-center">
+                      <h3>Resultado {resultIndex + 1}</h3>
+                      {result.isMainResult && <span className="main-result-badge">Principal</span>}
+                    </div>
+                    {results.length > 1 && (
+                      <button
+                        onClick={() => removeResult(resultIndex)}
+                        className="remove-button"
+                        type="button"
+                        aria-label="Remover resultado"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remover</span>
+                      </button>
+                    )}
                   </div>
-                  {results.length > 1 && (
-                    <button
-                      onClick={() => removeResult(resultIndex)}
-                      className="remove-button"
-                      type="button"
-                      aria-label="Remover resultado"
-                    >
-                      <Trash2 size={16} />
-                      <span>Remover</span>
-                    </button>
-                  )}
-                </div>
 
                 <div className="result-form">
                   <div className="form-row">
@@ -895,7 +1133,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                             <button
                               key={op}
                               type="button"
-                              onClick={() => updateResult(resultIndex, "expression", result.expression + op)}
+                              onClick={() => insertOperatorInExpression(resultIndex, op)}
                               className="operator-button"
                             >
                               {op}
@@ -943,11 +1181,34 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                       </div>
                     </div>
 
+                    <div className="expression-controls">
+                      <div className="undo-redo-buttons">
+                        <button
+                          type="button"
+                          onClick={() => undoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] <= 0}
+                          title="Desfazer (Ctrl+Z)"
+                        >
+                          <Undo2 size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => redoExpression(resultIndex)}
+                          className="undo-redo-button"
+                          disabled={!expressionHistory[resultIndex] || expressionHistoryIndex[resultIndex] >= (expressionHistory[resultIndex]?.length - 1 || 0)}
+                          title="Refazer (Ctrl+Y)"
+                        >
+                          <Redo2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+
                     <textarea
                       id={`result-expression-${resultIndex}`}
-                      placeholder="Ex: param1 * param2 / 100"
+                      placeholder="Ex: @[param1] * @[param2] / 100"
                       value={result.expression}
-                      onChange={(e) => updateResult(resultIndex, "expression", e.target.value)}
+                      onChange={(e) => updateExpressionWithHistory(resultIndex, e.target.value)}
                       className={`expression-input ${validationErrors.results[resultIndex]?.expression ? "input-error" : ""}`}
                       rows={3}
                     />
@@ -985,7 +1246,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   </div>
                 </div>
               </div>
-            ))}
+            )}
+            />
 
             <button onClick={addResult} className="add-result-button" type="button">
               <PlusCircle size={18} />
@@ -1037,7 +1299,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   <div className="review-parameter-header">
                     <span className="parameter-name">{param.name}</span>
                     <span className="parameter-type">
-                      {param.type === "number" ? "Número" : param.type === "text" ? "Texto" : "Seleção"}
+                      {param.type === "number" ? "Número" : "Seleção"}
                       {param.unit && ` (${param.unit})`}
                     </span>
                   </div>
@@ -1173,12 +1435,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                 ))}
               </div>
 
-              <div className="preview-calculate">
-                <button onClick={updatePreview} className="calculate-button">
-                  <Calculator size={16} />
-                  <span>Calcular</span>
-                </button>
-              </div>
+
             </div>
           </div>
         )}

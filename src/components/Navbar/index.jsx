@@ -5,9 +5,7 @@ import { auth, db } from '../../services/firebaseConfig.js';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
-import NavLinks from './components/NavLinks';
-import ProfileMenu from './components/ProfileMenu';
-import MobileMenu from './components/MobileMenu';
+import { NavLinks, ProfileMenu, MobileMenu } from './components';
 
 const Navbar = () => {
   const [user] = useAuthState(auth);
@@ -39,7 +37,7 @@ const Navbar = () => {
 
       <div className="flex items-center space-x-4">
         <NavLinks user={user} />
-        {user !== null && <ProfileMenu userName={userName} />}
+        {user !== null && <div className="hidden lg:block"><ProfileMenu userName={userName} /></div>}
         <MobileMenu user={user} userName={userName} />
       </div>
     </nav>
