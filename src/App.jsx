@@ -10,11 +10,14 @@ import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculati
 import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
 import LogsManagement from "./pages/LogsManagement";
 import UserManagement from "./pages/UserManagement";
+import AccessLoggerMiddleware from "./components/AccessLoggerMiddleware";
+
 
 function App() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <Router>
+        <AccessLoggerMiddleware />
         <Navbar />
         <main className="flex-grow pt-20">
           <Routes>

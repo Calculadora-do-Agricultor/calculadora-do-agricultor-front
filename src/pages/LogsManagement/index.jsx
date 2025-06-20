@@ -19,12 +19,16 @@ import {
   CalendarDaysIcon,
   UsersIcon,
   ExclamationTriangleIcon,
+  ServerIcon,
+  ComputerDesktopIcon,
 } from "@heroicons/react/24/outline";
 import { MetricCard, LogCard, MetricsToggle } from "@/components";
+import AccessLogCard from "../../components/LogCard/AccessLogCard";
 import "./LogsManagement.css";
 
 const LogsManagement = () => {
   const [logs, setLogs] = useState([]);
+  const [accessLogs, setAccessLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,6 +39,7 @@ const LogsManagement = () => {
   const [endDate, setEndDate] = useState("");
   const [userFilter, setUserFilter] = useState("");
   const [showFilteredMetrics, setShowFilteredMetrics] = useState(false);
+  const [logType, setLogType] = useState("all"); // 'all', 'regular', 'access'
   const logsPerPage = 10;
 
   const { user, isAdmin } = useContext(AuthContext);
@@ -80,17 +85,32 @@ const LogsManagement = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
+      // Buscar logs regulares
       const logsCollectionRef = collection(db, "logs");
       const q = query(logsCollectionRef, orderBy("date", "desc"));
       const querySnapshot = await getDocs(q);
 
       const logsData = [];
       querySnapshot.forEach((doc) => {
-        logsData.push({ id: doc.id, ...doc.data() });
+        logsData.push({ id: doc.id, ...doc.data(), logType: 'regular' });
+      });
+
+      // Buscar logs de acesso
+      const accessLogsCollectionRef = collection(db, "accessLogs");
+      const accessQ = query(accessLogsCollectionRef, orderBy("timestamp", "desc"));
+      const accessQuerySnapshot = await getDocs(accessQ);
+
+      const accessLogsData = [];
+      accessQuerySnapshot.forEach((doc) => {
+        accessLogsData.push({ id: doc.id, ...doc.data(), logType: 'access' });
       });
 
       setLogs(logsData);
-      setTotalPages(Math.ceil(logsData.length / logsPerPage));
+      setAccessLogs(accessLogsData);
+      
+      // Calcular total de páginas com base no tipo de log selecionado
+      updatePagination(logsData, accessLogsData, logType);
+      
       setError(null);
     } catch (err) {
       console.error("Erro ao buscar logs:", err);
@@ -99,35 +119,73 @@ const LogsManagement = () => {
       setLoading(false);
     }
   };
+  
+  // Função para atualizar a paginação com base no tipo de log selecionado
+  const updatePagination = (regularLogs, accessLogs, selectedLogType) => {
+    let totalItems = 0;
+    
+    if (selectedLogType === 'all') {
+      totalItems = regularLogs.length + accessLogs.length;
+    } else if (selectedLogType === 'regular') {
+      totalItems = regularLogs.length;
+    } else if (selectedLogType === 'access') {
+      totalItems = accessLogs.length;
+    }
+    
+    setTotalPages(Math.ceil(totalItems / logsPerPage));
+    setCurrentPage(1); // Resetar para a primeira página ao mudar o tipo de log
+  };
 
   useEffect(() => {
     if (user && isAdmin) {
       fetchLogs();
     }
   }, [user, isAdmin]);
+  
+  // Atualizar paginação quando o tipo de log mudar
+  useEffect(() => {
+    if (logs.length > 0 || accessLogs.length > 0) {
+      updatePagination(logs, accessLogs, logType);
+    }
+  }, [logType, logs, accessLogs]);
 
+  // Combinar logs com base no tipo selecionado
+  const combinedLogs = () => {
+    if (logType === 'all') {
+      return [...logs, ...accessLogs];
+    } else if (logType === 'regular') {
+      return logs;
+    } else if (logType === 'access') {
+      return accessLogs;
+    }
+    return [];
+  };
+  
   // Filtrar logs com base nos filtros aplicados
-  const filteredLogs = logs.filter((log) => {
-    // Filtro de localização
+  const filteredLogs = combinedLogs().filter((log) => {
+    // Filtro de localização (apenas para logs regulares)
     let matchesLocation = true;
-    if (filterType === "with-location") {
-      matchesLocation =
-        log.location && log.location.latitude && log.location.longitude;
-    } else if (filterType === "without-location") {
-      matchesLocation =
-        !log.location || !log.location.latitude || !log.location.longitude;
+    if (log.logType === 'regular') {
+      if (filterType === "with-location") {
+        matchesLocation =
+          log.location && log.location.latitude && log.location.longitude;
+      } else if (filterType === "without-location") {
+        matchesLocation =
+          !log.location || !log.location.latitude || !log.location.longitude;
+      }
     }
 
     // Filtro de usuário
     const matchesUser =
       userFilter === "" ||
-      (log.idUser &&
-        log.idUser.toLowerCase().includes(userFilter.toLowerCase()));
+      (log.idUser && log.idUser.toLowerCase().includes(userFilter.toLowerCase())) ||
+      (log.userId && log.userId.toLowerCase().includes(userFilter.toLowerCase()));
 
     // Filtro de data
     let matchesDate = true;
-    if (log.date && dateFilter !== "all") {
-      const logDate = log.date.toDate();
+    const logTimestamp = log.logType === 'access' ? log.timestamp : log.date;
+    if (logTimestamp && dateFilter !== "all") {
+      const logDate = logTimestamp.toDate();
       const today = new Date();
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -175,21 +233,32 @@ const LogsManagement = () => {
   // Calcular métricas para os cards
   const calculateMetrics = (logsToAnalyze) => {
     const totalLogs = logsToAnalyze.length;
-    const logsWithLocation = logsToAnalyze.filter(
+    
+    // Separar logs por tipo
+    const regularLogs = logsToAnalyze.filter(log => log.logType === 'regular');
+    const accessLogs = logsToAnalyze.filter(log => log.logType === 'access');
+    
+    // Métricas para logs regulares
+    const logsWithLocation = regularLogs.filter(
       (log) => log.location && log.location.latitude && log.location.longitude,
     ).length;
 
-    const logsWithoutLocation = logsToAnalyze.filter(
+    const logsWithoutLocation = regularLogs.filter(
       (log) =>
         !log.location || !log.location.latitude || !log.location.longitude,
     ).length;
 
+    // Métricas para todos os logs
     const uniqueUsers = new Set(
-      logsToAnalyze.filter((log) => log.idUser).map((log) => log.idUser),
+      logsToAnalyze
+        .filter(log => log.idUser || log.userId)
+        .map(log => log.idUser || log.userId)
     ).size;
 
     return {
       totalLogs,
+      regularLogsCount: regularLogs.length,
+      accessLogsCount: accessLogs.length,
       logsWithLocation,
       logsWithoutLocation,
       uniqueUsers,
@@ -248,21 +317,26 @@ const LogsManagement = () => {
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard
               title="Total de Logs"
               value={metrics.totalLogs}
               icon={DocumentTextIcon}
             />
             <MetricCard
+              title="Logs Regulares"
+              value={metrics.regularLogsCount}
+              icon={ChartBarIcon}
+            />
+            <MetricCard
+              title="Logs de Acesso"
+              value={metrics.accessLogsCount}
+              icon={ComputerDesktopIcon}
+            />
+            <MetricCard
               title="Com Localização"
               value={metrics.logsWithLocation}
               icon={GlobeAltIcon}
-            />
-            <MetricCard
-              title="Sem Localização"
-              value={metrics.logsWithoutLocation}
-              icon={ExclamationCircleIcon}
             />
             <MetricCard
               title="Usuários Únicos"
@@ -318,12 +392,12 @@ const LogsManagement = () => {
                 backgroundPosition: 'right 0.75rem center',
                 backgroundSize: '1.25em 1.25em'
               }}
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={logType}
+              onChange={(e) => setLogType(e.target.value)}
             >
-              <option value="all">Todos os logs</option>
-              <option value="with-location">Com localização</option>
-              <option value="without-location">Sem localização</option>
+              <option value="all">Todos os tipos de logs</option>
+              <option value="regular">Logs regulares</option>
+              <option value="access">Logs de acesso</option>
             </select>
           </div>
 
@@ -348,7 +422,7 @@ const LogsManagement = () => {
           )}
 
           {/* Indicador de filtros ativos */}
-          {(filterType !== "all" || dateFilter !== "all" || userFilter) && (
+          {(filterType !== "all" || dateFilter !== "all" || userFilter || logType !== "all") && (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#00418F]/10 pt-4">
               <span className="text-sm font-medium text-[#00418F]/70">
                 Filtros ativos:
@@ -358,6 +432,13 @@ const LogsManagement = () => {
                   {filterType === "with-location"
                     ? "Com localização"
                     : "Sem localização"}
+                </span>
+              )}
+              {logType !== "all" && (
+                <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
+                  {logType === "regular"
+                    ? "Logs regulares"
+                    : "Logs de acesso"}
                 </span>
               )}
               {userFilter && (
@@ -381,6 +462,7 @@ const LogsManagement = () => {
                   setUserFilter("");
                   setStartDate("");
                   setEndDate("");
+                  setLogType("all");
                 }}
                 className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-200"
               >
@@ -414,14 +496,22 @@ const LogsManagement = () => {
             </div>
           ) : (
             <div className="grid gap-4 p-4">
-              {currentLogs.map((log, index) => (
-                <LogCard
-                  key={log.id}
-                  log={log}
-                  formatDate={formatDate}
-                  openInMaps={openInMaps}
-                />
-              ))}
+              {currentLogs.map((log) => (
+              <div key={log.id} className="mb-4">
+                {log.logType === 'access' ? (
+                  <AccessLogCard
+                    log={log}
+                    formatDate={formatDate}
+                  />
+                ) : (
+                  <LogCard
+                    log={log}
+                    formatDate={formatDate}
+                    openInMaps={openInMaps}
+                  />
+                )}
+              </div>
+            ))}
             </div>
           )}
         </div>
