@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -21,6 +21,9 @@ import {
   ExclamationTriangleIcon,
   ServerIcon,
   ComputerDesktopIcon,
+  ArrowDownTrayIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
 } from "@heroicons/react/24/outline";
 import { MetricCard, LogCard, MetricsToggle } from "@/components";
 import AccessLogCard from "../../components/LogCard/AccessLogCard";
@@ -38,8 +41,12 @@ const LogsManagement = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [userFilter, setUserFilter] = useState("");
+  const [ipFilter, setIpFilter] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [showFilteredMetrics, setShowFilteredMetrics] = useState(false);
   const [logType, setLogType] = useState("all"); // 'all', 'regular', 'access'
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
 
   const { user, isAdmin } = useContext(AuthContext);
@@ -173,13 +180,32 @@ const LogsManagement = () => {
         matchesLocation =
           !log.location || !log.location.latitude || !log.location.longitude;
       }
+      
+      // Filtro de texto de localização
+      if (locationFilter && matchesLocation) {
+        const locationFilterLower = locationFilter.toLowerCase();
+        // Verifica se há alguma informação de localização que corresponda ao filtro
+        const hasLocationMatch = 
+          (log.location && 
+           ((log.location.latitude && log.location.latitude.toString().includes(locationFilterLower)) ||
+            (log.location.longitude && log.location.longitude.toString().includes(locationFilterLower)) ||
+            (log.location.status && log.location.status.toLowerCase().includes(locationFilterLower))));
+        
+        matchesLocation = hasLocationMatch;
+      }
     }
 
     // Filtro de usuário
     const matchesUser =
       userFilter === "" ||
       (log.idUser && log.idUser.toLowerCase().includes(userFilter.toLowerCase())) ||
-      (log.userId && log.userId.toLowerCase().includes(userFilter.toLowerCase()));
+      (log.userId && log.userId.toLowerCase().includes(userFilter.toLowerCase())) ||
+      (log.email && log.email.toLowerCase().includes(userFilter.toLowerCase()));
+    
+    // Filtro de IP (para ambos os tipos de logs)
+    const matchesIp =
+      ipFilter === "" ||
+      (log.ip && log.ip.toLowerCase().includes(ipFilter.toLowerCase()));
 
     // Filtro de data
     let matchesDate = true;
@@ -227,7 +253,36 @@ const LogsManagement = () => {
       }
     }
 
-    return matchesLocation && matchesUser && matchesDate;
+    // Busca global em todos os campos relevantes
+    let matchesSearch = true;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const searchableFields = [
+        log.idUser,
+        log.userId,
+        log.email,
+        log.ip,
+        log.description,
+        log.page,
+        log.action,
+        log.userAgent,
+      ];
+      
+      // Verifica se algum dos campos contém a consulta
+      matchesSearch = searchableFields.some(
+        field => field && field.toString().toLowerCase().includes(query)
+      );
+      
+      // Verifica também nos campos de localização se for um log regular
+      if (!matchesSearch && log.logType === 'regular' && log.location) {
+        matchesSearch = 
+          (log.location.status && log.location.status.toLowerCase().includes(query)) ||
+          (log.location.latitude && log.location.latitude.toString().includes(query)) ||
+          (log.location.longitude && log.location.longitude.toString().includes(query));
+      }
+    }
+    
+    return matchesLocation && matchesUser && matchesIp && matchesDate && matchesSearch;
   });
 
   // Calcular métricas para os cards
@@ -271,6 +326,132 @@ const LogsManagement = () => {
   const indexOfLastLog = currentPage * logsPerPage;
   const indexOfFirstLog = indexOfLastLog - logsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstLog, indexOfLastLog);
+
+  // Função para exportar logs em formato CSV
+  const exportLogsToCSV = () => {
+    try {
+      setIsExporting(true);
+      
+      // Determinar quais logs exportar (filtrados ou todos)
+      const logsToExport = filteredLogs;
+      
+      if (logsToExport.length === 0) {
+        alert('Não há logs para exportar com os filtros atuais.');
+        setIsExporting(false);
+        return;
+      }
+      
+      // Criar cabeçalhos do CSV com base no tipo de log
+      let csvContent = '';
+      const commonHeaders = ['ID', 'Data/Hora', 'Usuário'];
+      
+      // Adicionar cabeçalhos específicos com base nos tipos de logs presentes
+      const hasRegularLogs = logsToExport.some(log => log.logType === 'regular');
+      const hasAccessLogs = logsToExport.some(log => log.logType === 'access');
+      
+      let headers = [...commonHeaders];
+      
+      if (hasRegularLogs) {
+        headers.push('Descrição', 'Latitude', 'Longitude', 'Status Localização');
+      }
+      
+      if (hasAccessLogs) {
+        headers.push('IP', 'Página', 'Ação', 'Navegador');
+      }
+      
+      // Adicionar cabeçalhos ao CSV
+      csvContent += headers.join(',') + '\n';
+      
+      // Adicionar dados de cada log
+      logsToExport.forEach(log => {
+        const row = [];
+        
+        // Campos comuns
+        row.push(`"${log.id || ''}"`);
+        
+        // Data formatada
+        const timestamp = log.logType === 'access' ? log.timestamp : log.date;
+        row.push(`"${timestamp ? formatDate(timestamp) : 'Data indisponível'}"`);
+        
+        // Usuário (pode estar em campos diferentes dependendo do tipo de log)
+        const userId = log.idUser || log.userId || log.email || 'Usuário desconhecido';
+        row.push(`"${userId}"`);
+        
+        // Campos específicos para logs regulares
+        if (log.logType === 'regular') {
+          row.push(`"${log.description || ''}"`);
+          row.push(`"${log.location?.latitude || ''}"`);
+          row.push(`"${log.location?.longitude || ''}"`);
+          row.push(`"${log.location?.status || ''}"`);
+          
+          // Preencher com valores vazios para colunas de logs de acesso
+          if (hasAccessLogs) {
+            row.push('""', '""', '""', '""');
+          }
+        }
+        
+        // Campos específicos para logs de acesso
+        if (log.logType === 'access') {
+          // Preencher com valores vazios para colunas de logs regulares
+          if (hasRegularLogs) {
+            row.push('""', '""', '""', '""');
+          }
+          
+          row.push(`"${log.ip || ''}"`);
+          row.push(`"${log.page || ''}"`);
+          row.push(`"${log.action || ''}"`);
+          
+          // Extrair informações básicas do user agent
+          const userAgentInfo = log.userAgent ? formatUserAgent(log.userAgent) : 'Desconhecido';
+          row.push(`"${userAgentInfo}"`);
+        }
+        
+        csvContent += row.join(',') + '\n';
+      });
+      
+      // Criar um blob e link para download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      // Configurar e simular clique no link
+      link.setAttribute('href', url);
+      link.setAttribute('download', `logs_${new Date().toISOString().slice(0, 10)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setIsExporting(false);
+    } catch (error) {
+      console.error('Erro ao exportar logs:', error);
+      alert('Ocorreu um erro ao exportar os logs. Por favor, tente novamente.');
+      setIsExporting(false);
+    }
+  };
+  
+  // Função para formatar o agente do usuário de forma mais legível (para exportação)
+  const formatUserAgent = (userAgent) => {
+    if (!userAgent) return "Desconhecido";
+    
+    // Extrair informações básicas do user agent
+    let browser = "Desconhecido";
+    let os = "Desconhecido";
+    
+    if (userAgent.includes("Firefox")) browser = "Firefox";
+    else if (userAgent.includes("Chrome")) browser = "Chrome";
+    else if (userAgent.includes("Safari")) browser = "Safari";
+    else if (userAgent.includes("Edge")) browser = "Edge";
+    else if (userAgent.includes("MSIE") || userAgent.includes("Trident")) browser = "Internet Explorer";
+    
+    if (userAgent.includes("Windows")) os = "Windows";
+    else if (userAgent.includes("Mac OS")) os = "macOS";
+    else if (userAgent.includes("Linux")) os = "Linux";
+    else if (userAgent.includes("Android")) os = "Android";
+    else if (userAgent.includes("iOS") || userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
+    
+    return `${browser} em ${os}`;
+  };
 
   // Verificar se o usuário é administrador
   if (!user || !isAdmin) {
@@ -346,8 +527,40 @@ const LogsManagement = () => {
           </div>
         </div>
 
-        {/* Filtros */}
+        {/* Barra de busca global e botão de exportação */}
         <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+            {/* Busca global */}
+            <div className="relative w-full md:w-2/3">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                <MagnifyingGlassIcon className="h-5 w-5 text-[#00418F]/70" />
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar em todos os campos..."
+                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            
+            {/* Botão de exportação */}
+            <button
+              onClick={exportLogsToCSV}
+              disabled={isExporting || filteredLogs.length === 0}
+              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${isExporting || filteredLogs.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#00418F] text-white hover:bg-[#00418F]/90 hover:scale-105'}`}
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              {isExporting ? 'Exportando...' : 'Exportar CSV'}
+            </button>
+          </div>
+          
+          {/* Filtros avançados */}
+          <div className="mb-4 flex items-center">
+            <FunnelIcon className="mr-2 h-5 w-5 text-[#00418F]/70" />
+            <h3 className="text-md font-semibold text-[#00418F]">Filtros Avançados</h3>
+          </div>
+          
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Filtro de usuário */}
             <div className="relative">
@@ -363,6 +576,36 @@ const LogsManagement = () => {
               />
             </div>
 
+            {/* Filtro de IP */}
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                <ServerIcon className="h-5 w-5 text-[#00418F]/70" />
+              </div>
+              <input
+                type="text"
+                placeholder="Filtrar por IP..."
+                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                value={ipFilter}
+                onChange={(e) => setIpFilter(e.target.value)}
+              />
+            </div>
+            
+            {/* Filtro de localização */}
+            <div className="relative">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                <MapPinIcon className="h-5 w-5 text-[#00418F]/70" />
+              </div>
+              <input
+                type="text"
+                placeholder="Filtrar por localização..."
+                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+              />
+            </div>
+          </div>
+          
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Filtro de data */}
             <select
               className="cursor-pointer rounded-xl border border-[#00418F]/20 bg-white/80 pl-4 pr-12 py-3 font-medium text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20 appearance-none"
