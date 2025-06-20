@@ -1,130 +1,140 @@
-import { CalculatorIcon, ChartBarIcon, ClockIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import logoEscura from '../../assets/logoEscura.svg';
-import { Link } from 'react-router-dom';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../../services/firebaseConfig';
+import {
+  CalculatorIcon,
+  ChartBarIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
+import logoEscura from "../../assets/logoEscura.svg";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../../services/firebaseConfig";
+import { Button } from "../../components/ui";
 
 const Home = () => {
   const [user] = useAuthState(auth);
   return (
     <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-b from-[#00418F]/10 to-white">
       {/* Banner Principal */}
-      <section className="relative overflow-hidden bg-[#00418F]/10 py-20 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12">
-          <div className="lg:w-1/2 space-y-6 text-center lg:text-left">
-            <h1 className="text-4xl lg:text-5xl font-bold leading-tight text-[#00418F]">
+      <section className="relative overflow-hidden bg-[#00418F]/10 px-4 py-20">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-12 lg:flex-row">
+          <div className="space-y-6 text-center lg:w-1/2 lg:text-left">
+            <h1 className="text-4xl leading-tight font-bold text-[#00418F] lg:text-5xl">
               Simplifique seus Cálculos Agrícolas
             </h1>
             <p className="text-lg text-[#00418F]">
-              Sua ferramenta completa para cálculos agrícolas precisos. Evite perdas,
-              maximize lucros e tome decisões mais assertivas no campo.
+              Sua ferramenta completa para cálculos agrícolas precisos. Evite
+              perdas, maximize lucros e tome decisões mais assertivas no campo.
             </p>
-            <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+            <div className="flex flex-wrap justify-center gap-4 lg:justify-start">
               {user ? (
-                <Link
+                <Button
                   to="/calculator"
-                  className="bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 flex items-center gap-2"
+                  variant="primary"
+                  size="medium"
+                  icon={CalculatorIcon}
                 >
-                  <CalculatorIcon className="w-5 h-5" />
                   Acessar Calculadora
-                </Link>
+                </Button>
               ) : (
                 <>
-                  <Link
-                    to="/Register"
-                    className="bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105"
-                  >
+                  <Button to="/register" variant="primary" size="medium">
                     Cadastre-se Agora
-                  </Link>
-                  <Link
-                    to="/Login"
-                    className="bg-white hover:bg-gray-100 text-[#00418F] font-bold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 border-2 border-[#00418F]"
-                  >
+                  </Button>
+                  <Button to="/login" variant="secondary" size="medium">
                     Fazer Login
-                  </Link>
+                  </Button>
                 </>
               )}
             </div>
           </div>
-          <div className="lg:w-1/2 flex justify-center items-center">
+          <div className="flex items-center justify-center lg:w-1/2">
             <img
               src={logoEscura}
               alt="Logo da Calculadora do Agricultor"
-              className="w-80 lg:w-96 transform hover:scale-105 transition duration-500"
+              className="w-80 transform transition duration-500 hover:scale-105 lg:w-96"
             />
           </div>
         </div>
       </section>
 
       {/* Seção de Benefícios */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-[#00418F] mb-6">
+      <section className="bg-white px-4 py-16">
+        <div className="mx-auto max-w-7xl">
+          <h2 className="mb-6 text-center text-3xl font-bold text-[#00418F]">
             Por que escolher nossa calculadora?
           </h2>
-          <p className="text-center text-gray-600 max-w-3xl mx-auto mb-12">
-            Desenvolvida especialmente para agricultores, nossa calculadora oferece soluções para todas as etapas do cultivo,
-            desde o planejamento até a colheita. Com categorias específicas para cada tipo de cálculo e área administrativa para
-            personalização completa.
+          <p className="mx-auto mb-12 max-w-3xl text-center text-gray-600">
+            Desenvolvida especialmente para agricultores, nossa calculadora
+            oferece soluções para todas as etapas do cultivo, desde o
+            planejamento até a colheita. Com categorias específicas para cada
+            tipo de cálculo e área administrativa para personalização completa.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center max-w-5xl mx-auto">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Card 1 */}
-            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-              <div className="bg-[#00418F]/10 p-3 rounded-full w-fit mb-4">
-                <CalculatorIcon className="w-8 h-8 text-[#00418F]" />
+            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
+                <CalculatorIcon className="h-8 w-8 text-[#00418F]" />
               </div>
-              <h3 className="text-xl font-semibold text-[#00418F] mb-2">Cálculos Essenciais</h3>
-              <p className="text-gray-600">Todas as fórmulas necessárias para plantio, adubação, irrigação e muito mais em um só lugar.</p>
+              <h3 className="mb-2 text-xl font-semibold text-[#00418F]">
+                Cálculos Essenciais
+              </h3>
+              <p className="text-gray-600">
+                Todas as fórmulas necessárias para plantio, adubação, irrigação
+                e muito mais em um só lugar.
+              </p>
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-              <div className="bg-[#00418F]/10 p-3 rounded-full w-fit mb-4">
-                <ChartBarIcon className="w-8 h-8 text-[#00418F]" />
+            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
+                <ChartBarIcon className="h-8 w-8 text-[#00418F]" />
               </div>
-              <h3 className="text-xl font-semibold text-[#00418F] mb-2">Gestão Personalizada</h3>
-              <p className="text-gray-600">Área administrativa para a Marchesan criar e editar seus próprios cálculos adaptados à realidade dos seus usuários.</p>
+              <h3 className="mb-2 text-xl font-semibold text-[#00418F]">
+                Gestão Personalizada
+              </h3>
+              <p className="text-gray-600">
+                Área administrativa para a Marchesan criar e editar seus
+                próprios cálculos adaptados à realidade dos seus usuários.
+              </p>
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition duration-300 transform hover:-translate-y-1">
-              <div className="bg-[#00418F]/10 p-3 rounded-full w-fit mb-4">
-                <ClockIcon className="w-8 h-8 text-[#00418F]" />
+            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+              <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
+                <ClockIcon className="h-8 w-8 text-[#00418F]" />
               </div>
-              <h3 className="text-xl font-semibold text-[#00418F] mb-2">Prevenção de Perdas</h3>
-              <p className="text-gray-600">Evite erros de cálculo que podem resultar em prejuízos financeiros e desperdício de recursos.</p>
+              <h3 className="mb-2 text-xl font-semibold text-[#00418F]">
+                Prevenção de Perdas
+              </h3>
+              <p className="text-gray-600">
+                Evite erros de cálculo que podem resultar em prejuízos
+                financeiros e desperdício de recursos.
+              </p>
             </div>
-
-            
           </div>
         </div>
       </section>
 
       {/* Seção Sobre */}
-      <section className="py-16 px-4 bg-[#00418F]/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#00418F] mb-6">Sobre o Projeto</h2>
-          <p className="text-lg text-gray-700 leading-relaxed">
-            A Calculadora do Agricultor é fruto da cooperação empresa-escola, através
-            dos projetos Integradores do curso de Desenvolvimento
-            de Software Multiplataforma. Este software foi desenvolvido pelos alunos
-            da Fatec Matão "Luiz Marchesan", com base na planilha da empresa Marchesan.
+      <section className="bg-[#00418F]/10 px-4 py-16">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="mb-6 text-3xl font-bold text-[#00418F]">
+            Sobre o Projeto
+          </h2>
+          <p className="text-lg leading-relaxed text-gray-700">
+            A Calculadora do Agricultor é fruto da cooperação empresa-escola,
+            através dos projetos Integradores do curso de Desenvolvimento de
+            Software Multiplataforma. Este software foi desenvolvido pelos
+            alunos da Fatec Matão "Luiz Marchesan", com base na planilha da
+            empresa Marchesan.
           </p>
-          {user ? (
-            <Link
-              to="/calculator"
-              className="inline-flex items-center gap-2 mt-8 bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
-            >
-              <CalculatorIcon className="w-5 h-5" />
-              Acessar Calculadora
-            </Link>
-          ) : (
-            <Link
-              to="/Register"
-              className="inline-block mt-8 bg-[#00418F] hover:bg-[#00418F]/80 text-white font-bold py-3 px-8 rounded-lg transition duration-300 transform hover:scale-105"
-            >
-              Comece a Usar
-            </Link>
+          {!user && (
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <Button to="/register" variant="primary" size="large">
+                Comece a Usar
+              </Button>
+              <Button to="/login" variant="secondary" size="large">
+                Já tenho conta
+              </Button>
+            </div>
           )}
         </div>
       </section>
@@ -133,4 +143,3 @@ const Home = () => {
 };
 
 export default Home;
-
