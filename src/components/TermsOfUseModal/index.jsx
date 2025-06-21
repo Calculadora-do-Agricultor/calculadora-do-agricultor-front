@@ -79,13 +79,23 @@ const TermsOfUseModal = ({
             <h4>2. Conta de Usuário</h4>
             <p>Para utilizar nossos serviços, você precisa criar uma conta com informações precisas e completas. Você é responsável por manter a confidencialidade de sua senha e por todas as atividades realizadas em sua conta.</p>
             
-            <h4>3. Privacidade</h4>
+            <h4>3. Segurança e Coleta de Dados</h4>
+            <p>Para garantir a segurança de todos os usuários e da aplicação, coletamos automaticamente seu endereço IP durante o uso dos nossos serviços. Esta informação é utilizada exclusivamente para:</p>
+            <ul>
+              <li>Prevenção de fraudes e atividades maliciosas</li>
+              <li>Monitoramento de segurança da aplicação</li>
+              <li>Análise de logs para manutenção e melhorias do sistema</li>
+              <li>Proteção contra ataques e tentativas de invasão</li>
+            </ul>
+            <p>Adicionalmente, a coleta de localização é <strong>opcional</strong> e é utilizada para fins de marketing e personalização da experiência do usuário, conforme descrito na seção de benefícios abaixo.</p>
+            
+            <h4>4. Privacidade</h4>
             <p>Nossa Política de Privacidade descreve como coletamos, usamos e compartilhamos suas informações pessoais. Ao utilizar nossos serviços, você concorda com nossa coleta e uso de informações conforme descrito.</p>
             
-            <h4>4. Conteúdo</h4>
+            <h4>5. Conteúdo</h4>
             <p>Você é responsável por todo o conteúdo que enviar ou criar usando nossos serviços. Não permitimos conteúdo ilegal, ofensivo ou que viole direitos de terceiros.</p>
             
-            <h4>5. Modificações</h4>
+            <h4>6. Modificações</h4>
             <p>Podemos modificar estes termos a qualquer momento. Continuando a usar o serviço após as alterações, você concorda com os novos termos.</p>
           </div>
           

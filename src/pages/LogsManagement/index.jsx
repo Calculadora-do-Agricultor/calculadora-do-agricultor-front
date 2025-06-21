@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
-import { collection, getDocs, query, orderBy, limit, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  where,
+} from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -26,12 +33,10 @@ import {
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 import { MetricCard, LogCard, MetricsToggle } from "@/components";
-import AccessLogCard from "../../components/LogCard/AccessLogCard";
 import "./LogsManagement.css";
 
 const LogsManagement = () => {
   const [logs, setLogs] = useState([]);
-  const [accessLogs, setAccessLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -44,7 +49,7 @@ const LogsManagement = () => {
   const [ipFilter, setIpFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [showFilteredMetrics, setShowFilteredMetrics] = useState(false);
-  const [logType, setLogType] = useState("all"); // 'all', 'regular', 'access'
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
@@ -99,25 +104,14 @@ const LogsManagement = () => {
 
       const logsData = [];
       querySnapshot.forEach((doc) => {
-        logsData.push({ id: doc.id, ...doc.data(), logType: 'regular' });
-      });
-
-      // Buscar logs de acesso
-      const accessLogsCollectionRef = collection(db, "accessLogs");
-      const accessQ = query(accessLogsCollectionRef, orderBy("timestamp", "desc"));
-      const accessQuerySnapshot = await getDocs(accessQ);
-
-      const accessLogsData = [];
-      accessQuerySnapshot.forEach((doc) => {
-        accessLogsData.push({ id: doc.id, ...doc.data(), logType: 'access' });
+        logsData.push({ id: doc.id, ...doc.data() });
       });
 
       setLogs(logsData);
-      setAccessLogs(accessLogsData);
-      
-      // Calcular total de páginas com base no tipo de log selecionado
-      updatePagination(logsData, accessLogsData, logType);
-      
+
+      // Calcular total de páginas com base nos logs regulares
+      updatePagination(logsData);
+
       setError(null);
     } catch (err) {
       console.error("Erro ao buscar logs:", err);
@@ -126,21 +120,12 @@ const LogsManagement = () => {
       setLoading(false);
     }
   };
-  
-  // Função para atualizar a paginação com base no tipo de log selecionado
-  const updatePagination = (regularLogs, accessLogs, selectedLogType) => {
-    let totalItems = 0;
-    
-    if (selectedLogType === 'all') {
-      totalItems = regularLogs.length + accessLogs.length;
-    } else if (selectedLogType === 'regular') {
-      totalItems = regularLogs.length;
-    } else if (selectedLogType === 'access') {
-      totalItems = accessLogs.length;
-    }
-    
+
+  // Função para atualizar a paginação com base nos logs regulares
+  const updatePagination = (regularLogs) => {
+    const totalItems = regularLogs.length;
     setTotalPages(Math.ceil(totalItems / logsPerPage));
-    setCurrentPage(1); // Resetar para a primeira página ao mudar o tipo de log
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -148,60 +133,56 @@ const LogsManagement = () => {
       fetchLogs();
     }
   }, [user, isAdmin]);
-  
-  // Atualizar paginação quando o tipo de log mudar
-  useEffect(() => {
-    if (logs.length > 0 || accessLogs.length > 0) {
-      updatePagination(logs, accessLogs, logType);
-    }
-  }, [logType, logs, accessLogs]);
 
-  // Combinar logs com base no tipo selecionado
-  const combinedLogs = () => {
-    if (logType === 'all') {
-      return [...logs, ...accessLogs];
-    } else if (logType === 'regular') {
-      return logs;
-    } else if (logType === 'access') {
-      return accessLogs;
+  // Atualizar paginação quando os logs mudarem
+  useEffect(() => {
+    if (logs.length > 0) {
+      updatePagination(logs);
     }
-    return [];
+  }, [logs]);
+
+  // Retornar apenas os logs regulares
+  const combinedLogs = () => {
+    return logs;
   };
-  
+
   // Filtrar logs com base nos filtros aplicados
   const filteredLogs = combinedLogs().filter((log) => {
-    // Filtro de localização (apenas para logs regulares)
+    // Filtro de localização
     let matchesLocation = true;
-    if (log.logType === 'regular') {
-      if (filterType === "with-location") {
-        matchesLocation =
-          log.location && log.location.latitude && log.location.longitude;
-      } else if (filterType === "without-location") {
-        matchesLocation =
-          !log.location || !log.location.latitude || !log.location.longitude;
-      }
-      
-      // Filtro de texto de localização
-      if (locationFilter && matchesLocation) {
-        const locationFilterLower = locationFilter.toLowerCase();
-        // Verifica se há alguma informação de localização que corresponda ao filtro
-        const hasLocationMatch = 
-          (log.location && 
-           ((log.location.latitude && log.location.latitude.toString().includes(locationFilterLower)) ||
-            (log.location.longitude && log.location.longitude.toString().includes(locationFilterLower)) ||
-            (log.location.status && log.location.status.toLowerCase().includes(locationFilterLower))));
-        
-        matchesLocation = hasLocationMatch;
-      }
+    if (filterType === "with-location") {
+      matchesLocation =
+        log.location && log.location.latitude && log.location.longitude;
+    } else if (filterType === "without-location") {
+      matchesLocation =
+        !log.location || !log.location.latitude || !log.location.longitude;
+    }
+
+    // Filtro de texto de localização
+    if (locationFilter && matchesLocation) {
+      const locationFilterLower = locationFilter.toLowerCase();
+      // Verifica se há alguma informação de localização que corresponda ao filtro
+      const hasLocationMatch =
+        log.location &&
+        ((log.location.latitude &&
+          log.location.latitude.toString().includes(locationFilterLower)) ||
+          (log.location.longitude &&
+            log.location.longitude.toString().includes(locationFilterLower)) ||
+          (log.location.status &&
+            log.location.status.toLowerCase().includes(locationFilterLower)));
+
+      matchesLocation = hasLocationMatch;
     }
 
     // Filtro de usuário
     const matchesUser =
       userFilter === "" ||
-      (log.idUser && log.idUser.toLowerCase().includes(userFilter.toLowerCase())) ||
-      (log.userId && log.userId.toLowerCase().includes(userFilter.toLowerCase())) ||
+      (log.idUser &&
+        log.idUser.toLowerCase().includes(userFilter.toLowerCase())) ||
+      (log.userId &&
+        log.userId.toLowerCase().includes(userFilter.toLowerCase())) ||
       (log.email && log.email.toLowerCase().includes(userFilter.toLowerCase()));
-    
+
     // Filtro de IP (para ambos os tipos de logs)
     const matchesIp =
       ipFilter === "" ||
@@ -209,7 +190,7 @@ const LogsManagement = () => {
 
     // Filtro de data
     let matchesDate = true;
-    const logTimestamp = log.logType === 'access' ? log.timestamp : log.date;
+    const logTimestamp = log.date;
     if (logTimestamp && dateFilter !== "all") {
       const logDate = logTimestamp.toDate();
       const today = new Date();
@@ -267,38 +248,43 @@ const LogsManagement = () => {
         log.action,
         log.userAgent,
       ];
-      
+
       // Verifica se algum dos campos contém a consulta
       matchesSearch = searchableFields.some(
-        field => field && field.toString().toLowerCase().includes(query)
+        (field) => field && field.toString().toLowerCase().includes(query),
       );
-      
-      // Verifica também nos campos de localização se for um log regular
-      if (!matchesSearch && log.logType === 'regular' && log.location) {
-        matchesSearch = 
-          (log.location.status && log.location.status.toLowerCase().includes(query)) ||
-          (log.location.latitude && log.location.latitude.toString().includes(query)) ||
-          (log.location.longitude && log.location.longitude.toString().includes(query));
+
+      // Verifica também nos campos de localização
+      if (!matchesSearch && log.location) {
+        matchesSearch =
+          (log.location.status &&
+            log.location.status.toLowerCase().includes(query)) ||
+          (log.location.latitude &&
+            log.location.latitude.toString().includes(query)) ||
+          (log.location.longitude &&
+            log.location.longitude.toString().includes(query));
       }
     }
-    
-    return matchesLocation && matchesUser && matchesIp && matchesDate && matchesSearch;
+
+    return (
+      matchesLocation &&
+      matchesUser &&
+      matchesIp &&
+      matchesDate &&
+      matchesSearch
+    );
   });
 
   // Calcular métricas para os cards
   const calculateMetrics = (logsToAnalyze) => {
     const totalLogs = logsToAnalyze.length;
-    
-    // Separar logs por tipo
-    const regularLogs = logsToAnalyze.filter(log => log.logType === 'regular');
-    const accessLogs = logsToAnalyze.filter(log => log.logType === 'access');
-    
+
     // Métricas para logs regulares
-    const logsWithLocation = regularLogs.filter(
+    const logsWithLocation = logsToAnalyze.filter(
       (log) => log.location && log.location.latitude && log.location.longitude,
     ).length;
 
-    const logsWithoutLocation = regularLogs.filter(
+    const logsWithoutLocation = logsToAnalyze.filter(
       (log) =>
         !log.location || !log.location.latitude || !log.location.longitude,
     ).length;
@@ -306,17 +292,23 @@ const LogsManagement = () => {
     // Métricas para todos os logs
     const uniqueUsers = new Set(
       logsToAnalyze
-        .filter(log => log.idUser || log.userId)
-        .map(log => log.idUser || log.userId)
+        .filter((log) => log.idUser || log.userId)
+        .map((log) => log.idUser || log.userId),
+    ).size;
+
+    // Métricas de IPs únicos
+    const uniqueIPs = new Set(
+      logsToAnalyze
+        .filter((log) => log.ip && log.ip !== 'IP não disponível')
+        .map((log) => log.ip),
     ).size;
 
     return {
       totalLogs,
-      regularLogsCount: regularLogs.length,
-      accessLogsCount: accessLogs.length,
       logsWithLocation,
       logsWithoutLocation,
       uniqueUsers,
+      uniqueIPs,
     };
   };
 
@@ -331,125 +323,99 @@ const LogsManagement = () => {
   const exportLogsToCSV = () => {
     try {
       setIsExporting(true);
-      
+
       // Determinar quais logs exportar (filtrados ou todos)
       const logsToExport = filteredLogs;
-      
+
       if (logsToExport.length === 0) {
-        alert('Não há logs para exportar com os filtros atuais.');
+        alert("Não há logs para exportar com os filtros atuais.");
         setIsExporting(false);
         return;
       }
-      
-      // Criar cabeçalhos do CSV com base no tipo de log
-      let csvContent = '';
-      const commonHeaders = ['ID', 'Data/Hora', 'Usuário'];
-      
-      // Adicionar cabeçalhos específicos com base nos tipos de logs presentes
-      const hasRegularLogs = logsToExport.some(log => log.logType === 'regular');
-      const hasAccessLogs = logsToExport.some(log => log.logType === 'access');
-      
-      let headers = [...commonHeaders];
-      
-      if (hasRegularLogs) {
-        headers.push('Descrição', 'Latitude', 'Longitude', 'Status Localização');
-      }
-      
-      if (hasAccessLogs) {
-        headers.push('IP', 'Página', 'Ação', 'Navegador');
-      }
-      
+
+      // Criar cabeçalhos do CSV
+      let csvContent = "";
+      const headers = [
+        "ID",
+        "Data/Hora",
+        "Usuário",
+        "Descrição",
+        "IP",
+        "Latitude",
+        "Longitude",
+        "Status Localização",
+      ];
+
       // Adicionar cabeçalhos ao CSV
-      csvContent += headers.join(',') + '\n';
-      
+      csvContent += headers.join(",") + "\n";
+
       // Adicionar dados de cada log
-      logsToExport.forEach(log => {
+      logsToExport.forEach((log) => {
         const row = [];
-        
-        // Campos comuns
-        row.push(`"${log.id || ''}"`);
-        
-        // Data formatada
-        const timestamp = log.logType === 'access' ? log.timestamp : log.date;
-        row.push(`"${timestamp ? formatDate(timestamp) : 'Data indisponível'}"`);
-        
-        // Usuário (pode estar em campos diferentes dependendo do tipo de log)
-        const userId = log.idUser || log.userId || log.email || 'Usuário desconhecido';
-        row.push(`"${userId}"`);
-        
-        // Campos específicos para logs regulares
-        if (log.logType === 'regular') {
-          row.push(`"${log.description || ''}"`);
-          row.push(`"${log.location?.latitude || ''}"`);
-          row.push(`"${log.location?.longitude || ''}"`);
-          row.push(`"${log.location?.status || ''}"`);
-          
-          // Preencher com valores vazios para colunas de logs de acesso
-          if (hasAccessLogs) {
-            row.push('""', '""', '""', '""');
-          }
-        }
-        
-        // Campos específicos para logs de acesso
-        if (log.logType === 'access') {
-          // Preencher com valores vazios para colunas de logs regulares
-          if (hasRegularLogs) {
-            row.push('""', '""', '""', '""');
-          }
-          
-          row.push(`"${log.ip || ''}"`);
-          row.push(`"${log.page || ''}"`);
-          row.push(`"${log.action || ''}"`);
-          
-          // Extrair informações básicas do user agent
-          const userAgentInfo = log.userAgent ? formatUserAgent(log.userAgent) : 'Desconhecido';
-          row.push(`"${userAgentInfo}"`);
-        }
-        
-        csvContent += row.join(',') + '\n';
+
+        // Campos dos logs regulares
+        row.push(`"${log.id || ""}"`); 
+        row.push(`"${log.date ? formatDate(log.date) : "Data indisponível"}"`); 
+        row.push(`"${log.idUser || log.email || "Usuário desconhecido"}"`); 
+        row.push(`"${log.description || ""}"`); 
+        row.push(`"${log.ip || "IP não disponível"}"`); 
+        row.push(`"${log.location?.latitude || ""}"`); 
+        row.push(`"${log.location?.longitude || ""}"`); 
+        row.push(`"${log.location?.status || ""}"`);
+
+        csvContent += row.join(",") + "\n";
       });
-      
+
       // Criar um blob e link para download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      
+      const link = document.createElement("a");
+
       // Configurar e simular clique no link
-      link.setAttribute('href', url);
-      link.setAttribute('download', `logs_${new Date().toISOString().slice(0, 10)}.csv`);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `logs_${new Date().toISOString().slice(0, 10)}.csv`,
+      );
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       setIsExporting(false);
     } catch (error) {
-      console.error('Erro ao exportar logs:', error);
-      alert('Ocorreu um erro ao exportar os logs. Por favor, tente novamente.');
+      console.error("Erro ao exportar logs:", error);
+      alert("Ocorreu um erro ao exportar os logs. Por favor, tente novamente.");
       setIsExporting(false);
     }
   };
-  
+
   // Função para formatar o agente do usuário de forma mais legível (para exportação)
   const formatUserAgent = (userAgent) => {
     if (!userAgent) return "Desconhecido";
-    
+
     // Extrair informações básicas do user agent
     let browser = "Desconhecido";
     let os = "Desconhecido";
-    
+
     if (userAgent.includes("Firefox")) browser = "Firefox";
     else if (userAgent.includes("Chrome")) browser = "Chrome";
     else if (userAgent.includes("Safari")) browser = "Safari";
     else if (userAgent.includes("Edge")) browser = "Edge";
-    else if (userAgent.includes("MSIE") || userAgent.includes("Trident")) browser = "Internet Explorer";
-    
+    else if (userAgent.includes("MSIE") || userAgent.includes("Trident"))
+      browser = "Internet Explorer";
+
     if (userAgent.includes("Windows")) os = "Windows";
     else if (userAgent.includes("Mac OS")) os = "macOS";
     else if (userAgent.includes("Linux")) os = "Linux";
     else if (userAgent.includes("Android")) os = "Android";
-    else if (userAgent.includes("iOS") || userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
-    
+    else if (
+      userAgent.includes("iOS") ||
+      userAgent.includes("iPhone") ||
+      userAgent.includes("iPad")
+    )
+      os = "iOS";
+
     return `${browser} em ${os}`;
   };
 
@@ -498,38 +464,42 @@ const LogsManagement = () => {
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <MetricCard
               title="Total de Logs"
               value={metrics.totalLogs}
               icon={DocumentTextIcon}
             />
-            <MetricCard
-              title="Logs Regulares"
-              value={metrics.regularLogsCount}
-              icon={ChartBarIcon}
-            />
-            <MetricCard
-              title="Logs de Acesso"
-              value={metrics.accessLogsCount}
-              icon={ComputerDesktopIcon}
-            />
+
             <MetricCard
               title="Com Localização"
               value={metrics.logsWithLocation}
               icon={GlobeAltIcon}
             />
+            
+            <MetricCard
+              title="Sem Localização"
+              value={metrics.logsWithoutLocation}
+              icon={ExclamationTriangleIcon}
+            />
+            
             <MetricCard
               title="Usuários Únicos"
               value={metrics.uniqueUsers}
               icon={UsersIcon}
+            />
+            
+            <MetricCard
+              title="IPs Únicos"
+              value={metrics.uniqueIPs}
+              icon={ServerIcon}
             />
           </div>
         </div>
 
         {/* Barra de busca global e botão de exportação */}
         <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+          <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
             {/* Busca global */}
             <div className="relative w-full md:w-2/3">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
@@ -543,24 +513,26 @@ const LogsManagement = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             {/* Botão de exportação */}
             <button
               onClick={exportLogsToCSV}
               disabled={isExporting || filteredLogs.length === 0}
-              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${isExporting || filteredLogs.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-[#00418F] text-white hover:bg-[#00418F]/90 hover:scale-105'}`}
+              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${isExporting || filteredLogs.length === 0 ? "cursor-not-allowed bg-gray-300 text-gray-500" : "bg-[#00418F] text-white hover:scale-105 hover:bg-[#00418F]/90"}`}
             >
               <ArrowDownTrayIcon className="h-5 w-5" />
-              {isExporting ? 'Exportando...' : 'Exportar CSV'}
+              {isExporting ? "Exportando..." : "Exportar CSV"}
             </button>
           </div>
-          
+
           {/* Filtros avançados */}
           <div className="mb-4 flex items-center">
             <FunnelIcon className="mr-2 h-5 w-5 text-[#00418F]/70" />
-            <h3 className="text-md font-semibold text-[#00418F]">Filtros Avançados</h3>
+            <h3 className="text-md font-semibold text-[#00418F]">
+              Filtros Avançados
+            </h3>
           </div>
-          
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Filtro de usuário */}
             <div className="relative">
@@ -589,7 +561,7 @@ const LogsManagement = () => {
                 onChange={(e) => setIpFilter(e.target.value)}
               />
             </div>
-            
+
             {/* Filtro de localização */}
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
@@ -604,16 +576,16 @@ const LogsManagement = () => {
               />
             </div>
           </div>
-          
+
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Filtro de data */}
             <select
-              className="cursor-pointer rounded-xl border border-[#00418F]/20 bg-white/80 pl-4 pr-12 py-3 font-medium text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20 appearance-none"
+              className="cursor-pointer appearance-none rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-12 pl-4 font-medium text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2300418F'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1.25em 1.25em'
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 0.75rem center",
+                backgroundSize: "1.25em 1.25em",
               }}
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
@@ -624,23 +596,6 @@ const LogsManagement = () => {
               <option value="last-week">Última semana</option>
               <option value="last-month">Último mês</option>
               <option value="custom">Período personalizado</option>
-            </select>
-
-            {/* Filtro de tipo de log */}
-            <select
-              className="cursor-pointer rounded-xl border border-[#00418F]/20 bg-white/80 pl-4 pr-12 py-3 font-medium text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-2 focus:ring-[#00418F]/20 appearance-none"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2300418F'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 0.75rem center',
-                backgroundSize: '1.25em 1.25em'
-              }}
-              value={logType}
-              onChange={(e) => setLogType(e.target.value)}
-            >
-              <option value="all">Todos os tipos de logs</option>
-              <option value="regular">Logs regulares</option>
-              <option value="access">Logs de acesso</option>
             </select>
           </div>
 
@@ -665,7 +620,7 @@ const LogsManagement = () => {
           )}
 
           {/* Indicador de filtros ativos */}
-          {(filterType !== "all" || dateFilter !== "all" || userFilter || logType !== "all") && (
+          {(filterType !== "all" || dateFilter !== "all" || userFilter) && (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#00418F]/10 pt-4">
               <span className="text-sm font-medium text-[#00418F]/70">
                 Filtros ativos:
@@ -677,13 +632,7 @@ const LogsManagement = () => {
                     : "Sem localização"}
                 </span>
               )}
-              {logType !== "all" && (
-                <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
-                  {logType === "regular"
-                    ? "Logs regulares"
-                    : "Logs de acesso"}
-                </span>
-              )}
+
               {userFilter && (
                 <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
                   Usuário: "{userFilter}"
@@ -705,7 +654,6 @@ const LogsManagement = () => {
                   setUserFilter("");
                   setStartDate("");
                   setEndDate("");
-                  setLogType("all");
                 }}
                 className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-200"
               >
@@ -740,21 +688,14 @@ const LogsManagement = () => {
           ) : (
             <div className="grid gap-4 p-4">
               {currentLogs.map((log) => (
-              <div key={log.id} className="mb-4">
-                {log.logType === 'access' ? (
-                  <AccessLogCard
-                    log={log}
-                    formatDate={formatDate}
-                  />
-                ) : (
+                <div key={log.id} className="mb-4">
                   <LogCard
                     log={log}
                     formatDate={formatDate}
                     openInMaps={openInMaps}
                   />
-                )}
-              </div>
-            ))}
+                </div>
+              ))}
             </div>
           )}
         </div>
