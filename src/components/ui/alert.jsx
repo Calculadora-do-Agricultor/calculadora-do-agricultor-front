@@ -39,6 +39,8 @@ const alertVariants = cva(
           "bg-blue-50 border-l-blue-600 text-blue-900 [&>svg]:text-blue-700",
         "auth-blocked":
           "bg-gray-50 border-l-gray-500 text-gray-900 [&>svg]:text-gray-700",
+        "auth-disabled":
+          "bg-amber-50 border-l-amber-500 text-amber-900 [&>svg]:text-amber-700",
       },
     },
     defaultVariants: {
@@ -174,6 +176,11 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
         variant: "auth-blocked",
         title: "Conta Suspensa",
         description: "Sua conta foi temporariamente suspensa por motivos de segurança. Entre em contato com o suporte."
+      },
+      "account-disabled": {
+        variant: "auth-disabled",
+        title: "Conta Desativada",
+        description: "Sua conta foi desativada por um administrador. Para reativar sua conta, entre em contato com o suporte: suporte@calculadoradoagricultor.com | (11) 9999-9999 | Atendimento: Segunda a Sexta, 8h às 18h"
       },
       "auth/account-exists-with-different-credential": {
         variant: "auth-account",

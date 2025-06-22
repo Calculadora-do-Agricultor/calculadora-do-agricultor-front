@@ -1,9 +1,9 @@
-import { useState, useContext, useEffect } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { auth, db } from "../../services/firebaseConfig";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/schemas";
@@ -47,6 +47,20 @@ const Login = () => {
     },
   });
 
+  // Listener para evento de conta desativada
+  useEffect(() => {
+    const handleAccountDisabled = () => {
+      setError("Sua conta foi desativada por um administrador.");
+      setErrorCode("account-disabled");
+    };
+
+    window.addEventListener('accountDisabled', handleAccountDisabled);
+    
+    return () => {
+      window.removeEventListener('accountDisabled', handleAccountDisabled);
+    };
+  }, []);
+
   const handleLogin = async (values) => {
     setError("");
     setErrorCode("");
@@ -64,6 +78,23 @@ const Login = () => {
         setError("Verifique seu e-mail antes de continuar.");
         setIsLoading(false);
         return;
+      }
+
+      // Verificar se a conta está ativa antes de prosseguir
+      const userDocRef = doc(db, "users", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        
+        if (userData.active === false) {
+          // Deslogar imediatamente e mostrar erro
+          await signOut(auth);
+          setError("Sua conta foi desativada por um administrador.");
+          setErrorCode("account-disabled");
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Proteção contra log duplicado por sessão
@@ -116,7 +147,8 @@ const Login = () => {
   };
 
   useEffect(() => {
-    if (!loading && user) {
+    // Não redirecionar se há erro de conta desativada
+    if (!loading && user && errorCode !== "account-disabled") {
       navigate("/Calculator", { replace: true });
     }
 
@@ -125,7 +157,7 @@ const Login = () => {
       form.setValue("email", rememberedEmail);
       form.setValue("rememberMe", true);
     }
-  }, [user, loading, navigate, form]);
+  }, [user, loading, navigate, form, errorCode]);
 
   return (
     <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4 py-8">
@@ -345,6 +377,8 @@ const Login = () => {
                 "Entrar"
               )}
             </Button>
+
+
 
             {/* Link para Registro */}
             <div className="text-center pt-4">
