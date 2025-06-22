@@ -271,6 +271,7 @@ const Login = () => {
                   <div className="flex items-center space-x-2">
                     <FormControl>
                       <input
+                        id="remember-me-checkbox"
                         type="checkbox"
                         checked={field.value}
                         onChange={field.onChange}
@@ -289,7 +290,7 @@ const Login = () => {
                         tabIndex={4}
                       />
                     </FormControl>
-                    <FormLabel className="text-sm text-gray-600 font-normal cursor-pointer">
+                    <FormLabel htmlFor="remember-me-checkbox" className="text-sm text-gray-600 font-normal cursor-pointer">
                       Lembrar meu email
                     </FormLabel>
                   </div>

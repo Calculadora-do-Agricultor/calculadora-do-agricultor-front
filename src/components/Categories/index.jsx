@@ -132,6 +132,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated 
         <div className="search-input-container">
           <Search size={18} className="search-icon" />
           <input
+            id="search-categories"
             type="text"
             placeholder="Buscar categorias..."
             value={searchTerm}

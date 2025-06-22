@@ -100,8 +100,9 @@ const TermsOfUseModal = ({
           </div>
           
           <div className="checkbox-container">
-            <label className="checkbox-label">
+            <label htmlFor="accept-terms" className="checkbox-label">
               <input 
+                id="accept-terms"
                 type="checkbox" 
                 checked={acceptTerms} 
                 onChange={(e) => setAcceptTerms(e.target.checked)} 
@@ -112,8 +113,9 @@ const TermsOfUseModal = ({
           </div>
           
           <div className="checkbox-container">
-            <label className="checkbox-label">
+            <label htmlFor="accept-location" className="checkbox-label">
               <input 
+                id="accept-location"
                 type="checkbox" 
                 checked={acceptLocationSharing} 
                 onChange={(e) => setAcceptLocationSharing(e.target.checked)} 
