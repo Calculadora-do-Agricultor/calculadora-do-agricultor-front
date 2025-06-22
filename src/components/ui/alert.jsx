@@ -124,24 +124,29 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
       "auth/invalid-email": {
         variant: "auth-email",
         title: "Email Inválido",
-        description: "O formato do email inserido não é válido. Verifique e tente novamente."
+        description: "O formato do email inserido não é válido. Verifique se você digitou corretamente e tente novamente."
       },
       "auth/user-not-found": {
         variant: "auth-account",
         title: "Conta Não Encontrada",
-        description: "Não encontramos uma conta associada a este email. Verifique o email ou crie uma nova conta."
+        description: "Não encontramos uma conta associada a este email. Verifique o email digitado ou crie uma nova conta."
       },
       "auth/email-already-in-use": {
         variant: "auth-email",
         title: "Email Já Cadastrado",
-        description: "Este email já está sendo usado por outra conta. Tente fazer login ou use outro email."
+        description: "Este email já está sendo usado por outra conta. Tente fazer login ou use um email diferente."
+      },
+      "auth/missing-email": {
+        variant: "auth-email",
+        title: "Email Obrigatório",
+        description: "Por favor, insira um endereço de email válido para continuar."
       },
       
       // Erros de senha
       "auth/wrong-password": {
         variant: "auth-password",
         title: "Senha Incorreta",
-        description: "A senha inserida está incorreta. Verifique sua senha ou use a opção 'Esqueci minha senha'."
+        description: "A senha inserida está incorreta. Verifique sua senha e tente novamente."
       },
       "auth/invalid-credential": {
         variant: "auth-password",
@@ -151,33 +156,75 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
       "auth/weak-password": {
         variant: "auth-password",
         title: "Senha Muito Fraca",
-        description: "A senha deve ter pelo menos 6 caracteres, incluindo letras maiúsculas e números."
+        description: "A senha deve ter pelo menos 6 caracteres, incluindo letras maiúsculas e números para maior segurança."
+      },
+      "auth/missing-password": {
+        variant: "auth-password",
+        title: "Senha Obrigatória",
+        description: "Por favor, insira uma senha para continuar."
+      },
+      "auth/requires-recent-login": {
+        variant: "auth-password",
+        title: "Reautenticação Necessária",
+        description: "Por segurança, você precisa fazer login novamente para realizar esta ação."
       },
       
       // Erros de conta
       "auth/user-disabled": {
         variant: "auth-blocked",
-        title: "Conta Bloqueada",
-        description: "Sua conta foi temporariamente suspensa. Entre em contato com o suporte para mais informações."
+        title: "Conta Suspensa",
+        description: "Sua conta foi temporariamente suspensa por motivos de segurança. Entre em contato com o suporte."
       },
       "auth/account-exists-with-different-credential": {
         variant: "auth-account",
         title: "Conta Existente",
-        description: "Já existe uma conta com este email usando um método de login diferente."
+        description: "Já existe uma conta com este email usando um método de login diferente. Tente fazer login normalmente."
+      },
+      "auth/operation-not-allowed": {
+        variant: "auth-blocked",
+        title: "Operação Não Permitida",
+        description: "Este método de autenticação não está habilitado. Entre em contato com o suporte."
       },
       
       // Erros de limite/segurança
       "auth/too-many-requests": {
         variant: "auth-blocked",
         title: "Muitas Tentativas",
-        description: "Muitas tentativas de login falharam. Aguarde alguns minutos antes de tentar novamente."
+        description: "Detectamos muitas tentativas de login. Por segurança, aguarde alguns minutos antes de tentar novamente."
+      },
+      "auth/popup-blocked": {
+        variant: "warning",
+        title: "Pop-up Bloqueado",
+        description: "O pop-up de autenticação foi bloqueado pelo navegador. Permita pop-ups para este site."
+      },
+      "auth/cancelled-popup-request": {
+        variant: "info",
+        title: "Login Cancelado",
+        description: "O processo de login foi cancelado. Tente novamente se desejar continuar."
       },
       
-      // Erros de rede
+      // Erros de rede e sistema
       "auth/network-request-failed": {
         variant: "warning",
         title: "Erro de Conexão",
         description: "Problema de conexão com a internet. Verifique sua conexão e tente novamente."
+      },
+      "auth/timeout": {
+        variant: "warning",
+        title: "Tempo Esgotado",
+        description: "A operação demorou muito para ser concluída. Verifique sua conexão e tente novamente."
+      },
+      "auth/internal-error": {
+        variant: "destructive",
+        title: "Erro Interno",
+        description: "Ocorreu um erro interno no sistema. Tente novamente em alguns instantes."
+      },
+      
+      // Erros específicos de cadastro
+      "auth/admin-restricted-operation": {
+        variant: "auth-blocked",
+        title: "Operação Restrita",
+        description: "Esta operação está restrita por políticas administrativas."
       },
       
       // Erros genéricos contextuais
@@ -185,7 +232,7 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
         variant: "destructive",
         title: context === "register" ? "Erro no Cadastro" : "Erro no Login",
         description: context === "register" 
-          ? "Não foi possível completar o cadastro. Verifique os dados e tente novamente."
+          ? "Não foi possível completar o cadastro. Verifique os dados inseridos e tente novamente."
           : "Não foi possível fazer login. Verifique suas credenciais e tente novamente."
       }
     }

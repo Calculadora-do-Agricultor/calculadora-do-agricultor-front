@@ -6,7 +6,7 @@ import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth, db } from "@/services/firebaseConfig";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { registerSchema } from "@/schemas";
 import { cn } from "@/lib/utils";
 import {
   EnvelopeIcon,
@@ -33,24 +33,6 @@ import { TermsOfUseModal } from "@/components";
 import useLocationLogger from "@/hooks/useLocationLogger";
 
 // Schema de validação com Zod
-const registerSchema = z.object({
-  name: z.string()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
-    .max(50, "Nome deve ter no máximo 50 caracteres")
-    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
-  email: z.string()
-    .email("Email inválido")
-    .min(1, "Email é obrigatório"),
-  password: z.string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
-    .regex(/[0-9]/, "Senha deve conter pelo menos um número"),
-  confirmPassword: z.string()
-    .min(1, "Confirmação de senha é obrigatória"),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Senhas não coincidem",
-  path: ["confirmPassword"],
-});
 
 const Register = () => {
   const navigate = useNavigate();
@@ -178,8 +160,26 @@ const Register = () => {
         email: registrationData?.email
       });
       
+      // Definir código de erro específico do Firebase Auth
       setErrorCode(error.code || 'default');
       setErrorMessage("Erro de cadastro");
+      
+      // Log adicional para erros críticos de segurança
+      if (error.code === 'auth/email-already-in-use') {
+        console.warn('Registration attempt with existing email:', {
+          code: error.code,
+          email: registrationData?.email,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        });
+      } else if (error.code === 'auth/weak-password') {
+        console.info('Weak password attempt during registration:', {
+          code: error.code,
+          email: registrationData?.email,
+          timestamp: new Date().toISOString()
+        });
+      }
+      
       console.error("Erro ao processar registro:", error);
     } finally {
       setIsLoading(false);

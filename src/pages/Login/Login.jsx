@@ -6,7 +6,7 @@ import { auth, db } from "../../services/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { loginSchema } from "@/schemas";
 import {
   EnvelopeIcon,
   ArrowRightOnRectangleIcon,
@@ -28,17 +28,7 @@ import {
 import { cn } from "../../lib/utils";
 
 // Schema de validação com Zod
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email é obrigatório")
-    .email("Por favor, insira um email válido"),
-  password: z
-    .string()
-    .min(1, "Senha é obrigatória")
-    .min(6, "A senha deve ter pelo menos 6 caracteres"),
-  rememberMe: z.boolean().default(false),
-});
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -107,8 +97,19 @@ const Login = () => {
         email: values.email // Log apenas do email, não da senha
       });
       
-      setErrorCode(error.code);
+      // Definir código de erro específico do Firebase Auth
+      setErrorCode(error.code || 'default');
       setError("Erro de autenticação");
+      
+      // Log adicional para erros críticos de segurança
+      if (error.code === 'auth/too-many-requests' || error.code === 'auth/user-disabled') {
+        console.warn('Security alert - Login attempt blocked:', {
+          code: error.code,
+          email: values.email,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent
+        });
+      }
     } finally {
       setIsLoading(false);
     }
