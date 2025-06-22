@@ -36,7 +36,7 @@ const Home = () => {
               ) : (
                 <>
                   <Button to="/register" variant="primary" size="medium">
-                    Cadastre-se Agora
+                    Cadastrar-se
                   </Button>
                   <Button to="/login" variant="secondary" size="medium">
                     Fazer Login

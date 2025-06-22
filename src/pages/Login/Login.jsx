@@ -132,10 +132,10 @@ const Login = () => {
         <div className="backdrop-blur-xl bg-white/80 border border-white/20 rounded-2xl shadow-2xl p-8 space-y-6">
         {/* Header */}
         <div className="space-y-3 text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg" style={{background: 'linear-gradient(135deg, #00418f, #0066cc)'}}>
             <ArrowRightOnRectangleIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-800 to-indigo-800 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent" style={{background: 'linear-gradient(135deg, #00418f, #0066cc)', WebkitBackgroundClip: 'text'}}>
             Bem-vindo de volta
           </h1>
           <p className="text-gray-600 text-sm">
@@ -162,10 +162,23 @@ const Login = () => {
                         type="email"
                         placeholder="seu@email.com"
                         className={cn(
-                          "pl-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200",
+                          "pl-10 h-11 border-gray-200 transition-all duration-200",
                           "hover:border-gray-400 bg-white/50"
                         )}
+                        style={{
+                          '--tw-ring-color': '#00418f33',
+                          borderColor: form.formState.errors.email ? '#ef4444' : undefined
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#00418f';
+                          e.target.style.boxShadow = '0 0 0 3px #00418f33';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb';
+                          e.target.style.boxShadow = 'none';
+                        }}
                         disabled={isLoading}
+                        tabIndex={1}
                       />
                       <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
@@ -187,7 +200,11 @@ const Login = () => {
                     </FormLabel>
                     <Link
                       to="/recuperar-senha"
-                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      className="text-sm hover:underline transition-colors"
+                      style={{color: '#00418f'}}
+                      onMouseEnter={(e) => e.target.style.color = '#003366'}
+                      onMouseLeave={(e) => e.target.style.color = '#00418f'}
+                      tabIndex={6}
                     >
                       Esqueceu a senha?
                     </Link>
@@ -199,18 +216,38 @@ const Login = () => {
                         type={showPassword ? "text" : "password"}
                         placeholder="Sua senha"
                         className={cn(
-                          "pl-10 pr-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200",
+                          "pl-10 pr-10 h-11 border-gray-200 transition-all duration-200",
                           "hover:border-gray-400 bg-white/50"
                         )}
+                        style={{
+                          '--tw-ring-color': '#00418f33',
+                          borderColor: form.formState.errors.password ? '#ef4444' : undefined
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#00418f';
+                          e.target.style.boxShadow = '0 0 0 3px #00418f33';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#e5e7eb';
+                          e.target.style.boxShadow = 'none';
+                        }}
                         disabled={isLoading}
+                        tabIndex={2}
                       />
                       <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200 focus:outline-none focus:text-blue-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors duration-200 focus:outline-none"
+                        style={{
+                          color: showPassword ? '#00418f' : undefined
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = '#00418f'}
+                        onMouseLeave={(e) => e.target.style.color = showPassword ? '#00418f' : '#9ca3af'}
+                        onFocus={(e) => e.target.style.color = '#00418f'}
                         aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
                         disabled={isLoading}
+                        tabIndex={3}
                       >
                         {showPassword ? (
                           <EyeSlashIcon className="h-5 w-5" />
@@ -237,8 +274,19 @@ const Login = () => {
                         type="checkbox"
                         checked={field.value}
                         onChange={field.onChange}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-colors"
+                        className="h-4 w-4 rounded border-gray-200 transition-colors"
+                        style={{
+                          accentColor: '#00418f',
+                          '--tw-ring-color': '#00418f33'
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 2px #00418f33';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.boxShadow = 'none';
+                        }}
                         disabled={isLoading}
+                        tabIndex={4}
                       />
                     </FormControl>
                     <FormLabel className="text-sm text-gray-600 font-normal cursor-pointer">
@@ -266,11 +314,25 @@ const Login = () => {
               type="submit"
               disabled={isLoading}
               className={cn(
-                "w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
-                "text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]",
+                "w-full h-11 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]",
                 "shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
-                "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                "focus:ring-2 focus:ring-offset-2"
               )}
+              style={{
+                background: 'linear-gradient(135deg, #00418f, #0066cc)',
+                '--tw-ring-color': '#00418f66'
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading) {
+                  e.target.style.background = 'linear-gradient(135deg, #003366, #004d99)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading) {
+                  e.target.style.background = 'linear-gradient(135deg, #00418f, #0066cc)';
+                }
+              }}
+              tabIndex={5}
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -288,7 +350,11 @@ const Login = () => {
                 Não tem uma conta?{" "}
                 <Link
                   to="/Register"
-                  className="font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                  className="font-semibold hover:underline transition-colors"
+                   style={{color: '#00418f'}}
+                   onMouseEnter={(e) => e.target.style.color = '#003366'}
+                   onMouseLeave={(e) => e.target.style.color = '#00418f'}
+                   tabIndex={7}
                 >
                   Cadastre-se aqui
                 </Link>
