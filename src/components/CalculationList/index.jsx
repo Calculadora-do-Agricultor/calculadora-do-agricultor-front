@@ -60,21 +60,21 @@ const CalculationList = ({
   // Efeito para bloquear/desbloquear scroll do body quando o modal de exclusão está aberto
   useEffect(() => {
     if (showDeleteModal) {
-      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.classList.add("modal-open")
       document.body.style.overflow = 'hidden'
     } else {
-      // Restaura o scroll do body quando o modal é fechado
+      document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
-      // Limpa os estados de erro e sucesso quando o modal é fechado
       setDeleteError(null)
       setDeleteSuccess(false)
     }
-
-    // Cleanup function para garantir que o scroll seja restaurado
+  
     return () => {
+      document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
     }
   }, [showDeleteModal])
+  
 
 
   useEffect(() => {
