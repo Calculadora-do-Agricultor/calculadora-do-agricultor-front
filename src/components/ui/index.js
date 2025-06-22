@@ -12,3 +12,4 @@ export {
   DialogTitle,
   DialogDescription,
 } from "./dialog";
+export { Alert, AlertTitle, AlertDescription, AuthAlert } from "./alert";

@@ -12,7 +12,7 @@ import {
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
-import { Alert } from "@/components";
+import { AuthAlert } from "../../components/ui";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -86,27 +87,16 @@ const Login = () => {
 
       navigate("/Calculator");
     } catch (error) {
-      let errorMessage = "";
-      switch (error.code) {
-        case "auth/wrong-password":
-        case "auth/user-not-found":
-          errorMessage = "Email ou senha incorretos.";
-          break;
-        case "auth/invalid-email":
-          errorMessage = "Email inválido.";
-          break;
-        case "auth/too-many-requests":
-          errorMessage =
-            "Muitas tentativas de login. Por favor, tente novamente mais tarde.";
-          break;
-        case "auth/network-request-failed":
-          errorMessage =
-            "Erro de conexão. Verifique sua internet e tente novamente.";
-          break;
-        default:
-          errorMessage = "Ocorreu um erro ao fazer login. Tente novamente.";
-      }
-      setError(errorMessage);
+      // Log do erro para monitoramento de segurança
+      console.error('Login error:', {
+        code: error.code,
+        message: error.message,
+        timestamp: new Date().toISOString(),
+        email: email // Log apenas do email, não da senha
+      });
+      
+      setErrorCode(error.code);
+      setError(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -222,7 +212,15 @@ const Login = () => {
           </div>
 
           {error && (
-            <Alert type="error" message={error} onClose={() => setError("")} />
+            <AuthAlert 
+              errorCode={errorCode} 
+              customMessage={error}
+              context="login"
+              onClose={() => {
+                setError("");
+                setErrorCode("");
+              }} 
+            />
           )}
 
           <div className="flex flex-col items-center pt-2">

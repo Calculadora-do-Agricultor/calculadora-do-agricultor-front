@@ -13,7 +13,8 @@ import {
   CheckCircleIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
-import { Alert, TermsOfUseModal } from "@/components";
+import { AuthAlert } from "../../components/ui";
+import { TermsOfUseModal } from "@/components";
 import useLocationLogger from "@/hooks/useLocationLogger";
 
 const Register = () => {
@@ -25,6 +26,7 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [role] = useState("user");
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -184,31 +186,16 @@ const Register = () => {
       navigate("/Calculator");
       console.log("Usuário registrado e salvo no Firestore.");
     } catch (err) {
-      let errorMsg;
-      switch (err.code) {
-        case "auth/email-already-in-use":
-          errorMsg = "Email já cadastrado. Use outro email ou faça login.";
-          break;
-        case "auth/invalid-email":
-          errorMsg = "Email inválido. Verifique o formato.";
-          break;
-        case "auth/network-request-failed":
-          errorMsg = "Erro de conexão. Verifique sua internet.";
-          break;
-        case "auth/weak-password":
-          errorMsg =
-            "Senha fraca. Use 6+ caracteres, letras maiúsculas e números.";
-          break;
-        case "auth/operation-not-allowed":
-          errorMsg = "Cadastro temporariamente indisponível.";
-          break;
-        case "auth/too-many-requests":
-          errorMsg = "Muitas tentativas. Aguarde alguns minutos.";
-          break;
-        default:
-          errorMsg = "Erro no cadastro. Tente novamente ou contate o suporte.";
-      }
-      setErrorMessage(errorMsg);
+      // Log do erro para monitoramento de segurança
+      console.error('Registration processing error:', {
+        code: err.code,
+        message: err.message,
+        timestamp: new Date().toISOString(),
+        email: email
+      });
+      
+      setErrorCode(err.code || 'default');
+      setErrorMessage(err.message);
       console.error("Erro ao processar registro:", err);
     } finally {
       setIsLoading(false);
@@ -219,6 +206,7 @@ const Register = () => {
     e.preventDefault();
 
     setErrorMessage("");
+    setErrorCode("");
     setIsLoading(true);
 
     if (!validateForm()) {
@@ -472,7 +460,17 @@ const Register = () => {
             )}
           </div>
 
-          {errorMessage && <Alert message={errorMessage} type="error" />}
+          {errorMessage && (
+            <AuthAlert 
+              errorCode={errorCode} 
+              customMessage={errorMessage}
+              context="register"
+              onClose={() => {
+                setErrorMessage("");
+                setErrorCode("");
+              }} 
+            />
+          )}
 
           <div className="pt-2">
             <button
@@ -539,7 +537,16 @@ const processRegistration = async (data, acceptedLocationSharing = false) => {
     navigate("/login");
   } catch (error) {
     console.error("Erro durante o registro:", error);
-    setErrorMessage(getErrorMessage(error.message));
+    // Log do erro para monitoramento de segurança
+    console.error('Registration error:', {
+      code: error.code,
+      message: error.message,
+      timestamp: new Date().toISOString(),
+      email: email // Log apenas do email, não da senha
+    });
+    
+    setErrorCode(error.code || 'default');
+    setErrorMessage(error.message);
     setIsLoading(false);
   }
 };
