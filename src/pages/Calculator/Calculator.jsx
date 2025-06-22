@@ -224,6 +224,7 @@ export default function Calculator() {
               onSelect={setCategoriaSelecionada}
               selectedCategory={categoriaSelecionada}
               onCategoryUpdated={fetchCategorias}
+              idPrefix="mobile-"
             />
           </div>
         </div>
@@ -241,7 +242,7 @@ export default function Calculator() {
               </div>
             ) : (
               <>
-                <div className="categories-container">
+                <div className="categories-container-calculator">
                   <div className="categories-header">
                     <h2>Categorias</h2>
                   </div>
@@ -252,6 +253,7 @@ export default function Calculator() {
                     }}
                     selectedCategory={categoriaSelecionada}
                     onCategoryUpdated={fetchCategorias}
+                    idPrefix="desktop-"
                   />
                 </div>
               </>

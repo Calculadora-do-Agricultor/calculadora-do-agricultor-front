@@ -498,7 +498,7 @@ const CalculationList = ({
             {deleteSuccess ? (
               <div className="delete-modal-success">
                 <CheckCircle className="delete-modal-success-icon" size={48} />
-                <h2 id="delete-modal-title">Cálculo excluído</h2>
+                <h2 id="delete-success-modal-title">Cálculo excluído</h2>
                 <p>O cálculo foi excluído com sucesso.</p>
               </div>
             ) : (
