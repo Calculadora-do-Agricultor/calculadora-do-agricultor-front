@@ -39,7 +39,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background-color: #f9fafb;
+  background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   color: #4b5563;
@@ -47,11 +47,14 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .sort-button:hover {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+  background-color: #f8fafc;
+  border-color: #00418f;
+  color: #00418f;
+  font-weight: 600;
 }
 
 .sort-options {
@@ -87,7 +90,8 @@
 }
 
 .sort-options button:hover {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  border-color: #00418f;
 }
 
 .sort-options button.active {
@@ -100,7 +104,7 @@
 .view-toggle {
   display: flex;
   align-items: center;
-  background-color: #f9fafb;
+  background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -322,9 +326,9 @@
 }
 
 .action-button:hover {
-  background-color: #f9fafb;
-  color: #374151;
-  border-color: #d1d5db;
+  background-color: #f8fafc;
+  color: #00418f;
+  border-color: #00418f;
 }
 
 

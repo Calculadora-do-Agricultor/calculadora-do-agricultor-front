@@ -1,9 +1,13 @@
-import { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext";
 import { doc, setDoc } from "firebase/firestore";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth, db } from "@/services/firebaseConfig";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { cn } from "@/lib/utils";
 import {
   EnvelopeIcon,
   LockClosedIcon,
@@ -12,19 +16,45 @@ import {
   EyeSlashIcon,
   CheckCircleIcon,
   XCircleIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
-import { AuthAlert } from "../../components/ui";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Button,
+  AuthAlert,
+} from "../../components/ui";
 import { TermsOfUseModal } from "@/components";
 import useLocationLogger from "@/hooks/useLocationLogger";
+
+// Schema de validação com Zod
+const registerSchema = z.object({
+  name: z.string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(50, "Nome deve ter no máximo 50 caracteres")
+    .regex(/^[a-zA-ZÀ-ÿ\s]+$/, "Nome deve conter apenas letras e espaços"),
+  email: z.string()
+    .email("Email inválido")
+    .min(1, "Email é obrigatório"),
+  password: z.string()
+    .min(6, "Senha deve ter pelo menos 6 caracteres")
+    .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[0-9]/, "Senha deve conter pelo menos um número"),
+  confirmPassword: z.string()
+    .min(1, "Confirmação de senha é obrigatória"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Senhas não coincidem",
+  path: ["confirmPassword"],
+});
 
 const Register = () => {
   const navigate = useNavigate();
   const { user: authUser, loading: authLoading } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [role] = useState("user");
   const [errorMessage, setErrorMessage] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -33,74 +63,35 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
-  const [formTouched, setFormTouched] = useState({
-    name: false,
-    email: false,
-    password: false,
-    confirmPassword: false,
-  });
 
   // Hook para gerenciar logs de localização
-  const { locationPermission, logUserRegistration, isLogging } =
-    useLocationLogger();
+  const { locationPermission, logUserRegistration, isLogging } = useLocationLogger();
 
-  // Password validation states
-  const hasMinLength = password.length >= 6;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
-  const passwordsMatch = password === confirmPassword && confirmPassword !== "";
+  // Hook do Firebase para criação de usuário
+  const [createUserWithEmailAndPassword, firebaseUser, firebaseLoading, firebaseError] = 
+    useCreateUserWithEmailAndPassword(auth);
 
-  const validateForm = () => {
-    if (!name.trim()) {
-      setErrorMessage("Por favor, insira seu nome.");
-      return false;
-    }
+  // Configuração do formulário com react-hook-form e Zod
+  const form = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onChange",
+  });
 
-    if (!email.trim()) {
-      setErrorMessage("Por favor, insira seu email.");
-      return false;
-    }
+  // Observar valores do formulário para validações em tempo real
+  const watchedPassword = form.watch("password");
+  const watchedConfirmPassword = form.watch("confirmPassword");
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMessage("Por favor, insira um email válido.");
-      return false;
-    }
-
-    if (!password.trim()) {
-      setErrorMessage("Por favor, insira uma senha.");
-      return false;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage("A senha deve ter pelo menos 6 caracteres.");
-      return false;
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      setErrorMessage("A senha deve conter pelo menos uma letra maiúscula.");
-      return false;
-    }
-
-    if (!/[0-9]/.test(password)) {
-      setErrorMessage("A senha deve conter pelo menos um número.");
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      setErrorMessage("As senhas não coincidem.");
-      return false;
-    }
-
-    return true;
-  };
-
-  const [
-    createUserWithEmailAndPassword,
-    firebaseUser,
-    firebaseLoading,
-    firebaseError,
-  ] = useCreateUserWithEmailAndPassword(auth);
+  // Validações visuais da senha
+  const hasMinLength = watchedPassword?.length >= 6;
+  const hasUpperCase = /[A-Z]/.test(watchedPassword || "");
+  const hasNumber = /[0-9]/.test(watchedPassword || "");
+  const passwordsMatch = watchedPassword === watchedConfirmPassword && watchedConfirmPassword !== "";
 
   // useEffect para redirecionar se o usuário já estiver autenticado
   useEffect(() => {
@@ -109,18 +100,11 @@ const Register = () => {
     }
   }, [authUser, authLoading, navigate]);
 
-  const handleInputFocus = (field) => {
-    setFormTouched((prev) => ({ ...prev, [field]: true }));
-  };
-
   // Função para processar o registro após a decisão sobre a localização
   const processRegistration = async (shouldRequestLocation) => {
     try {
       setIsLoading(true);
-      console.log(
-        "Iniciando processRegistration, shouldRequestLocation:",
-        shouldRequestLocation,
-      );
+      console.log("Iniciando processRegistration, shouldRequestLocation:", shouldRequestLocation);
 
       // Verificar se temos os dados de registro
       if (!registrationData) {
@@ -185,41 +169,52 @@ const Register = () => {
       localStorage.setItem("authToken", "logado");
       navigate("/Calculator");
       console.log("Usuário registrado e salvo no Firestore.");
-    } catch (err) {
+    } catch (error) {
       // Log do erro para monitoramento de segurança
       console.error('Registration processing error:', {
-        code: err.code,
-        message: err.message,
+        code: error.code,
+        message: error.message,
         timestamp: new Date().toISOString(),
-        email: email
+        email: registrationData?.email
       });
       
-      setErrorCode(err.code || 'default');
-      setErrorMessage(err.message);
-      console.error("Erro ao processar registro:", err);
+      setErrorCode(error.code || 'default');
+      setErrorMessage("Erro de cadastro");
+      console.error("Erro ao processar registro:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
+  const handleRegister = async (values) => {
+    try {
+      setErrorMessage("");
+      setErrorCode("");
+      setIsLoading(true);
 
-    setErrorMessage("");
-    setErrorCode("");
-    setIsLoading(true);
+      // Armazenar os dados de registro para uso após a permissão de localização
+      setRegistrationData({
+        name: values.name,
+        email: values.email,
+        password: values.password
+      });
 
-    if (!validateForm()) {
+      // Mostrar o modal de termos de uso
+      setShowTermsModal(true);
       setIsLoading(false);
-      return;
+    } catch (error) {
+      console.error('Registration error:', {
+        code: error.code,
+        message: error.message,
+        timestamp: new Date().toISOString(),
+        email: values.email
+      });
+      
+      setErrorCode(error.code);
+      setErrorMessage("Erro de cadastro");
+    } finally {
+      setIsLoading(false);
     }
-
-    // Armazenar os dados de registro para uso após a permissão de localização
-    setRegistrationData({ name, email, password });
-
-    // Mostrar o modal de termos de uso
-    setShowTermsModal(true);
-    setIsLoading(false);
   };
 
   // Handlers para o modal de termos de uso
@@ -256,7 +251,7 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  if (firebaseLoading || isLoading || isProcessing || isLogging) {
+  if (firebaseLoading || isProcessing || isLogging) {
     return (
       <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center">
         <div className="text-center">
@@ -268,7 +263,7 @@ const Register = () => {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-64px-40px)] items-center justify-center bg-white px-4 py-8">
+    <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4 py-8">
       {/* Modal de termos de uso */}
       <TermsOfUseModal
         isOpen={showTermsModal}
@@ -276,277 +271,265 @@ const Register = () => {
         onAccept={handleAcceptTerms}
         onDecline={handleDeclineTerms}
       />
-      <div className="w-full max-w-md space-y-4 rounded-2xl border border-blue-200 bg-blue-100 p-8 shadow-xl md:p-12">
-        <div className="space-y-2 text-center">
-          <h2 className="text-3xl font-bold text-blue-800">Cadastre-se</h2>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-blue-700">
-              Bem-vindo à Calculadora do Agricultor!
-            </h3>
-            <p className="text-sm text-gray-600">
-              Preencha os dados abaixo para criar sua conta.
-            </p>
+      
+      <div className="w-full max-w-md">
+        {/* Card principal com glassmorphism */}
+        <div className="backdrop-blur-xl bg-white/80 border border-white/20 rounded-2xl shadow-2xl p-8 space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <UserPlusIcon className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Cadastre-se
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Crie sua conta na Calculadora do Agricultor
+              </p>
+            </div>
           </div>
+
+          {/* Formulário */}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleRegister)} className="space-y-4">
+              {/* Campo Nome */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Nome Completo</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="Seu nome completo"
+                          {...field}
+                          className={cn(
+                            "pl-10 h-11 border-gray-200 focus:border-blue-400 focus:ring-blue-400/20",
+                            "hover:border-gray-400 bg-white/50"
+                          )}
+                          disabled={isLoading}
+                        />
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-500 text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Campo Email */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type="email"
+                          placeholder="seu@email.com"
+                          {...field}
+                          className={cn(
+                            "pl-10 h-11 border-gray-200 focus:border-blue-400 focus:ring-blue-400/20",
+                            "hover:border-gray-400 bg-white/50"
+                          )}
+                          disabled={isLoading}
+                        />
+                        <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-500 text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Campo Senha */}
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Senha</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Sua senha"
+                          {...field}
+                          className={cn(
+                            "pl-10 pr-10 h-11 border-gray-200 focus:border-blue-400 focus:ring-blue-400/20",
+                            "hover:border-gray-400 bg-white/50"
+                          )}
+                          disabled={isLoading}
+                        />
+                        <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200 focus:outline-none focus:text-blue-600"
+                          aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                          disabled={isLoading}
+                        >
+                          {showPassword ? (
+                            <EyeSlashIcon className="h-5 w-5" />
+                          ) : (
+                            <EyeIcon className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    
+                    {/* Indicadores de validação da senha */}
+                    {watchedPassword && (
+                      <div className="mt-2 space-y-1 text-xs">
+                        <div className="flex items-center">
+                          {hasMinLength ? (
+                            <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                          )}
+                          <span className={hasMinLength ? "text-green-600" : "text-red-600"}>
+                            Mínimo de 6 caracteres
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          {hasUpperCase ? (
+                            <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                          )}
+                          <span className={hasUpperCase ? "text-green-600" : "text-red-600"}>
+                            Pelo menos uma letra maiúscula
+                          </span>
+                        </div>
+                        <div className="flex items-center">
+                          {hasNumber ? (
+                            <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                          ) : (
+                            <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                          )}
+                          <span className={hasNumber ? "text-green-600" : "text-red-600"}>
+                            Pelo menos um número
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </FormItem>
+                )}
+              />
+
+              {/* Campo Confirmar Senha */}
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Confirmar Senha</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirme sua senha"
+                          {...field}
+                          className={cn(
+                            "pl-10 pr-10 h-11 border-gray-200 focus:border-blue-400 focus:ring-blue-400/20",
+                            "hover:border-gray-400 bg-white/50"
+                          )}
+                          disabled={isLoading}
+                        />
+                        <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200 focus:outline-none focus:text-blue-600"
+                          aria-label={showConfirmPassword ? "Esconder senha" : "Mostrar senha"}
+                          disabled={isLoading}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeSlashIcon className="h-5 w-5" />
+                          ) : (
+                            <EyeIcon className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    
+                    {/* Indicador de confirmação de senha */}
+                    {watchedConfirmPassword && (
+                      <div className="mt-2 flex items-center text-xs">
+                        {passwordsMatch ? (
+                          <>
+                            <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
+                            <span className="text-green-600">Senhas coincidem</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
+                            <span className="text-red-600">Senhas não coincidem</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    
+                    <FormMessage className="text-red-500 text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Alert de Erro */}
+              {errorMessage && (
+                <AuthAlert 
+                  errorCode={errorCode} 
+                  context="register"
+                  onClose={() => {
+                    setErrorMessage("");
+                    setErrorCode("");
+                  }} 
+                />
+              )}
+
+              {/* Botão de Submit */}
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className={cn(
+                  "w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
+                  "text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]",
+                  "shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
+                  "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                )}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Cadastrando...</span>
+                  </div>
+                ) : (
+                  "Cadastrar"
+                )}
+              </Button>
+
+              {/* Link para Login */}
+              <div className="text-center pt-4">
+                <p className="text-sm text-gray-600">
+                  Já tem uma conta?{" "}
+                  <Link
+                    to="/Login"
+                    className="font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                  >
+                    Faça login aqui
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </Form>
         </div>
-
-        <form onSubmit={handleRegister} className="mt-6 space-y-4">
-          <div className="space-y-1">
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-blue-800"
-            >
-              Nome
-            </label>
-            <div className="relative">
-              <input
-                id="name"
-                type="text"
-                value={name}
-                placeholder="Seu nome completo"
-                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setName(e.target.value)}
-                onFocus={() => handleInputFocus("name")}
-                required
-              />
-              <UserIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-blue-800"
-            >
-              Email
-            </label>
-            <div className="relative">
-              <input
-                id="email"
-                type="email"
-                value={email}
-                placeholder="seu@email.com"
-                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => handleInputFocus("email")}
-                required
-              />
-              <EnvelopeIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-blue-800"
-            >
-              Senha
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                placeholder="Sua senha"
-                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => handleInputFocus("password")}
-                required
-              />
-              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-              <button
-                type="button"
-                className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
-                onClick={() => setShowPassword(!showPassword)}
-                aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-
-            {formTouched.password && (
-              <div className="mt-2 space-y-1 text-xs">
-                <div className="flex items-center">
-                  {hasMinLength ? (
-                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                  )}
-                  <span
-                    className={`${hasMinLength ? "text-green-600" : "text-red-600"}`}
-                  >
-                    Mínimo de 6 caracteres
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  {hasUpperCase ? (
-                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                  )}
-                  <span
-                    className={`${hasUpperCase ? "text-green-600" : "text-red-600"}`}
-                  >
-                    Pelo menos uma letra maiúscula
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  {hasNumber ? (
-                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                  ) : (
-                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                  )}
-                  <span
-                    className={`${hasNumber ? "text-green-600" : "text-red-600"}`}
-                  >
-                    Pelo menos um número
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-1">
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-blue-800"
-            >
-              Confirmar Senha
-            </label>
-            <div className="relative">
-              <input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                placeholder="Confirme sua senha"
-                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onFocus={() => handleInputFocus("confirmPassword")}
-                required
-              />
-              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-              <button
-                type="button"
-                className="absolute top-3.5 right-3 text-gray-500 hover:text-gray-700"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                aria-label={
-                  showConfirmPassword ? "Ocultar senha" : "Mostrar senha"
-                }
-              >
-                {showConfirmPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-            {formTouched.confirmPassword && (
-              <div className="mt-2 flex items-center text-xs">
-                {passwordsMatch ? (
-                  <>
-                    <CheckCircleIcon className="mr-1 h-4 w-4 text-green-500" />
-                    <span className="text-green-600">Senhas coincidem</span>
-                  </>
-                ) : (
-                  <>
-                    <XCircleIcon className="mr-1 h-4 w-4 text-red-500" />
-                    <span className="text-red-600">Senhas não coincidem</span>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {errorMessage && (
-            <AuthAlert 
-              errorCode={errorCode} 
-              customMessage={errorMessage}
-              context="register"
-              onClose={() => {
-                setErrorMessage("");
-                setErrorCode("");
-              }} 
-            />
-          )}
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="w-full cursor-pointer rounded-lg bg-blue-700 px-4 py-3 text-center font-medium text-white shadow-md transition-all duration-300 hover:bg-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? "Processando..." : "Cadastrar"}
-            </button>
-          </div>
-
-          <div className="mt-4 text-center text-sm">
-            <span className="text-gray-600">Já tem uma conta?</span>{" "}
-            <Link
-              to="/login"
-              className="font-medium text-blue-700 hover:text-blue-800"
-            >
-              Faça login
-            </Link>
-          </div>
-        </form>
       </div>
     </div>
   );
 };
 
 export default Register;
-
-// Função para processar o registro
-const processRegistration = async (data, acceptedLocationSharing = false) => {
-  try {
-    setIsLoading(true);
-    setErrorMessage("");
-
-    // Criar usuário no Firebase Authentication
-    const res = await createUser(data.email, data.password);
-    const { uid } = res.user;
-
-    // Criar documento do usuário no Firestore
-    await insertDocument({
-      name: data.name,
-      email: data.email,
-      uid,
-      createdAt: new Date(),
-    });
-
-    // Registrar log de registro com localização se aceito
-    try {
-      console.log(
-        "Registrando log de usuário com ID:",
-        uid,
-        "Aceitou localização:",
-        acceptedLocationSharing,
-      );
-      await logUserRegistration(uid, acceptedLocationSharing);
-    } catch (logError) {
-      console.error("Erro ao registrar log:", logError);
-      // Continuar com o registro mesmo se houver erro no log
-    }
-
-    // Limpar formulário e redirecionar
-    reset();
-    setIsLoading(false);
-    navigate("/login");
-  } catch (error) {
-    console.error("Erro durante o registro:", error);
-    // Log do erro para monitoramento de segurança
-    console.error('Registration error:', {
-      code: error.code,
-      message: error.message,
-      timestamp: new Date().toISOString(),
-      email: email // Log apenas do email, não da senha
-    });
-    
-    setErrorCode(error.code || 'default');
-    setErrorMessage(error.message);
-    setIsLoading(false);
-  }
-};

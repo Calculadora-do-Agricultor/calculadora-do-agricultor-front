@@ -1,60 +1,72 @@
-;
-
 import { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../services/firebaseConfig";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   EnvelopeIcon,
-  LockClosedIcon,
+  ArrowRightOnRectangleIcon,
   EyeIcon,
+  LockClosedIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
-import { AuthAlert } from "../../components/ui";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Button,
+  AuthAlert,
+} from "../../components/ui";
+import { cn } from "../../lib/utils";
+
+// Schema de validação com Zod
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email é obrigatório")
+    .email("Por favor, insira um email válido"),
+  password: z
+    .string()
+    .min(1, "Senha é obrigatória")
+    .min(6, "A senha deve ter pelo menos 6 caracteres"),
+  rememberMe: z.boolean().default(false),
+});
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, loading } = useContext(AuthContext);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
 
-  const validateForm = () => {
-    if (!email.trim()) {
-      setError("Por favor, insira seu email.");
-      return false;
-    }
-    if (!password.trim()) {
-      setError("Por favor, insira sua senha.");
-      return false;
-    }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError("Por favor, insira um email válido.");
-      return false;
-    }
-    return true;
-  };
+  const form = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+      rememberMe: false,
+    },
+  });
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (values) => {
     setError("");
-
-    if (!validateForm()) return;
-
+    setErrorCode("");
     setIsLoading(true);
 
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
-        password,
+        values.email,
+        values.password,
       );
       const user = userCredential.user;
 
@@ -79,8 +91,8 @@ const Login = () => {
 
       localStorage.setItem("authToken", "logado");
 
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
+      if (values.rememberMe) {
+        localStorage.setItem("rememberedEmail", values.email);
       } else {
         localStorage.removeItem("rememberedEmail");
       }
@@ -92,11 +104,11 @@ const Login = () => {
         code: error.code,
         message: error.message,
         timestamp: new Date().toISOString(),
-        email: email // Log apenas do email, não da senha
+        email: values.email // Log apenas do email, não da senha
       });
       
       setErrorCode(error.code);
-      setError(error.message);
+      setError("Erro de autenticação");
     } finally {
       setIsLoading(false);
     }
@@ -109,141 +121,182 @@ const Login = () => {
 
     const rememberedEmail = localStorage.getItem("rememberedEmail");
     if (rememberedEmail) {
-      setEmail(rememberedEmail);
-      setRememberMe(true);
+      form.setValue("email", rememberedEmail);
+      form.setValue("rememberMe", true);
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, form]);
 
   return (
-    <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center bg-white px-4">
-      <div className="w-full max-w-md space-y-4 rounded-2xl border border-blue-200 bg-blue-100 p-8 shadow-xl md:p-12">
-        <div className="space-y-2 text-center">
-          <h2 className="text-3xl font-bold text-blue-800">Entrar</h2>
-          <div className="mt-3">
-            <h3 className="text-lg font-semibold text-blue-700">
-              Bem-vindo de volta!
-            </h3>
-            <p className="text-sm text-gray-600">
-              Preencha as informações abaixo para entrar:
-            </p>
+    <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md">
+        <div className="backdrop-blur-xl bg-white/80 border border-white/20 rounded-2xl shadow-2xl p-8 space-y-6">
+        {/* Header */}
+        <div className="space-y-3 text-center">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <ArrowRightOnRectangleIcon className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-800 to-indigo-800 bg-clip-text text-transparent">
+            Bem-vindo de volta
+          </h1>
+          <p className="text-gray-600 text-sm">
+            Entre com suas credenciais para acessar sua conta
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
-          <div className="space-y-1">
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-blue-800"
-            >
-              Email
-            </label>
-            <div className="relative">
-              <input
-                id="email"
-                type="email"
-                value={email}
-                tabIndex="1"
-                placeholder="seu@email.com"
-                className="w-full rounded-lg border border-gray-400 p-3 pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <EnvelopeIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-blue-800"
-              >
-                Senha
-              </label>
-              <Link
-                to="/recuperar-senha"
-                className="text-sm text-blue-600 transition-colors hover:text-blue-800 hover:underline"
-              >
-                Esqueceu a senha?
-              </Link>
-            </div>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                tabIndex="2"
-                placeholder="Sua senha"
-                className="w-full rounded-lg border border-gray-400 p-3 pr-10 pl-10 transition-all duration-200 hover:border-blue-500 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <LockClosedIcon className="absolute top-3.5 left-3 h-5 w-5 text-gray-500" />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute top-3.5 right-3 text-gray-500 transition-colors duration-200 hover:text-blue-600"
-                aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
-              >
-                {showPassword ? (
-                  <EyeSlashIcon className="h-5 w-5" />
-                ) : (
-                  <EyeIcon className="h-5 w-5" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              id="remember-me"
-              name="remember-me"
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-700 focus:ring-blue-500"
+        {/* Formulário */}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleLogin)} className="space-y-5">
+            {/* Campo Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-700 font-medium">
+                    Email
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type="email"
+                        placeholder="seu@email.com"
+                        className={cn(
+                          "pl-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200",
+                          "hover:border-gray-400 bg-white/50"
+                        )}
+                        disabled={isLoading}
+                      />
+                      <EnvelopeIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-red-500 text-xs" />
+                </FormItem>
+              )}
             />
-            <label
-              htmlFor="remember-me"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Lembrar meu email
-            </label>
-          </div>
 
-          {error && (
-            <AuthAlert 
-              errorCode={errorCode} 
-              customMessage={error}
-              context="login"
-              onClose={() => {
-                setError("");
-                setErrorCode("");
-              }} 
+            {/* Campo Senha */}
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between">
+                    <FormLabel className="text-gray-700 font-medium">
+                      Senha
+                    </FormLabel>
+                    <Link
+                      to="/recuperar-senha"
+                      className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Sua senha"
+                        className={cn(
+                          "pl-10 pr-10 h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 transition-all duration-200",
+                          "hover:border-gray-400 bg-white/50"
+                        )}
+                        disabled={isLoading}
+                      />
+                      <LockClosedIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition-colors duration-200 focus:outline-none focus:text-blue-600"
+                        aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+                        disabled={isLoading}
+                      >
+                        {showPassword ? (
+                          <EyeSlashIcon className="h-5 w-5" />
+                        ) : (
+                          <EyeIcon className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage className="text-red-500 text-xs" />
+                </FormItem>
+              )}
             />
-          )}
 
-          <div className="flex flex-col items-center pt-2">
-            <button
-              tabIndex="3"
+            {/* Checkbox Lembrar */}
+            <FormField
+              control={form.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center space-x-2">
+                    <FormControl>
+                      <input
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={field.onChange}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 transition-colors"
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm text-gray-600 font-normal cursor-pointer">
+                      Lembrar meu email
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {/* Alert de Erro */}
+            {error && (
+              <AuthAlert 
+                errorCode={errorCode} 
+                context="login"
+                onClose={() => {
+                  setError("");
+                  setErrorCode("");
+                }} 
+              />
+            )}
+
+            {/* Botão de Submit */}
+            <Button
               type="submit"
               disabled={isLoading}
-              className={`w-full ${isLoading ? "cursor-not-allowed bg-blue-400" : "bg-blue-700 hover:bg-blue-800"} rounded-lg py-3 text-lg font-semibold text-white transition`}
+              className={cn(
+                "w-full h-11 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700",
+                "text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]",
+                "shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none",
+                "focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              )}
             >
-              {isLoading ? "Entrando..." : "Entrar"}
-            </button>
-          </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Entrando...</span>
+                </div>
+              ) : (
+                "Entrar"
+              )}
+            </Button>
 
-          <div className="pt-2 text-center text-sm text-gray-600">
-            Não tem uma conta?{" "}
-            <Link
-              to="/Register"
-              className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              Cadastre-se
-            </Link>
-          </div>
-        </form>
+            {/* Link para Registro */}
+            <div className="text-center pt-4">
+              <p className="text-sm text-gray-600">
+                Não tem uma conta?{" "}
+                <Link
+                  to="/Register"
+                  className="font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                  Cadastre-se aqui
+                </Link>
+              </p>
+            </div>
+          </form>
+        </Form>
+        </div>
       </div>
     </div>
   );

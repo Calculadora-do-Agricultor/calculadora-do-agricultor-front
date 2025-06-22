@@ -143,6 +143,11 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
         title: "Senha Incorreta",
         description: "A senha inserida está incorreta. Verifique sua senha ou use a opção 'Esqueci minha senha'."
       },
+      "auth/invalid-credential": {
+        variant: "auth-password",
+        title: "Credenciais Inválidas",
+        description: "Email ou senha incorretos. Verifique suas informações e tente novamente."
+      },
       "auth/weak-password": {
         variant: "auth-password",
         title: "Senha Muito Fraca",

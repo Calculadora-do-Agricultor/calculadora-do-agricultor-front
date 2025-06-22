@@ -107,7 +107,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-[#00418F]/10 to-white p-4 md:p-8 min-h-screen">
+    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-[#00418F]/10 to-[#EFF2FF] p-4 md:p-8 min-h-screen">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl border border-[#00418F]/10 overflow-hidden">
         {/* Cabeçalho */}
         <div className="bg-[#00418F]/5 p-6 border-b border-[#00418F]/10">
