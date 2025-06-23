@@ -222,6 +222,11 @@
   color: #00418f;
   margin: 0;
   line-height: 1.4;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 /* Estilos para o wrapper de ações de administrador */
@@ -542,6 +547,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 /* Estilos para o estado de sucesso */
@@ -562,6 +572,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .delete-modal-success p {

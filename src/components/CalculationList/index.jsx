@@ -32,6 +32,7 @@ const CalculationList = ({
   sortOption: initialSortOption = "name_asc",
   complexityFilters = [],
   onEditCalculation,
+  onCalculationDeleted,
 }) =>{
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
@@ -224,6 +225,11 @@ const CalculationList = ({
       // Mostrar mensagem de sucesso antes de fechar o modal
       setDeleteSuccess(true)
       
+      // Notificar o componente pai que um cálculo foi excluído
+      if (onCalculationDeleted) {
+        onCalculationDeleted()
+      }
+
       // Fechar o modal após um breve delay para mostrar a mensagem de sucesso
       setTimeout(() => {
         setShowDeleteModal(false)
