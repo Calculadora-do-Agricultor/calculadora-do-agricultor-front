@@ -5,6 +5,7 @@ import { X, Copy, Calculator, Check, Info, FileText, Calendar, User, Eye } from 
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import DraggableList from "../DraggableList"
+import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
 import "./styles.css"
 
 /**
@@ -129,17 +130,11 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         context[key] = Number.parseFloat(values[key]) || 0
       })
 
-      // Substitui os nomes dos parâmetros na expressão pelos valores usando o formato @[nome do campo]
-      let expressionToEval = expression
-      Object.keys(context).forEach((key) => {
-        // Substitui todas as ocorrências do nome do parâmetro pelo seu valor
-        const regex = new RegExp(`@\\[${key}\\]`, "g")
-        expressionToEval = expressionToEval.replace(regex, context[key])
-      })
+      // Normaliza as funções matemáticas na expressão
+      const normalizedExpression = normalizeMathFunctions(expression)
 
-      // Avalia a expressão
-      // eslint-disable-next-line no-eval
-      return eval(expressionToEval)
+      // Avalia a expressão de forma segura
+      return evaluateExpression(normalizedExpression, context)
     } catch (error) {
       console.error("Erro ao avaliar expressão:", error)
       return 0

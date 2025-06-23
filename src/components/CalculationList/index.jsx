@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react"
+import { useState, useEffect, useContext, memo } from "react"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
@@ -16,6 +16,8 @@ import {
   AlertCircle,
   Eye,
   AlertTriangle,
+  CheckCircle,
+  Loader2,
 } from "lucide-react"
 import CalculationModal  from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
@@ -24,6 +26,7 @@ import "./styles.css"
 
 const CalculationList = ({
   category,
+  calculations: externalCalculations,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
@@ -52,31 +55,59 @@ const CalculationList = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [calculationToDelete, setCalculationToDelete] = useState(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState(null)
+  const [deleteSuccess, setDeleteSuccess] = useState(false)
 
   // Efeito para bloquear/desbloquear scroll do body quando o modal de exclusão está aberto
   useEffect(() => {
     if (showDeleteModal) {
-      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.classList.add("modal-open")
       document.body.style.overflow = 'hidden'
     } else {
-      // Restaura o scroll do body quando o modal é fechado
+      document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
+      setDeleteError(null)
+      setDeleteSuccess(false)
     }
-
-    // Cleanup function para garantir que o scroll seja restaurado
+  
     return () => {
+      document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
     }
   }, [showDeleteModal])
+  
 
 
   useEffect(() => {
+    // Se cálculos externos foram fornecidos, use-os diretamente
+    if (externalCalculations) {
+      setCalculations(externalCalculations)
+      setLoading(false)
+      return
+    }
+
+    // Caso contrário, busque do Firestore (fallback para compatibilidade)
     const fetchCalculations = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const q = query(collection(db, "calculations"), where("category", "==", category))
+        // Buscar todas as categorias para encontrar o ID da categoria pelo nome
+        const categoriesSnapshot = await getDocs(collection(db, "categories"))
+        const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
+        
+        if (!categoryDoc) {
+          setCalculations([])
+          return
+        }
+
+        const categoryId = categoryDoc.id
+        
+        // Buscar cálculos que contêm o ID da categoria no array categories
+        const q = query(
+          collection(db, "calculations"), 
+          where("categories", "array-contains", categoryId)
+        )
         const querySnapshot = await getDocs(q)
 
         const calculationsData = querySnapshot.docs.map((doc) => ({
@@ -98,10 +129,10 @@ const CalculationList = ({
       }
     }
 
-    if (category) {
+    if (category && !externalCalculations) {
       fetchCalculations()
     }
-  }, [category])
+  }, [category, externalCalculations])
 
 
 
@@ -179,18 +210,28 @@ const CalculationList = ({
 
     try {
       setIsDeleting(true)
+      setDeleteError(null)
+      
+      // Adicionar um pequeno atraso para mostrar o estado de loading
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       await deleteDoc(doc(db, "calculations", calculationToDelete.id))
       
       // Remover o cálculo da lista
       setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       
-      // Fechar o modal
-      setShowDeleteModal(false)
-      setCalculationToDelete(null)
+      // Mostrar mensagem de sucesso antes de fechar o modal
+      setDeleteSuccess(true)
+      
+      // Fechar o modal após um breve delay para mostrar a mensagem de sucesso
+      setTimeout(() => {
+        setShowDeleteModal(false)
+        setCalculationToDelete(null)
+      }, 1500)
     } catch (error) {
       console.error("Erro ao excluir cálculo:", error)
-      alert("Erro ao excluir cálculo. Tente novamente.")
+      setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
     } finally {
       setIsDeleting(false)
     }
@@ -416,10 +457,12 @@ const CalculationList = ({
                   <Clock size={14} />
                   <span>{getTimeAgo(calculation.updatedAt.toDate())}</span>
                 </div>
+                {/* TODO: Uncomment this when view tracking is implemented
                 <div className="meta-item">
                   <Eye size={14} />
                   <span>{calculation.views || 0} visualizações</span>
                 </div>
+                */}
               </div>
             </div>
 
@@ -476,40 +519,87 @@ const CalculationList = ({
 
       {/* Modal de Exclusão Global */}
       {showDeleteModal && calculationToDelete && (
-        <div className="delete-modal-overlay">
+        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
           <div className="delete-modal">
-            <div className="delete-modal-header">
-              <AlertTriangle className="delete-modal-icon" size={48} />
-              <h2>Confirmar exclusão</h2>
-            </div>
-            <div className="delete-modal-content">
-              <p>
-                Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
-              </p>
-              <p className="delete-modal-warning">
-                Esta ação não pode ser desfeita.
-              </p>
-            </div>
-            <div className="delete-modal-actions">
-              <button 
-                className="delete-modal-cancel" 
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="delete-modal-confirm" 
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? "Excluindo..." : "Sim, excluir"}
-              </button>
-            </div>
+            {deleteSuccess ? (
+              <div className="delete-modal-success">
+                <CheckCircle className="delete-modal-success-icon" size={48} />
+                <h2 id="delete-success-modal-title">Cálculo excluído</h2>
+                <p>O cálculo foi excluído com sucesso.</p>
+              </div>
+            ) : (
+              <>
+                <div className="delete-modal-header">
+                  <AlertTriangle className="delete-modal-icon" size={48} />
+                  <h2 id="delete-modal-title">Confirmar exclusão</h2>
+                </div>
+                <div className="delete-modal-content">
+                  <p>
+                    Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
+                  </p>
+                  <p className="delete-modal-warning">
+                    Esta ação não pode ser desfeita.
+                  </p>
+                  
+                  {deleteError && (
+                    <div className="delete-modal-error">
+                      <AlertCircle size={16} />
+                      <span>{deleteError}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="delete-modal-actions">
+                  <button 
+                    className="delete-modal-cancel" 
+                    onClick={handleCancelDelete}
+                    disabled={isDeleting}
+                    aria-label="Cancelar exclusão"
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    className="delete-modal-confirm" 
+                    onClick={handleConfirmDelete}
+                    disabled={isDeleting}
+                    aria-label="Confirmar exclusão"
+                  >
+                    {isDeleting ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Excluindo...</span>
+                      </>
+                    ) : (
+                      "Sim, excluir"
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
     </div>
   )
 }
-export default CalculationList;
+// Adicionar função para buscar nomes das categorias
+const resolveCategoryNames = async (calculations) => {
+  const categoryIds = [...new Set(
+    calculations.flatMap(calc => calc.categories || [])
+  )]
+  
+  const categoryPromises = categoryIds.map(async (id) => {
+    const categoryDoc = await getDoc(doc(db, "categories", id))
+    return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
+  })
+  
+  const categoryMap = await Promise.all(categoryPromises)
+  const categoryLookup = Object.fromEntries(
+    categoryMap.map(cat => [cat.id, cat.name])
+  )
+  
+  return calculations.map(calc => ({
+    ...calc,
+    categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
+  }))
+}
+export default memo(CalculationList);

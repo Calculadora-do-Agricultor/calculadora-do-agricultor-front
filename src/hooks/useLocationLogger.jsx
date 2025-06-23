@@ -145,16 +145,32 @@ export const useLocationLogger = (userId = null) => {
     }
   };
 
+  // Função para obter o IP do usuário
+  const getUserIP = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org/?format=json');
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      console.error('Erro ao obter IP:', error);
+      return 'IP não disponível';
+    }
+  };
+
   // Função para criar um log no Firestore
   const createLog = async (userId, description, acceptedLocationSharing) => {
     try {
       setIsLogging(true);
       
-      // Dados básicos do log - apenas os campos solicitados
+      // Obter o IP do usuário
+      const userIP = await getUserIP();
+      
+      // Dados básicos do log - incluindo IP
       const logData = {
         idUser: userId, // id do usuário
         description: description, // descrição da ação
         date: serverTimestamp(), // data da ação
+        ip: userIP, // endereço IP do usuário
         location: { status: 'Usuário optou por não compartilhar localização' } // valor padrão
       };
 

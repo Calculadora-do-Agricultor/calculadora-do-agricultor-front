@@ -39,7 +39,7 @@ const NavLinks = ({ user }) => {
           </Link>
           <Link className={linkStyle('/Register')} to='/Register'>
             <UserPlusIcon className="w-5 h-5 mr-2" />
-            Cadastre-se
+            Cadastrar-se
           </Link>
         </>
       ) : (

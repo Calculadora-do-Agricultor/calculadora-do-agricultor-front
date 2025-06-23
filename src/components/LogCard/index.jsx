@@ -4,13 +4,14 @@ import {
   UserIcon,
   DocumentTextIcon,
   MapPinIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
 const LogCard = ({ log, formatDate, openInMaps }) => {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-[#00418F]/20 hover:border-[#00418F]/40 transition-colors duration-150">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
             <ClockIcon className="h-5 w-5 text-[#00418F]" />
@@ -38,6 +39,16 @@ const LogCard = ({ log, formatDate, openInMaps }) => {
           <div className="min-w-0 flex-1">
             <p className="text-sm text-[#00418F] font-medium mb-1">Descrição</p>
             <p className="text-sm text-gray-800">{log.description || 'Sem descrição'}</p>
+          </div>
+        </div>
+        
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <GlobeAltIcon className="h-5 w-5 text-[#00418F]" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-[#00418F] font-medium mb-1">IP</p>
+            <p className="text-sm text-gray-800 font-mono">{log.ip || 'IP não disponível'}</p>
           </div>
         </div>
         

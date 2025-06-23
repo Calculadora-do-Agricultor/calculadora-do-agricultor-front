@@ -62,11 +62,11 @@ const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
 
         <div className="modal-body">
           <div className="input-group">
-            <label htmlFor="category-name" className="input-label">
+            <label htmlFor="edit-category-name" className="input-label">
               Nome da Categoria <span className="required">*</span>
             </label>
             <input
-              id="category-name"
+              id="edit-category-name"
               type="text"
               placeholder="Ex: Adubação, Irrigação, Plantio..."
               value={categoryName}
@@ -77,11 +77,11 @@ const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
           </div>
 
           <div className="input-group">
-            <label htmlFor="category-description" className="input-label">
+            <label htmlFor="edit-category-description" className="input-label">
               Descrição da Categoria
             </label>
             <textarea
-              id="category-description"
+              id="edit-category-description"
               placeholder="Descreva o propósito desta categoria de cálculos..."
               value={categoryDescription}
               onChange={(e) => setCategoryDescription(e.target.value)}

@@ -73,7 +73,7 @@ const MobileMenu = ({ user, userName }) => {
                 onClick={() => setIsOpen(false)}
               >
                 <UserPlusIcon className="w-5 h-5 mr-2" />
-                Cadastre-se
+                Cadastrar-se
               </Link>
             </>
           ) : (

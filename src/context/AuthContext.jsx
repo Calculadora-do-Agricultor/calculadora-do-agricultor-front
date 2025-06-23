@@ -1,5 +1,5 @@
-import { createContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import React, { createContext, useState, useEffect } from "react";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../services/firebaseConfig";
 
@@ -38,6 +38,29 @@ export const AuthProvider = ({ children }) => {
 
         if (docSnap.exists()) {
           const userData = docSnap.data();
+          
+          // Verificar se a conta está ativa
+          if (userData.active === false) {
+            console.warn('Tentativa de acesso com conta desativada:', {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Deslogar o usuário imediatamente
+            await signOut(auth);
+            setUser(null);
+            setIsAdmin(false);
+            setLoading(false);
+            
+            // Dispara um evento customizado para mostrar mensagem de conta desativada
+            // com um pequeno delay para garantir que a página de login esteja carregada
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('accountDisabled'));
+            }, 100);
+            return;
+          }
+          
           setUser({ uid: firebaseUser.uid, ...userData });
           
           // Verificar se o usuário é administrador

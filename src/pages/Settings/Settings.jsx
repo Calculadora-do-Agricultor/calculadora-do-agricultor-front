@@ -18,6 +18,16 @@ import {
   ClipboardDocumentListIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui"
 import { signOut } from "firebase/auth"
 import { auth, db } from "../../services/firebaseConfig"
 import { useNavigate } from "react-router-dom"
@@ -97,7 +107,7 @@ const Settings = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-[#00418F]/10 to-white p-4 md:p-8 min-h-screen">
+    <div className="flex flex-col items-center justify-start bg-gradient-to-b from-[#00418F]/10 to-[#EFF2FF] p-4 md:p-8 min-h-screen">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-4xl border border-[#00418F]/10 overflow-hidden">
         {/* Cabeçalho */}
         <div className="bg-[#00418F]/5 p-6 border-b border-[#00418F]/10">
@@ -193,55 +203,213 @@ const Settings = () => {
                 <div>
                   <h3 className="text-lg font-semibold text-[#00418F] mb-4">Informações Pessoais</h3>
                   <div className="space-y-3">
-                    <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
-                      <UserIcon className="w-5 h-5 mr-3 text-[#00418F]" />
-                      <div className="flex-1 text-left">
-                        <span className="font-medium">Nome de usuário</span>
-                        <p className="text-sm text-gray-500">{userName || "Não definido"}</p>
-                      </div>
-                      <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
-                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                          <UserIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                          <div className="flex-1 text-left">
+                            <span className="font-medium">Nome de usuário</span>
+                            <p className="text-sm text-gray-500">{userName || "Não definido"}</p>
+                          </div>
+                          <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Editar Nome de Usuário</DialogTitle>
+                          <DialogDescription>
+                            Altere seu nome de usuário aqui. Clique em salvar quando terminar.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <label htmlFor="username" className="text-right">
+                              Nome
+                            </label>
+                            <input
+                              id="username"
+                              defaultValue={userName}
+                              className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" className="bg-[#00418F] hover:bg-[#00418F]/90">
+                            Salvar alterações
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
 
-                    <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
-                      <EnvelopeIcon className="w-5 h-5 mr-3 text-[#00418F]" />
-                      <div className="flex-1 text-left">
-                        <span className="font-medium">E-mail</span>
-                        <p className="text-sm text-gray-500">{user?.email || "Não definido"}</p>
-                      </div>
-                      <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
-                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                          <EnvelopeIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                          <div className="flex-1 text-left">
+                            <span className="font-medium">E-mail</span>
+                            <p className="text-sm text-gray-500">{user?.email || "Não definido"}</p>
+                          </div>
+                          <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Editar E-mail</DialogTitle>
+                          <DialogDescription>
+                            Altere seu endereço de e-mail aqui. Clique em salvar quando terminar.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <label htmlFor="email" className="text-right">
+                              E-mail
+                            </label>
+                            <input
+                              id="email"
+                              type="email"
+                              defaultValue={user?.email}
+                              className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" className="bg-[#00418F] hover:bg-[#00418F]/90">
+                            Salvar alterações
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
 
-                    <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
-                      <PhoneIcon className="w-5 h-5 mr-3 text-[#00418F]" />
-                      <div className="flex-1 text-left">
-                        <span className="font-medium">Telefone</span>
-                        <p className="text-sm text-gray-500">Não definido</p>
-                      </div>
-                      <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
-                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                          <PhoneIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                          <div className="flex-1 text-left">
+                            <span className="font-medium">Telefone</span>
+                            <p className="text-sm text-gray-500">Não definido</p>
+                          </div>
+                          <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Editar Telefone</DialogTitle>
+                          <DialogDescription>
+                            Adicione ou altere seu número de telefone aqui. Clique em salvar quando terminar.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <label htmlFor="phone" className="text-right">
+                              Telefone
+                            </label>
+                            <input
+                              id="phone"
+                              type="tel"
+                              placeholder="(11) 99999-9999"
+                              className="col-span-3 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" className="bg-[#00418F] hover:bg-[#00418F]/90">
+                            Salvar alterações
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 
                 <div>
                   <h3 className="text-lg font-semibold text-[#00418F] mb-4">Preferências</h3>
                   <div className="space-y-3">
-                    <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
-                      <LanguageIcon className="w-5 h-5 mr-3 text-[#00418F]" />
-                      <div className="flex-1 text-left">
-                        <span className="font-medium">Idioma</span>
-                        <p className="text-sm text-gray-500">Português (Brasil)</p>
-                      </div>
-                      <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
-                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                          <LanguageIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                          <div className="flex-1 text-left">
+                            <span className="font-medium">Idioma</span>
+                            <p className="text-sm text-gray-500">Português (Brasil)</p>
+                          </div>
+                          <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Selecionar Idioma</DialogTitle>
+                          <DialogDescription>
+                            Escolha o idioma de sua preferência para a interface do aplicativo.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Idioma disponível:</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:border-transparent">
+                              <option value="pt-BR">Português (Brasil)</option>
+                              <option value="en-US" disabled>English (US) - Em breve</option>
+                              <option value="es-ES" disabled>Español - Em breve</option>
+                            </select>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" className="bg-[#00418F] hover:bg-[#00418F]/90">
+                            Salvar alterações
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
 
-                    <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
-                      <CogIcon className="w-5 h-5 mr-3 text-[#00418F]" />
-                      <div className="flex-1 text-left">
-                        <span className="font-medium">Configurações avançadas</span>
-                        <p className="text-sm text-gray-500">Personalizar experiência</p>
-                      </div>
-                      <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
-                    </button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button className="w-full flex items-center p-3.5 bg-white rounded-lg hover:bg-[#FFEE00]/10 transition-all duration-300 text-[#00418F] border border-[#00418F]/10 hover:border-[#00418F]/30 shadow-sm">
+                          <CogIcon className="w-5 h-5 mr-3 text-[#00418F]" />
+                          <div className="flex-1 text-left">
+                            <span className="font-medium">Configurações avançadas</span>
+                            <p className="text-sm text-gray-500">Personalizar experiência</p>
+                          </div>
+                          <PencilIcon className="w-4 h-4 text-[#00418F]/50" />
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[500px]">
+                        <DialogHeader>
+                          <DialogTitle>Configurações Avançadas</DialogTitle>
+                          <DialogDescription>
+                            Personalize sua experiência com configurações avançadas do aplicativo.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <label className="text-sm font-medium">Notificações push</label>
+                                <p className="text-xs text-gray-500">Receber notificações no dispositivo</p>
+                              </div>
+                              <input type="checkbox" className="rounded" defaultChecked />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <label className="text-sm font-medium">Modo desenvolvedor</label>
+                                <p className="text-xs text-gray-500">Ativar recursos para desenvolvedores</p>
+                              </div>
+                              <input type="checkbox" className="rounded" />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <label className="text-sm font-medium">Analytics</label>
+                                <p className="text-xs text-gray-500">Compartilhar dados de uso anônimos</p>
+                              </div>
+                              <input type="checkbox" className="rounded" defaultChecked />
+                            </div>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button type="submit" className="bg-[#00418F] hover:bg-[#00418F]/90">
+                            Salvar configurações
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </div>

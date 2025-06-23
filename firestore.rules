@@ -24,15 +24,15 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isOwner(userId);
       // Usuários podem atualizar seus próprios dados
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
-      // Ninguém pode excluir usuários (proteção contra perda de dados)
-      allow delete: if false;
+      // Apenas administradores podem excluir usuários
+      allow delete: if isAdmin();
     }
     
-    // Regras para coleção de logs (nova implementação)
-    match /logs/{logId} {
-      // Qualquer usuário autenticado pode criar logs
+    // Regras para coleção de logs de acesso (nova)
+    match /accessLogs/{logId} {
+      // Qualquer usuário autenticado pode criar logs de acesso
       allow create: if isAuthenticated();
-      // Apenas administradores podem ler logs (privacidade)
+      // Apenas administradores podem ler logs de acesso (privacidade)
       allow read: if isAdmin();
       // Ninguém pode atualizar ou excluir logs (integridade dos dados)
       allow update, delete: if false;
@@ -57,14 +57,6 @@ service cloud.firestore {
       // Apenas o criador ou um administrador pode atualizar ou excluir
       allow update, delete: if isAuthenticated() && 
         (request.auth.uid == resource.data.userId || isAdmin());
-    }
-    
-    // Regras padrão para outras coleções
-    match /{document=**} {
-      // Usuários autenticados podem ler documentos
-      allow read: if isAuthenticated();
-      // Restringir escrita por padrão (segurança)
-      allow write: if isAdmin();
     }
   }
 }
