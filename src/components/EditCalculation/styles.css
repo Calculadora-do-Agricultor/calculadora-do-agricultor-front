@@ -77,7 +77,7 @@
   width: 32px;
   height: 32px;
   border: 1px solid #d1d5db;
-  background-color: #ffffff;
+  background-color: white;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -101,7 +101,7 @@
 .redo-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background-color: #f9fafb;
+  background-color: #EFF2FF;
   color: #9ca3af;
 }
 

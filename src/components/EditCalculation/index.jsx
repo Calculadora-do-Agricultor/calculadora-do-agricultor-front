@@ -892,11 +892,11 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             ) : (
               <>
                 <div className="form-group">
-                  <label htmlFor="calculationName">
+                  <label htmlFor="edit-calculationName">
                     Nome do Cálculo <span className="required">*</span>
                   </label>
                   <input
-                    id="calculationName"
+                    id="edit-calculationName"
                     type="text"
                     placeholder="Ex: Cálculo de Adubação, Conversão de Unidades..."
                     value={calculationName}
@@ -907,11 +907,11 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="calculationDescription">
+                  <label htmlFor="edit-calculationDescription">
                     Descrição do Cálculo <span className="required">*</span>
                   </label>
                   <textarea
-                    id="calculationDescription"
+                    id="edit-calculationDescription"
                     placeholder="Descreva o propósito deste cálculo e como ele pode ser útil..."
                     value={calculationDescription}
                     onChange={(e) => setCalculationDescription(e.target.value)}
@@ -924,11 +924,11 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="categorySelect">
+                  <label htmlFor="edit-categorySelect">
                     Categoria <span className="required">*</span>
                   </label>
                   <select
-                    id="categorySelect"
+                    id="edit-categorySelect"
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className={validationErrors.basic?.category ? "input-error" : ""}
@@ -946,7 +946,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="tags">Tags (opcional)</label>
+                  <label htmlFor="edit-tags">Tags (opcional)</label>
                   <div className="tags-input-container">
                     <div className="tags-list">
                       {tags.map((tag, index) => (
@@ -960,7 +960,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                     </div>
                     <div className="tags-input-wrapper">
                       <input
-                        id="tags"
+                        id="edit-tags"
                         type="text"
                         placeholder="Adicionar tag..."
                         value={currentTag}

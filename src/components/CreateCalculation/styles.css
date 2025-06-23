@@ -4,7 +4,7 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
-  background-color: #f9fafb;
+  background-color: white;
   border-radius: 12px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
@@ -253,7 +253,7 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   padding: 8px;
-  background-color: #f9fafb;
+  background-color: white;
 }
 
 .tags-list {
@@ -660,7 +660,7 @@
 .review-section {
   margin-bottom: 30px;
   padding: 20px;
-  background-color: #f9fafb;
+  background-color: white;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
@@ -909,7 +909,7 @@
 .preview-result {
   margin-bottom: 16px;
   padding: 16px;
-  background-color: #f9fafb;
+  background-color: white;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
@@ -1383,7 +1383,7 @@
 .review-section {
   margin-bottom: 30px;
   padding: 20px;
-  background-color: #f9fafb;
+  background-color: white;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }
@@ -1632,7 +1632,7 @@
 .preview-result {
   margin-bottom: 16px;
   padding: 16px;
-  background-color: #f9fafb;
+  background-color: white;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
 }

@@ -4,6 +4,7 @@ import { useEffect, useState, useContext } from "react"
 import { Navigate } from "react-router-dom"
 import { doc, getDoc } from "firebase/firestore"
 import { useAuthState } from "react-firebase-hooks/auth"
+import { signOut } from "firebase/auth"
 import { auth, db } from "../../services/firebaseConfig"
 import { AuthContext } from "../../context/AuthContext"
 
@@ -18,6 +19,7 @@ const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
   const [user] = useAuthState(auth)
   const { loading } = useContext(AuthContext)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isActive, setIsActive] = useState(true)
   const [checkingPermissions, setCheckingPermissions] = useState(true)
 
   useEffect(() => {
@@ -32,9 +34,23 @@ const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
         const docSnap = await getDoc(userRef)
         
         if (docSnap.exists()) {
-          setIsAdmin(docSnap.data().role === "admin")
+          const userData = docSnap.data()
+          setIsAdmin(userData.role === "admin")
+          setIsActive(userData.active !== false)
+          
+          // Se a conta estiver desativada, desloga o usuário
+          if (userData.active === false) {
+            console.warn("Conta desativada detectada. Deslogando usuário.")
+            await signOut(auth)
+            // Dispara evento para mostrar mensagem de conta desativada
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('accountDisabled'))
+            }, 100)
+            return
+          }
         } else {
           setIsAdmin(false)
+          setIsActive(false)
         }
       } catch (error) {
         console.error("Erro ao verificar permissões do usuário:", error)
@@ -58,6 +74,11 @@ const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
 
   // Verifica se o usuário está autenticado
   if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Verifica se a conta está ativa
+  if (!isActive) {
     return <Navigate to="/login" replace />
   }
 

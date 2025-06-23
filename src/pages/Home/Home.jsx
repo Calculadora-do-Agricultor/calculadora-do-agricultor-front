@@ -11,7 +11,7 @@ import { Button } from "../../components/ui";
 const Home = () => {
   const [user] = useAuthState(auth);
   return (
-    <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-b from-[#00418F]/10 to-white">
+    <div className="min-h-[calc(100vh-64px-40px)] bg-gradient-to-b from-[#00418F]/10 to-[#EFF2FF]">
       {/* Banner Principal */}
       <section className="relative overflow-hidden bg-[#00418F]/10 px-4 py-20">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-12 lg:flex-row">
@@ -36,7 +36,7 @@ const Home = () => {
               ) : (
                 <>
                   <Button to="/register" variant="primary" size="medium">
-                    Cadastre-se Agora
+                    Cadastrar-se
                   </Button>
                   <Button to="/login" variant="secondary" size="medium">
                     Fazer Login
@@ -69,7 +69,7 @@ const Home = () => {
           </p>
           <div className="mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Card 1 */}
-            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <div className="transform rounded-xl bg-white p-6 shadow-[0_4px_20px_rgba(0,65,143,0.15)] border border-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,65,143,0.25)]">
               <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
                 <CalculatorIcon className="h-8 w-8 text-[#00418F]" />
               </div>
@@ -83,7 +83,7 @@ const Home = () => {
             </div>
 
             {/* Card 2 */}
-            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <div className="transform rounded-xl bg-white p-6 shadow-[0_4px_20px_rgba(0,65,143,0.15)] border border-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,65,143,0.25)]">
               <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
                 <ChartBarIcon className="h-8 w-8 text-[#00418F]" />
               </div>
@@ -97,7 +97,7 @@ const Home = () => {
             </div>
 
             {/* Card 3 */}
-            <div className="transform rounded-xl bg-white p-6 shadow-lg transition duration-300 hover:-translate-y-1 hover:shadow-xl">
+            <div className="transform rounded-xl bg-white p-6 shadow-[0_4px_20px_rgba(0,65,143,0.15)] border border-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,65,143,0.25)]">
               <div className="mb-4 w-fit rounded-full bg-[#00418F]/10 p-3">
                 <ClockIcon className="h-8 w-8 text-[#00418F]" />
               </div>
