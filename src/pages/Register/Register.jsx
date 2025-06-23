@@ -29,7 +29,7 @@ import {
   Button,
   AuthAlert,
 } from "../../components/ui";
-import { TermsOfUseModal } from "@/components";
+import TermsOfUseModal from "@/components/TermsOfUseModal";
 import useLocationLogger from "@/hooks/useLocationLogger";
 
 // Schema de validação com Zod

@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, memo } from "react"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
@@ -26,6 +26,7 @@ import "./styles.css"
 
 const CalculationList = ({
   category,
+  calculations: externalCalculations,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
@@ -78,6 +79,14 @@ const CalculationList = ({
 
 
   useEffect(() => {
+    // Se cálculos externos foram fornecidos, use-os diretamente
+    if (externalCalculations) {
+      setCalculations(externalCalculations)
+      setLoading(false)
+      return
+    }
+
+    // Caso contrário, busque do Firestore (fallback para compatibilidade)
     const fetchCalculations = async () => {
       try {
         setLoading(true)
@@ -120,10 +129,10 @@ const CalculationList = ({
       }
     }
 
-    if (category) {
+    if (category && !externalCalculations) {
       fetchCalculations()
     }
-  }, [category])
+  }, [category, externalCalculations])
 
 
 
@@ -591,4 +600,4 @@ const resolveCategoryNames = async (calculations) => {
     categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
   }))
 }
-export default CalculationList;
+export default memo(CalculationList);

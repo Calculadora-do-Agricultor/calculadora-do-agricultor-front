@@ -32,7 +32,9 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
 } from "@heroicons/react/24/outline";
-import { MetricCard, LogCard, MetricsToggle } from "@/components";
+import MetricCard from "@/components/MetricCard";
+import LogCard from "@/components/LogCard";
+import MetricsToggle from "@/components/MetricsToggle";
 import "./LogsManagement.css";
 
 const LogsManagement = () => {
