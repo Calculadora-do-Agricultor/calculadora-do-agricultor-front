@@ -156,7 +156,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estados para feedback ao usuário
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [validationErrors, setValidationErrors] = useState({
     basic: {},
@@ -168,7 +167,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   // Carregar categorias para o dropdown
   const [categories, setCategories] = useState([])
-  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [loadingCategories, setLoadingCategories] = useState(false)
 
   // Verificar se o nome do cálculo já existe
   const checkCalculationNameExists = useCallback(
@@ -187,13 +186,26 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     [originalName],
   )
 
-  // Carregar dados do cálculo existente
+  // Carregar dados do cálculo e categorias em paralelo
   useEffect(() => {
-    const fetchCalculation = async () => {
+    const fetchData = async () => {
       try {
-        setInitialLoading(true)
-        const calculationDoc = await getDoc(doc(db, "calculations", calculationId))
+        setLoadingCategories(true)
+        
+        // Carregar dados em paralelo para melhor performance
+        const [calculationDoc, categoriesSnapshot] = await Promise.all([
+          getDoc(doc(db, "calculations", calculationId)),
+          getDocs(collection(db, "categories"))
+        ])
 
+        // Processar categorias
+        const categoriesData = categoriesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setCategories(categoriesData)
+
+        // Processar dados do cálculo
         if (calculationDoc.exists()) {
           const calculationData = calculationDoc.data()
 
@@ -201,13 +213,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           setCalculationName(calculationData.name)
           setOriginalName(calculationData.name)
           setCalculationDescription(calculationData.description)
+          
           // Converter categoria antiga (string) para novo formato (array de IDs)
           if (calculationData.categories && Array.isArray(calculationData.categories)) {
             // Novo formato: array de IDs
             setSelectedCategoryIds(calculationData.categories)
           } else if (calculationData.category) {
             // Formato antigo: string com nome da categoria - converter para ID
-            const categoryId = categories.find(cat => cat.name === calculationData.category)?.id
+            const categoryId = categoriesData.find(cat => cat.name === calculationData.category)?.id
             setSelectedCategoryIds(categoryId ? [categoryId] : [])
           } else {
             setSelectedCategoryIds([])
@@ -230,39 +243,18 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             }))
             setResults(resultsWithIds)
           }
-
-
-      
         } else {
           setError("Cálculo não encontrado.")
         }
       } catch (err) {
-        console.error("Erro ao carregar cálculo:", err)
-        setError("Erro ao carregar dados do cálculo. Verifique sua conexão e tente novamente.")
-      } finally {
-        setInitialLoading(false)
-      }
-    }
-
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true)
-        const querySnapshot = await getDocs(collection(db, "categories"))
-        const categoriesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        setCategories(categoriesData)
-      } catch (err) {
-        console.error("Erro ao carregar categorias:", err)
-        setError("Não foi possível carregar as categorias. Tente novamente mais tarde.")
+        console.error("Erro ao carregar dados:", err)
+        setError("Erro ao carregar dados. Verifique sua conexão e tente novamente.")
       } finally {
         setLoadingCategories(false)
       }
     }
 
-    fetchCalculation()
-    fetchCategories()
+    fetchData()
   }, [calculationId])
 
 
@@ -820,12 +812,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     </div>
   )
 
-  if (initialLoading) {
+  if (loadingCategories) {
     return (
       <div className="create-calculation-container">
         <div className="loading-indicator">
           <Loader2 size={36} className="animate-spin" />
-          <p>Carregando dados do cálculo...</p>
+          <p>Carregando dados...</p>
         </div>
       </div>
     )

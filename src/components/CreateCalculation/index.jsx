@@ -678,21 +678,26 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   )
 
   return (
-    <div className="create-calculation-container">
+    <div className="create-calculation-container edit-mode">
       <div className="create-calculation-header">
         <div className="flex items-center">
           <button onClick={onCancel} className="back-button mr-4" aria-label="Voltar">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-primary">Etapas de criação</h1>
+          <h1 className="text-2xl font-bold text-primary">
+            <Calculator size={20} className="inline-block mr-2" />
+            Criar cálculo
+          </h1>
         </div>
 
-        <button
-          onClick={() => setPreviewMode(!previewMode)}
-          className={`preview-toggle-button ${previewMode ? "active" : ""}`}
-        >
-          {previewMode ? "Editar" : "Visualizar"}
-        </button>
+        <div className="header-actions">
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+          >
+            {previewMode ? "Editar" : "Visualizar"}
+          </button>
+        </div>
       </div>
 
       {/* Mensagens de feedback */}
