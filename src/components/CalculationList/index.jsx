@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react"
+import { useState, useEffect, useContext, memo } from "react"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
@@ -26,6 +26,7 @@ import "./styles.css"
 
 const CalculationList = ({
   category,
+  calculations: externalCalculations,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
@@ -78,12 +79,35 @@ const CalculationList = ({
 
 
   useEffect(() => {
+    // Se cálculos externos foram fornecidos, use-os diretamente
+    if (externalCalculations) {
+      setCalculations(externalCalculations)
+      setLoading(false)
+      return
+    }
+
+    // Caso contrário, busque do Firestore (fallback para compatibilidade)
     const fetchCalculations = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const q = query(collection(db, "calculations"), where("category", "==", category))
+        // Buscar todas as categorias para encontrar o ID da categoria pelo nome
+        const categoriesSnapshot = await getDocs(collection(db, "categories"))
+        const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
+        
+        if (!categoryDoc) {
+          setCalculations([])
+          return
+        }
+
+        const categoryId = categoryDoc.id
+        
+        // Buscar cálculos que contêm o ID da categoria no array categories
+        const q = query(
+          collection(db, "calculations"), 
+          where("categories", "array-contains", categoryId)
+        )
         const querySnapshot = await getDocs(q)
 
         const calculationsData = querySnapshot.docs.map((doc) => ({
@@ -105,10 +129,10 @@ const CalculationList = ({
       }
     }
 
-    if (category) {
+    if (category && !externalCalculations) {
       fetchCalculations()
     }
-  }, [category])
+  }, [category, externalCalculations])
 
 
 
@@ -555,4 +579,25 @@ const CalculationList = ({
     </div>
   )
 }
-export default CalculationList;
+// Adicionar função para buscar nomes das categorias
+const resolveCategoryNames = async (calculations) => {
+  const categoryIds = [...new Set(
+    calculations.flatMap(calc => calc.categories || [])
+  )]
+  
+  const categoryPromises = categoryIds.map(async (id) => {
+    const categoryDoc = await getDoc(doc(db, "categories", id))
+    return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
+  })
+  
+  const categoryMap = await Promise.all(categoryPromises)
+  const categoryLookup = Object.fromEntries(
+    categoryMap.map(cat => [cat.id, cat.name])
+  )
+  
+  return calculations.map(calc => ({
+    ...calc,
+    categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
+  }))
+}
+export default memo(CalculationList);
