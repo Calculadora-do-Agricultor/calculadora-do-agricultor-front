@@ -41,10 +41,15 @@ export const preloadUserRoutes = () => {
  */
 export const useIntelligentPreload = (user, isAdmin) => {
   React.useEffect(() => {
+    // Verificar se o preload está habilitado
+    if (import.meta.env.VITE_PRELOAD_ROUTES !== 'true') {
+      return;
+    }
+    
     // Preload crítico sempre
     const timer = setTimeout(() => {
       preloadCriticalRoutes();
-    }, 2000); // Aguarda 2s após carregamento inicial
+    }, 2000);
     
     return () => clearTimeout(timer);
   }, []);
