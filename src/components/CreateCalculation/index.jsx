@@ -25,7 +25,8 @@ import {
 } from "lucide-react"
 import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
-import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import ExpressionValidator from "../ExpressionValidator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -483,6 +484,22 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
           if (!errors.results[index]) errors.results[index] = {}
           errors.results[index].expression = "A expressão de cálculo é obrigatória."
           isValid = false
+        } else {
+          // Valida a expressão matemática usando a função validateExpression
+          const paramValues = {}
+          parameters.forEach(param => {
+            if (param.name) {
+              paramValues[param.name] = param.type === "number" ? 10 : 0
+            }
+          })
+          
+          const validationResult = validateExpression(result.expression, paramValues)
+          
+          if (!validationResult.isValid) {
+            if (!errors.results[index]) errors.results[index] = {}
+            errors.results[index].expression = validationResult.errorMessage
+            isValid = false
+          }
         }
 
         if (result.isMainResult) {
@@ -529,17 +546,24 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
+      // Primeiro valida a expressão
+      const validation = validateExpression(expression, values)
+      if (!validation.isValid) {
+        console.error("Erro de validação:", validation.errorMessage)
+        return "Erro: " + validation.errorMessage
+      }
+      
       // Normaliza as funções matemáticas na expressão
       const normalizedExpression = normalizeMathFunctions(expression)
 
       // Avalia a expressão de forma segura
-      const result = evaluateExpression(normalizedExpression, values)
+      const result = evaluateExpression(normalizedExpression, values, true)
       
       // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
       return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
-      return "Erro"
+      return "Erro: " + error.message
     }
   }
 
@@ -1201,6 +1225,15 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     />
                     {validationErrors.results[resultIndex]?.expression && (
                       <div className="error-text">{validationErrors.results[resultIndex].expression}</div>
+                    )}
+                    
+                    {/* Validador de expressão */}
+                    {result.expression && (
+                      <ExpressionValidator 
+                        expression={result.expression} 
+                        onChange={(e) => updateExpressionWithHistory(resultIndex, e)}
+                        parameters={parameters}
+                      />
                     )}
                   </div>
 
