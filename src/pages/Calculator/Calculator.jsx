@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   getDocs,
@@ -53,6 +53,7 @@ export default function Calculator() {
   const [showUserCount, setShowUserCount] = useState(false);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showEditCalculation, setShowEditCalculation] = useState(false);
   const [calculationToEdit, setCalculationToEdit] = useState(null);
@@ -96,7 +97,8 @@ export default function Calculator() {
       setCategorias(categoriasComCalculos);
 
       // Seleciona a primeira categoria por padrão se não houver nenhuma selecionada
-      if (categoriasComCalculos.length > 0 && !categoriaSelecionada) {
+      // e não estiver vindo de uma navegação de breadcrumb
+      if (categoriasComCalculos.length > 0 && !categoriaSelecionada && !location.state?.from) {
         setCategoriaSelecionada(categoriasComCalculos[0].name);
       }
     } catch (error) {
@@ -120,6 +122,15 @@ export default function Calculator() {
       fetchCategorias();
     }
   }, [user, fetchCategorias]);
+
+  // Limpar categoria selecionada quando navegar de volta para calculadora
+  useEffect(() => {
+    if (location.state?.from === "breadcrumb") {
+      setCategoriaSelecionada(null);
+      // Limpar o state para evitar loops
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // Escutar eventos de mudança de modo de visualização
