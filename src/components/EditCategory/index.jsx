@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react"
-import { doc, updateDoc } from "firebase/firestore"
+import { doc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import { X, Save, AlertCircle, Loader2, Trash2 } from "lucide-react"
 import "./styles.css"
 
-const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
+const EditCategory = ({ category, onUpdate, onCancel }) => {
   const [categoryName, setCategoryName] = useState("")
   const [categoryDescription, setCategoryDescription] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
 
   useEffect(() => {
     if (category) {
@@ -43,6 +44,45 @@ const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleDelete = async () => {
+    // Verificar se a categoria tem cálculos associados
+    if (category.calculos && category.calculos.length > 0) {
+      setError("Esta categoria possui cálculos associados e não pode ser excluída.");
+      setShowConfirmDelete(false); // Fechar o modal de confirmação
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await deleteDoc(doc(db, "categories", category.id));
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error("Erro ao excluir categoria:", err);
+      setError("Ocorreu um erro ao excluir a categoria.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (showConfirmDelete) {
+    return (
+      <div className="edit-category-modal">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h2 className="modal-title">Confirmar Exclusão</h2>
+          </div>
+          <div className="modal-body">
+            <p>Tem certeza de que deseja excluir a categoria <strong>{category.name}</strong>? Esta ação não pode ser desfeita.</p>
+          </div>
+          <div className="modal-footer">
+            <button onClick={() => setShowConfirmDelete(false)} className="cancel-button">Cancelar</button>
+            <button onClick={handleDelete} className="delete-button">Excluir</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -103,7 +143,7 @@ const EditCategory = ({ category, onUpdate, onCancel, onDelete }) => {
         <div className="modal-footer">
           <div className="modal-footer-left">
             <button 
-              onClick={() => onDelete && onDelete(category)} 
+              onClick={() => setShowConfirmDelete(true)} 
               className="delete-button" 
               disabled={isSubmitting} 
               type="button"

@@ -96,11 +96,7 @@ export default function Calculator() {
       const categoriasComCalculos = Array.from(categoriasMap.values());
       setCategorias(categoriasComCalculos);
 
-      // Seleciona a primeira categoria por padrão se não houver nenhuma selecionada
-      // e não estiver vindo de uma navegação de breadcrumb
-      if (categoriasComCalculos.length > 0 && !categoriaSelecionada && !location.state?.from) {
-        setCategoriaSelecionada(categoriasComCalculos[0].name);
-      }
+
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
     } finally {
@@ -123,14 +119,10 @@ export default function Calculator() {
     }
   }, [user, fetchCategorias]);
 
-  // Limpar categoria selecionada quando navegar de volta para calculadora
+  // Limpar categoria selecionada ao montar o componente
   useEffect(() => {
-    if (location.state?.from === "breadcrumb") {
-      setCategoriaSelecionada(null);
-      // Limpar o state para evitar loops
-      window.history.replaceState({}, document.title);
-    }
-  }, [location.state]);
+    setCategoriaSelecionada(null);
+  }, []);
 
   useEffect(() => {
     // Escutar eventos de mudança de modo de visualização
@@ -444,6 +436,7 @@ export default function Calculator() {
                   sortOption={currentSortOption}
                   complexityFilters={selectedComplexities}
                   onEditCalculation={handleEditCalculation}
+                  onCalculationDeleted={fetchCategorias}
                 />
               </>
             )}

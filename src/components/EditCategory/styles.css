@@ -50,7 +50,7 @@
 .edit-category-modal .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #fff;
   margin: 0;
   word-wrap: break-word;
   word-break: break-word;
@@ -62,7 +62,7 @@
 .edit-category-modal .close-button {
   background: none;
   border: none;
-  color: #6b7280;
+  color: #fff;
   cursor: pointer;
   padding: 6px;
   border-radius: 6px;

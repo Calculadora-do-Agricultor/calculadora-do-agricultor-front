@@ -23,12 +23,9 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   const [filterOption, setFilterOption] = useState("all")
   const { isAdmin, user } = useContext(AuthContext)
 
-  // Estados para edição e exclusão
+  // Estados para edição
   const [categoryToEdit, setCategoryToEdit] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [categoryToDelete, setCategoryToDelete] = useState(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!categories) return
@@ -74,52 +71,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     }
   }
 
-  // Função para abrir o modal de exclusão
-  const handleDeleteClick = (category) => {
-    setCategoryToDelete(category)
-    setShowDeleteModal(true)
-  }
 
-  // Função para confirmar a exclusão
-  const handleConfirmDelete = async () => {
-    if (!categoryToDelete) return
-
-    try {
-      setIsDeleting(true)
-
-      // Verificar se a categoria tem cálculos associados
-      if (categoryToDelete.calculos && categoryToDelete.calculos.length > 0) {
-        alert("Esta categoria possui cálculos associados e não pode ser excluída. Remova os cálculos primeiro.")
-        setIsDeleting(false)
-        setShowDeleteModal(false)
-        setCategoryToDelete(null)
-        return
-      }
-
-      // Excluir a categoria do Firestore
-      await deleteDoc(doc(db, "categories", categoryToDelete.id))
-
-      // Fechar o modal
-      setShowDeleteModal(false)
-      setCategoryToDelete(null)
-
-      // Notificar o componente pai para atualizar a lista de categorias
-      if (onCategoryUpdated) {
-        onCategoryUpdated()
-      }
-    } catch (error) {
-      console.error("Erro ao excluir categoria:", error)
-      alert("Erro ao excluir categoria. Tente novamente.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  // Função para cancelar a exclusão
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false)
-    setCategoryToDelete(null)
-  }
 
   // Verificar se o usuário pode editar a categoria
   const canEditCategory = (category) => {
@@ -199,40 +151,43 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
                 >
                   {/* Category Info */}
                   <div className="flex-1 min-w-0 flex items-center justify-between ">
-                    <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
-                      <span 
-                        className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${
-                          selectedCategory === category.name
-                            ? "text-blue-700"
-                            : "text-gray-800 group-hover:text-blue-600"
-                        }`}
-                        style={{
-                          scrollbarWidth: "none",
-                          msOverflowStyle: "none",
-                        }}
-                      >
-                        {category.name}
-                      </span>
-                    </div>
+                     <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
+                       <span 
+                         className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${ 
+                           selectedCategory === category.name
+                             ? "text-blue-700"
+                             : "text-gray-800 group-hover:text-blue-600"
+                         }`}
+                         style={{
+                           scrollbarWidth: "none",
+                           msOverflowStyle: "none",
+                         }}
+                       >
+                         {category.name}
+                       </span>
+                     </div>
+ 
+                     <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
+                       {/* Count Badge */}
+                       <span
+                         className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${ 
+                           selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                         }`}
+                       >
+                         {category.calculos?.length || 0}
+                       </span>
 
-                    <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
-                      {/* Count Badge */}
-                      <span
-                        className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${
-                          selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {category.calculos?.length || 0}
-                      </span>
-
-                      {/* Actions */}
-                      {canEditCategory(category) && (
-                        <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <CategoryActions category={category} onEdit={() => handleEditCategory(category)} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                       {/* Actions */}
+                       {canEditCategory(category) && (
+                         <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                           <CategoryActions 
+                            category={category} 
+                            onEdit={() => handleEditCategory(category)} 
+                           />
+                         </div>
+                       )}
+                     </div>
+                   </div>
                 </div>
               </div>
             ))
@@ -250,58 +205,10 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           category={categoryToEdit}
           onUpdate={handleUpdateCategory}
           onCancel={handleCloseEditModal}
-          onDelete={handleDeleteClick}
         />
       )}
 
-      {/* Modal de confirmação de exclusão */}
-      {showDeleteModal && categoryToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl w-full max-w-md shadow-2xl animate-in fade-in-0 zoom-in-95 duration-300">
-            {/* Header */}
-            <div className="flex items-center gap-3 p-4 sm:p-5 border-b border-gray-200 bg-red-50 rounded-t-xl">
-              <div className="flex items-center justify-center w-8 h-8 bg-red-100 rounded-full">
-                <AlertTriangle size={20} className="text-red-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-red-900">Confirmar Exclusão</h3>
-            </div>
 
-            {/* Body */}
-            <div className="p-4 sm:p-5">
-              <p className="text-gray-700 mb-2">
-                Tem certeza que deseja excluir a categoria{" "}
-                <strong className="text-gray-900">{categoryToDelete.name}</strong>?
-              </p>
-              <p className="text-sm text-red-600 font-medium">Esta ação não pode ser desfeita.</p>
-            </div>
-
-            {/* Footer */}
-            <div className="flex flex-col sm:flex-row gap-3 p-4 sm:p-5 border-t border-gray-200 bg-gray-50 rounded-b-xl">
-              <button
-                className="flex-1 sm:flex-none px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </button>
-              <button
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-600 border border-red-600 rounded-lg text-sm font-medium text-white hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Excluindo...</span>
-                  </>
-                ) : (
-                  <span>Excluir</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
