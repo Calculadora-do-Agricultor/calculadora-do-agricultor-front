@@ -180,7 +180,7 @@ const AuthAlert = ({ errorCode, customMessage, onClose, context = "login", ...pr
       "account-disabled": {
         variant: "auth-disabled",
         title: "Conta Desativada",
-        description: "Sua conta foi desativada por um administrador. Para reativar sua conta, entre em contato com o suporte: suporte@calculadoradoagricultor.com | (11) 9999-9999 | Atendimento: Segunda a Sexta, 8h às 18h"
+        description: "Sua conta foi desativada por um administrador. Entre em contato com o suporte para mais informações."
       },
       "auth/account-exists-with-different-credential": {
         variant: "auth-account",
