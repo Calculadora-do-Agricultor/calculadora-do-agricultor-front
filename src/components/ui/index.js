@@ -29,3 +29,17 @@ export {
 } from "./form";
 export { Input } from "./input";
 export { Label } from "./label";
+export { Badge } from "./badge";
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+  MultiSelect,
+} from "./select";

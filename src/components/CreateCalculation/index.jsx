@@ -24,6 +24,7 @@ import {
   Redo2,
 } from "lucide-react"
 import DraggableList from "../DraggableList"
+import { MultiSelect } from "../ui"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -35,7 +36,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
   const [calculationDescription, setCalculationDescription] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
 
@@ -438,8 +439,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         errors.basic.description = "A descrição do cálculo é obrigatória."
         isValid = false
       }
-      if (!selectedCategory) {
-        errors.basic.category = "Selecione uma categoria."
+      if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+        errors.basic.categories = "Selecione pelo menos uma categoria."
         isValid = false
       }
     } else if (currentStep === 2) {
@@ -629,7 +630,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       await addDoc(collection(db, "calculations"), {
         name: calculationName,
         description: calculationDescription,
-        category: selectedCategory,
+        categories: selectedCategoryIds, // Array de IDs em vez de string
         parameters: parametersWithOrder,
         results: resultsWithOrder,
         tags,
@@ -772,23 +773,22 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
                 <div className="form-group">
                   <label htmlFor="categorySelect">
-                    Categoria <span className="required">*</span>
+                    Categorias <span className="required">*</span>
                   </label>
-                  <select
-                    id="categorySelect"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className={validationErrors.basic?.category ? "input-error" : ""}
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {validationErrors.basic?.category && (
-                    <div className="error-text">{validationErrors.basic.category}</div>
+                  <MultiSelect
+                    options={categories.map(category => ({
+                      value: category.id,
+                      label: category.name
+                    }))}
+                    value={selectedCategoryIds}
+                    onValueChange={setSelectedCategoryIds}
+                    placeholder="Selecione pelo menos uma categoria..."
+                    searchPlaceholder="Buscar categorias..."
+                    maxCount={2}
+                    className={validationErrors.basic?.categories ? "border-red-500" : ""}
+                  />
+                  {validationErrors.basic?.categories && (
+                    <div className="error-text">{validationErrors.basic.categories}</div>
                   )}
                 </div>
 
@@ -1271,8 +1271,17 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                 <span className="review-value">{calculationName}</span>
               </div>
               <div className="review-item">
-                <span className="review-label">Categoria:</span>
-                <span className="review-value">{selectedCategory}</span>
+                <span className="review-label">Categorias:</span>
+                <div className="review-categories">
+                  {selectedCategoryIds.map((categoryId) => {
+                    const category = categories.find(cat => cat.id === categoryId)
+                    return category ? (
+                      <span key={categoryId} className="review-tag">
+                        {category.name}
+                      </span>
+                    ) : null
+                  })}
+                </div>
               </div>
               <div className="review-item">
                 <span className="review-label">Descrição:</span>

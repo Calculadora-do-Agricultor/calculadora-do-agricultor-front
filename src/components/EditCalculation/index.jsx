@@ -25,6 +25,7 @@ import {
   Redo2,
 } from "lucide-react"
 import DraggableList from "../DraggableList"
+import { MultiSelect } from "../ui"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -37,7 +38,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   const [calculationName, setCalculationName] = useState("")
   const [originalName, setOriginalName] = useState("") // Para verificar se o nome foi alterado
   const [calculationDescription, setCalculationDescription] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
   const [lastModified, setLastModified] = useState(null)
@@ -200,7 +201,17 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           setCalculationName(calculationData.name)
           setOriginalName(calculationData.name)
           setCalculationDescription(calculationData.description)
-          setSelectedCategory(calculationData.category)
+          // Converter categoria antiga (string) para novo formato (array de IDs)
+          if (calculationData.categories && Array.isArray(calculationData.categories)) {
+            // Novo formato: array de IDs
+            setSelectedCategoryIds(calculationData.categories)
+          } else if (calculationData.category) {
+            // Formato antigo: string com nome da categoria - converter para ID
+            const categoryId = categories.find(cat => cat.name === calculationData.category)?.id
+            setSelectedCategoryIds(categoryId ? [categoryId] : [])
+          } else {
+            setSelectedCategoryIds([])
+          }
           setTags(calculationData.tags || [])
 
           // Parâmetros e resultados
@@ -533,8 +544,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         errors.basic.description = "A descrição do cálculo é obrigatória."
         isValid = false
       }
-      if (!selectedCategory) {
-        errors.basic.category = "Selecione uma categoria."
+      if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+        errors.basic.categories = "Selecione pelo menos uma categoria."
         isValid = false
       }
     } else if (currentStep === 2) {
@@ -706,8 +717,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       errors.basic.name = "Nome do cálculo é obrigatório"
       isValid = false
     }
-    if (!selectedCategory) {
-      errors.basic.category = "Categoria é obrigatória"
+    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+      errors.basic.categories = "Pelo menos uma categoria é obrigatória"
       isValid = false
     }
   
@@ -763,7 +774,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       await updateDoc(calculationRef, {
         name: calculationName,
         description: calculationDescription,
-        category: selectedCategory,
+        categories: selectedCategoryIds, // Array de IDs em vez de string
         tags: tags,
         parameters: parametersWithOrder,
         results: resultsWithOrder,
@@ -925,23 +936,22 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
                 <div className="form-group">
                   <label htmlFor="edit-categorySelect">
-                    Categoria <span className="required">*</span>
+                    Categorias <span className="required">*</span>
                   </label>
-                  <select
-                    id="edit-categorySelect"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className={validationErrors.basic?.category ? "input-error" : ""}
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {validationErrors.basic?.category && (
-                    <div className="error-text">{validationErrors.basic.category}</div>
+                  <MultiSelect
+                    options={categories.map(category => ({
+                      value: category.id,
+                      label: category.name
+                    }))}
+                    value={selectedCategoryIds}
+                    onValueChange={setSelectedCategoryIds}
+                    placeholder="Selecione pelo menos uma categoria..."
+                    searchPlaceholder="Buscar categorias..."
+                    maxCount={2}
+                    className={validationErrors.basic?.categories ? "border-red-500" : ""}
+                  />
+                  {validationErrors.basic?.categories && (
+                    <div className="error-text">{validationErrors.basic.categories}</div>
                   )}
                 </div>
 
@@ -1435,8 +1445,13 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 <span className="review-value">{calculationName}</span>
               </div>
               <div className="review-item">
-                <span className="review-label">Categoria:</span>
-                <span className="review-value">{selectedCategory}</span>
+                <span className="review-label">Categorias:</span>
+                <span className="review-value">
+                  {selectedCategoryIds.map((categoryId) => {
+                    const category = categories.find(cat => cat.id === categoryId)
+                    return category ? category.name : categoryId
+                  }).join(", ")}
+                </span>
               </div>
               <div className="review-item">
                 <span className="review-label">Descrição:</span>

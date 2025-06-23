@@ -72,10 +72,11 @@ export default function Calculator() {
           const categoria = { id: doc.id, ...doc.data() };
 
           // Busca todos os cálculos que pertencem a esta categoria
+          // Linha 78 - Alterar consulta para usar array-contains
           const calculosSnapshot = await getDocs(
             query(
               collection(db, "calculations"),
-              where("category", "==", categoria.name),
+              where("categories", "array-contains", categoria.id), // Usar ID em vez de nome
             ),
           );
 
