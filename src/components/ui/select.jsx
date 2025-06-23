@@ -139,6 +139,34 @@ const MultiSelect = React.forwardRef(({
 }, ref) => {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
+  const containerRef = React.useRef(null)
+  
+  // Fechar quando clicar fora ou perder o foco
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setOpen(false)
+        setSearch("") // Limpar busca ao fechar
+      }
+    }
+    
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setSearch("") // Limpar busca ao fechar
+      }
+    }
+    
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
+      
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('keydown', handleEscape)
+      }
+    }
+  }, [open])
   
   const filteredOptions = React.useMemo(() => {
     if (!search) return options
@@ -162,7 +190,7 @@ const MultiSelect = React.forwardRef(({
   const selectedOptions = options.filter(option => value.includes(option.value))
 
   return (
-    <div className={cn("relative", className)} ref={ref}>
+    <div className={cn("relative", className)} ref={containerRef}>
       <div
         className={cn(
           "flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
