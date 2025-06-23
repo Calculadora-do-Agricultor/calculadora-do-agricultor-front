@@ -26,6 +26,7 @@ import {
 } from "lucide-react"
 import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
+import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -625,33 +626,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
-      // Substitui os nomes dos parâmetros pelos valores
-      let expressionToEval = expression
+      // Normaliza as funções matemáticas na expressão
+      const normalizedExpression = normalizeMathFunctions(expression)
 
-      // Substitui funções matemáticas comuns
-      expressionToEval = expressionToEval
-        .replace(/Math\.pow\(/g, "Math.pow(")
-        .replace(/Math\.sqrt\(/g, "Math.sqrt(")
-        .replace(/Math\.abs\(/g, "Math.abs(")
-        .replace(/Math\.round\(/g, "Math.round(")
-        .replace(/Math\.floor\(/g, "Math.floor(")
-        .replace(/Math\.ceil\(/g, "Math.ceil(")
-        .replace(/Math\.sin\(/g, "Math.sin(")
-        .replace(/Math\.cos\(/g, "Math.cos(")
-        .replace(/Math\.tan\(/g, "Math.tan(")
-        .replace(/Math\.log\(/g, "Math.log(")
-        .replace(/Math\.exp\(/g, "Math.exp(")
-        .replace(/Math\.PI/g, "Math.PI")
-
-      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
-      Object.keys(values).forEach((key) => {
-        const regex = new RegExp(`@\\[${key}\\]`, "g")
-        expressionToEval = expressionToEval.replace(regex, values[key])
-      })
-
-      // Avalia a expressão
-      // eslint-disable-next-line no-eval
-      return eval(expressionToEval)
+      // Avalia a expressão de forma segura
+      const result = evaluateExpression(normalizedExpression, values)
+      
+      // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
+      return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
       return "Erro"
