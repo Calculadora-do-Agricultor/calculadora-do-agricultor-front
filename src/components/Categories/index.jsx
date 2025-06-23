@@ -7,7 +7,7 @@ import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
 import "./styles.css"
 
-const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated }) => {
+const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
   const [filterOption, setFilterOption] = useState("all")
@@ -132,6 +132,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated 
         <div className="search-input-container">
           <Search size={18} className="search-icon" />
           <input
+            id={`${idPrefix}search-categories`}
             type="text"
             placeholder="Buscar categorias..."
             value={searchTerm}

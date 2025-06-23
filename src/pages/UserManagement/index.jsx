@@ -363,7 +363,11 @@ const UserManagement = () => {
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <UserIcon className="h-5 w-5 text-[#00418F]/70" />
               </div>
+              <label htmlFor="search-users" className="sr-only">
+                Buscar usuários por nome ou email
+              </label>
               <input
+                id="search-users"
                 type="text"
                 placeholder="Buscar por nome ou email..."
                 className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"

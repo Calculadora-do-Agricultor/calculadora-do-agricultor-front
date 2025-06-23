@@ -11,6 +11,7 @@ import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage
 import LogsManagement from "./pages/LogsManagement";
 import UserManagement from "./pages/UserManagement";
 
+
 function App() {
   return (
     <div className="flex min-h-screen w-full flex-col">

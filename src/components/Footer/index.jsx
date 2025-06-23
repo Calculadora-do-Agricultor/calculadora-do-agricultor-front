@@ -159,7 +159,9 @@ const Footer = () => {
               <h3 className="text-lg font-semibold border-b border-[#00418F]/30 pb-2">Sugestões de Melhorias</h3>
               <p className="text-gray-300">Envie sugestões para tornarmos sua experiência ainda melhor:</p>
               <form className="mt-2 space-y-2">
+                <label htmlFor="suggestion-input" className="sr-only">Sua sugestão</label>
                 <input
+                  id="suggestion-input"
                   type="email"
                   placeholder="Sua sugestão"
                   className="w-full px-4 py-2 rounded bg-[#00418F]/80 border border-[#00418F]/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FFEE00]"

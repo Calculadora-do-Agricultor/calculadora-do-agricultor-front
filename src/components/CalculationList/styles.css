@@ -39,7 +39,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background-color: #f9fafb;
+  background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   color: #4b5563;
@@ -47,11 +47,14 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .sort-button:hover {
-  background-color: #f3f4f6;
-  border-color: #d1d5db;
+  background-color: #f8fafc;
+  border-color: #00418f;
+  color: #00418f;
+  font-weight: 600;
 }
 
 .sort-options {
@@ -87,7 +90,8 @@
 }
 
 .sort-options button:hover {
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  border-color: #00418f;
 }
 
 .sort-options button.active {
@@ -100,7 +104,7 @@
 .view-toggle {
   display: flex;
   align-items: center;
-  background-color: #f9fafb;
+  background-color: white;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -322,9 +326,9 @@
 }
 
 .action-button:hover {
-  background-color: #f9fafb;
-  color: #374151;
-  border-color: #d1d5db;
+  background-color: #f8fafc;
+  color: #00418f;
+  border-color: #00418f;
 }
 
 
@@ -540,6 +544,31 @@
   color: #1f2937;
 }
 
+/* Estilos para o estado de sucesso */
+.delete-modal-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.delete-modal-success-icon {
+  color: #10b981;
+  margin-bottom: 1rem;
+}
+
+.delete-modal-success h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.delete-modal-success p {
+  margin: 0;
+  color: #4b5563;
+}
+
 .delete-modal-content {
   margin-bottom: 2rem;
   text-align: center;
@@ -554,6 +583,21 @@
 .delete-modal-warning {
   font-size: 0.875rem;
   color: #ef4444;
+  font-weight: 500;
+}
+
+/* Estilos para mensagem de erro */
+.delete-modal-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border-radius: 0.5rem;
+  color: #b91c1c;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -587,10 +631,28 @@
 .delete-modal-confirm {
   background-color: #ef4444;
   color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .delete-modal-confirm:hover:not(:disabled) {
   background-color: #dc2626;
+}
+
+/* Animação de rotação para o ícone de carregamento */
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .delete-modal-cancel:disabled,

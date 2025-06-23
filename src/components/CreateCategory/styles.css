@@ -18,7 +18,7 @@
   width: 100%;
   max-width: 500px;
   margin: 20px;
-  background: #ffffff;
+  background: white;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   animation: modalFadeIn 0.3s ease-out;
@@ -104,7 +104,7 @@
   border-radius: 8px;
   font-size: 0.875rem;
   transition: all 0.2s;
-  background-color: #f9fafb;
+  background-color: white;
 }
 
 .input-field:hover {
@@ -152,7 +152,7 @@
 /* Modal Footer */
 .modal-footer {
   padding: 1.25rem 1.5rem;
-  background-color: #f9fafb;
+  background-color: white;
   border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: flex-end;
