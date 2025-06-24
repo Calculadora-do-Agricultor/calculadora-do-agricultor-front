@@ -5,7 +5,7 @@ import { X, Copy, Calculator, Check, Info, FileText, Calendar, User, Eye } from 
 import { doc, getDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import DraggableList from "../DraggableList"
-import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
 import "./styles.css"
 
 /**
@@ -130,18 +130,11 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         context[key] = Number.parseFloat(values[key]) || 0
       })
 
-      // Valida a expressão antes de calcular
-      const validation = validateExpression(expression, context)
-      if (!validation.isValid) {
-        console.error("Erro de validação:", validation.errorMessage)
-        return 0
-      }
-
-      // Normaliza as funções matemáticas na expressão
+            // Normaliza as funções matemáticas na expressão
       const normalizedExpression = normalizeMathFunctions(expression)
 
       // Avalia a expressão de forma segura
-      return evaluateExpression(normalizedExpression, context, true)
+      return evaluateExpression(normalizedExpression, context)
     } catch (error) {
       console.error("Erro ao avaliar expressão:", error)
       return 0
