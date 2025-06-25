@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
@@ -49,6 +49,10 @@ const Dashboard = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showCategoryFilters, setShowCategoryFilters] = useState(false);
   const [showActivityFilters, setShowActivityFilters] = useState(false);
+  
+  // Refs para detectar cliques fora dos filtros
+  const categoryFilterRef = useRef(null);
+  const activityFilterRef = useRef(null);
   const [filteredUserActivity, setFilteredUserActivity] = useState([]);
   const [filteredCalculationsByCategory, setFilteredCalculationsByCategory] = useState([]);
   const [filteredRecentCalculations, setFilteredRecentCalculations] = useState([]);
@@ -126,6 +130,31 @@ const Dashboard = () => {
       setFilteredRecentCalculations(sorted);
     }
   }, [metrics, dateRange, categoryFilter, recentCalculationsDateRange, sortOrder, activitySortOrder]);
+
+  // Efeito para detectar cliques fora dos filtros
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Verificar se o clique foi fora do filtro de categoria
+      if (categoryFilterRef.current && !categoryFilterRef.current.contains(event.target)) {
+        setShowCategoryFilters(false);
+      }
+      
+      // Verificar se o clique foi fora do filtro de atividade
+      if (activityFilterRef.current && !activityFilterRef.current.contains(event.target)) {
+        setShowActivityFilters(false);
+      }
+    };
+
+    // Adicionar event listener apenas se algum filtro estiver aberto
+    if (showCategoryFilters || showActivityFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup function
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCategoryFilters, showActivityFilters]);
 
   // Função para buscar dados do dashboard
   const fetchDashboardData = async () => {
@@ -400,7 +429,7 @@ const Dashboard = () => {
           <div className="chart-header">
             <h2>Cálculos por Categoria</h2>
             <div className="chart-actions">
-              <div className="filter-dropdown">
+              <div className="filter-dropdown" ref={categoryFilterRef}>
                 <button 
                   onClick={() => setShowCategoryFilters(prev => !prev)} 
                   className="filter-button"
@@ -481,7 +510,7 @@ const Dashboard = () => {
           <div className="chart-header">
             <h2>Atividade de Usuários</h2>
             <div className="chart-actions">
-              <div className="filter-dropdown">
+              <div className="filter-dropdown" ref={activityFilterRef}>
                 <button 
                   onClick={() => setShowActivityFilters(prev => !prev)} 
                   className="filter-button"
