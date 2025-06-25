@@ -99,14 +99,14 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             newResults[`result_${index}`] = {
               name: result.name,
               description: result.description,
-              value: calculatedValue.toFixed(2),
+              value: calculatedValue.toString(),
               unit: result.unit || "",
             };
           });
         } else {
           // Compatibilidade com o formato antigo (resultado único)
           const calculatedValue = calculateResult(calculation, paramValues);
-          newResults.value = calculatedValue.toFixed(2);
+          newResults.value = calculatedValue.toString();
 
           // Calcula resultados adicionais se existirem (formato antigo)
           if (
@@ -118,7 +118,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                 newResults[result.key] = (
                   (calculatedValue * 50) /
                   1000
-                ).toFixed(2);
+                ).toString();
               }
             });
           }
@@ -177,22 +177,43 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   // Atualiza o valor de um parâmetro
   const handleParamChange = (paramName, value, param) => {
     if (param.type === "number") {
-      let numericValue = value; // Converte para número para validar min/max/step
-      const numValue = parseFloat(numericValue);
-      const step = parseFloat(param.step) || 0.01;
-      if (!isNaN(numValue)) {
-        // Arredonda o valor para o incremento mais próximo
-        numericValue = (Math.round(numValue / step) * step).toFixed(2); // Aplica os limites min/max
-        if (param.min !== "" && numValue < parseFloat(param.min)) {
-          numericValue = param.min;
+      let numericValue = value;
+      // Só processa o valor se não estiver vazio
+      if (value !== '') {
+        const numValue = parseFloat(numericValue);
+        if (!isNaN(numValue)) {
+          // Aplica a máscara (step) apenas se estiver definida no parâmetro
+          if (param.step) {
+            const step = parseFloat(param.step);
+            if (!isNaN(step)) {
+              // Determina o número de casas decimais do step
+              const stepDecimals = param.step.toString().split('.')[1]?.length || 0;
+              // Arredonda o valor de acordo com o step e mantém as casas decimais
+              const roundedValue = Math.round(numValue / step) * step;
+              // Limita o número de casas decimais para evitar zeros extras
+              numericValue = Number(roundedValue.toFixed(stepDecimals)).toString();
+            }
+          } else {
+            // Se não tiver step, limita a 2 casas decimais
+            numericValue = Number(numValue.toFixed(2)).toString();
+          }
+        } else {
+          numericValue = '';
         }
-        if (param.max !== "" && numValue > parseFloat(param.max)) {
-          numericValue = param.max;
+      }
+      // Aplica os limites min/max apenas se houver um valor numérico
+      if (numericValue !== '') {
+        const currentValue = parseFloat(numericValue);
+        if (param.min !== "" && currentValue < parseFloat(param.min)) {
+          const minValue = parseFloat(param.min);
+          const stepDecimals = param.step?.toString().split('.')[1]?.length || 2;
+          numericValue = Number(minValue.toFixed(stepDecimals)).toString();
         }
-      } // <--- ESTA CHAVE ESTAVA FALTANDO AQUI!
-      // Se o valor não for um número válido, usa um valor padrão
-      if (isNaN(numValue)) {
-        numericValue = "";
+        if (param.max !== "" && currentValue > parseFloat(param.max)) {
+          const maxValue = parseFloat(param.max);
+          const stepDecimals = param.step?.toString().split('.')[1]?.length || 2;
+          numericValue = Number(maxValue.toFixed(stepDecimals)).toString();
+        }
       }
       setParamValues((prev) => ({
         ...prev,
@@ -213,7 +234,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         setCopied((prev) => ({
           ...prev,
           [resultId]: true,
-        }));
+        })); // <-- Adicionado ponto e vírgula aqui
         setTimeout(() => {
           setCopied((prev) => ({
             ...prev,
@@ -334,7 +355,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                           title={param.tooltip || param.description}
                           step={
                             param.type === "number"
-                              ? param.step || "0.01"
+                              ? param.step
                               : undefined
                           }
                           min={
