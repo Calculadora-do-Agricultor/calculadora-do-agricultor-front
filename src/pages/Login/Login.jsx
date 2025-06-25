@@ -78,6 +78,7 @@ const Login = () => {
 
       // Removida verificação de e-mail para melhorar experiência do usuário
 
+
       // Verificar se a conta está ativa antes de prosseguir
       const userDocRef = doc(db, "users", user.uid);
       const userDocSnap = await getDoc(userDocRef);
@@ -117,7 +118,9 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
+
       success("Bem-vindo de volta! Login realizado com sucesso.");
+
       navigate("/Calculator");
     } catch (error) {
       // Log do erro para monitoramento de segurança
@@ -134,6 +137,7 @@ const Login = () => {
       
       // Mensagens de erro mais específicas para o usuário
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+
         // Notificação de email ou senha incorretos removida conforme solicitado
       } else if (error.code === 'auth/too-many-requests') {
         // Notificação de muitas tentativas removida conforme solicitado
@@ -141,6 +145,7 @@ const Login = () => {
         // Mantendo apenas o registro do erro sem exibir notificação
       } else {
         // Notificação genérica de erro de login removida conforme solicitado
+
       }
       
       // Log adicional para erros críticos de segurança
