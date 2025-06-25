@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../utils/mathEvaluator"
 
 export function useCalculationResult(calculation) {
   const [paramValues, setParamValues] = useState({})
