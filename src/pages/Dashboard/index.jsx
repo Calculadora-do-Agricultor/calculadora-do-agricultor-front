@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, getDocs, where, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
 import { AuthContext } from '../../context/AuthContext';
 import { 
@@ -10,7 +10,10 @@ import {
   Download, 
   FileSpreadsheet, 
   FileImage,
-  Loader2
+  Loader2,
+  Filter,
+  RefreshCw,
+  ChevronDown
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -40,119 +43,213 @@ const Dashboard = () => {
     calculationsByCategory: [],
     userActivity: []
   });
+  
+  // Estados para filtragem
+  const [dateRange, setDateRange] = useState('7d'); // 7d, 30d, 90d, all
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [showCategoryFilters, setShowCategoryFilters] = useState(false);
+  const [showActivityFilters, setShowActivityFilters] = useState(false);
+  const [filteredUserActivity, setFilteredUserActivity] = useState([]);
+  const [filteredCalculationsByCategory, setFilteredCalculationsByCategory] = useState([]);
+  const [filteredRecentCalculations, setFilteredRecentCalculations] = useState([]);
+  const [recentCalculationsDateRange, setRecentCalculationsDateRange] = useState('7d');
+  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  const [activitySortOrder, setActivitySortOrder] = useState('desc'); // asc, desc
 
+  // Função para aplicar filtro de data aos dados de atividade
+  const applyDateFilter = (data, range) => {
+    if (range === 'all') return data;
+    
+    const now = new Date();
+    let startDate;
+    
+    switch(range) {
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '30d':
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '90d':
+        startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    }
+    
+    const startDateStr = startDate.toISOString().split('T')[0];
+    
+    return data.filter(item => {
+      const itemDate = new Date(item.date);
+      return itemDate >= startDate;
+    });
+  };
+  
+  // Função para aplicar filtro de categoria
+  const applyCategoryFilter = (data, category) => {
+    if (category === 'all') return data;
+    return data.filter(item => item.category === category);
+  };
+  
+  // Função para aplicar ordenação aos dados
+  const applySortOrder = (data, order, key = 'createdAt') => {
+    if (!data || data.length === 0) return [];
+    
+    return [...data].sort((a, b) => {
+      // Verificar se os dados existem
+      const dateA = a[key] instanceof Date ? a[key] : new Date(a[key]);
+      const dateB = b[key] instanceof Date ? b[key] : new Date(b[key]);
+      
+      if (order === 'asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    });
+  };
+
+  // Efeito para aplicar filtros quando os dados ou filtros mudam
+  useEffect(() => {
+    if (metrics.userActivity.length > 0) {
+      const dateFiltered = applyDateFilter(metrics.userActivity, dateRange);
+      const sorted = applySortOrder(dateFiltered, activitySortOrder, 'date');
+      setFilteredUserActivity(sorted);
+    }
+    
+    if (metrics.calculationsByCategory.length > 0) {
+      setFilteredCalculationsByCategory(applyCategoryFilter(metrics.calculationsByCategory, categoryFilter));
+    }
+
+    if (metrics.recentCalculations.length > 0) {
+      const dateFiltered = applyDateFilter(metrics.recentCalculations, recentCalculationsDateRange);
+      const sorted = applySortOrder(dateFiltered, sortOrder);
+      setFilteredRecentCalculations(sorted);
+    }
+  }, [metrics, dateRange, categoryFilter, recentCalculationsDateRange, sortOrder, activitySortOrder]);
+
+  // Função para buscar dados do dashboard
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Buscar contagem de usuários
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      const totalUsers = usersSnapshot.size;
+
+      // Buscar cálculos
+      const calculationsSnapshot = await getDocs(collection(db, 'calculations'));
+      const totalCalculations = calculationsSnapshot.size;
+      
+      // Buscar categorias
+      const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+      const totalCategories = categoriesSnapshot.size;
+
+      // Buscar cálculos recentes
+      const recentCalculationsQuery = query(
+        collection(db, 'calculations'),
+        orderBy('createdAt', 'desc'),
+        limit(5)
+      );
+      const recentCalculationsSnapshot = await getDocs(recentCalculationsQuery);
+      
+      // Agrupar categorias por ID para referência rápida
+      const categoriesMap = {};
+      categoriesSnapshot.docs.forEach(doc => {
+        categoriesMap[doc.id] = doc.data().name;
+      });
+      
+      const recentCalculations = recentCalculationsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        const categoryIds = data.categories || [];
+        const categoryNames = categoryIds.map(id => categoriesMap[id] || 'N/A').filter(name => name !== 'N/A');
+        
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          categoryNames: categoryNames
+        };
+      });
+
+      // Agrupar cálculos por categoria
+      const calculationsByCategory = [];
+      const categoryCountMap = {};
+
+      calculationsSnapshot.docs.forEach(doc => {
+        const calculation = doc.data();
+        const categories = calculation.categories || [];
+        
+        categories.forEach(categoryId => {
+          if (categoriesMap[categoryId]) {
+            const categoryName = categoriesMap[categoryId];
+            categoryCountMap[categoryName] = (categoryCountMap[categoryName] || 0) + 1;
+          }
+        });
+      });
+
+      Object.keys(categoryCountMap).forEach(category => {
+        calculationsByCategory.push({
+          category,
+          count: categoryCountMap[category]
+        });
+      });
+
+      // Buscar logs para atividade de usuários
+      const logsQuery = query(
+        collection(db, 'Logs'),
+        orderBy('timestamp', 'desc'),
+        limit(30)
+      );
+      const logsSnapshot = await getDocs(logsQuery);
+      
+      // Agrupar logs por dia para criar dados de atividade
+      const activityMap = {};
+      logsSnapshot.docs.forEach(doc => {
+        const log = doc.data();
+        const date = log.timestamp?.toDate() || new Date();
+        const dateString = date.toISOString().split('T')[0];
+        
+        activityMap[dateString] = (activityMap[dateString] || 0) + 1;
+      });
+
+      // Garantir que temos dados para os últimos 7 dias, mesmo sem atividade
+      const last7Days = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        last7Days.push(dateString);
+      }
+      
+      const userActivity = last7Days.map(date => ({
+        date,
+        count: activityMap[date] || 0
+      }));
+
+      setMetrics({
+        totalUsers,
+        totalCalculations,
+        totalCategories,
+        recentCalculations,
+        calculationsByCategory,
+        userActivity
+      });
+    } catch (err) {
+      console.error('Erro ao buscar dados do dashboard:', err);
+      setError('Não foi possível carregar os dados do dashboard. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Efeito para verificar permissões e carregar dados iniciais
   useEffect(() => {
     // Verificar se o usuário é administrador
     if (!isAdmin) {
       navigate('/');
       return;
     }
-
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Buscar contagem de usuários
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        const totalUsers = usersSnapshot.size;
-
-        // Buscar cálculos
-        const calculationsSnapshot = await getDocs(collection(db, 'calculations'));
-        const totalCalculations = calculationsSnapshot.size;
-        
-        // Buscar categorias
-        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-        const totalCategories = categoriesSnapshot.size;
-
-        // Buscar cálculos recentes
-        const recentCalculationsQuery = query(
-          collection(db, 'calculations'),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
-        const recentCalculationsSnapshot = await getDocs(recentCalculationsQuery);
-        const recentCalculations = recentCalculationsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate() || new Date()
-        }));
-
-        // Agrupar cálculos por categoria
-        const categoriesMap = {};
-        categoriesSnapshot.docs.forEach(doc => {
-          categoriesMap[doc.id] = doc.data().name;
-        });
-
-        const calculationsByCategory = [];
-        const categoryCountMap = {};
-
-        calculationsSnapshot.docs.forEach(doc => {
-          const calculation = doc.data();
-          const categories = calculation.categories || [];
-          
-          categories.forEach(categoryId => {
-            if (categoriesMap[categoryId]) {
-              const categoryName = categoriesMap[categoryId];
-              categoryCountMap[categoryName] = (categoryCountMap[categoryName] || 0) + 1;
-            }
-          });
-        });
-
-        Object.keys(categoryCountMap).forEach(category => {
-          calculationsByCategory.push({
-            category,
-            count: categoryCountMap[category]
-          });
-        });
-
-        // Buscar logs para atividade de usuários
-        const logsQuery = query(
-          collection(db, 'Logs'),
-          orderBy('timestamp', 'desc'),
-          limit(30)
-        );
-        const logsSnapshot = await getDocs(logsQuery);
-        
-        // Agrupar logs por dia para criar dados de atividade
-        const activityMap = {};
-        logsSnapshot.docs.forEach(doc => {
-          const log = doc.data();
-          const date = log.timestamp?.toDate() || new Date();
-          const dateString = date.toISOString().split('T')[0];
-          
-          activityMap[dateString] = (activityMap[dateString] || 0) + 1;
-        });
-
-        // Garantir que temos dados para os últimos 7 dias, mesmo sem atividade
-        const last7Days = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const dateString = date.toISOString().split('T')[0];
-          last7Days.push(dateString);
-        }
-        
-        const userActivity = last7Days.map(date => ({
-          date,
-          count: activityMap[date] || 0
-        }));
-
-        setMetrics({
-          totalUsers,
-          totalCalculations,
-          totalCategories,
-          recentCalculations,
-          calculationsByCategory,
-          userActivity
-        });
-      } catch (err) {
-        console.error('Erro ao buscar dados do dashboard:', err);
-        setError('Não foi possível carregar os dados do dashboard. Tente novamente mais tarde.');
-      } finally {
-        setLoading(false);
-      }
-    };
 
     fetchDashboardData();
   }, [isAdmin, navigate]);
@@ -267,6 +364,14 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <h1>Dashboard Administrativo</h1>
         <p>Visão geral das métricas e atividades da plataforma</p>
+        <button 
+          onClick={() => fetchDashboardData()} 
+          className="refresh-button"
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Atualizar dados
+        </button>
       </div>
 
       <div className="metrics-grid">
@@ -295,8 +400,37 @@ const Dashboard = () => {
           <div className="chart-header">
             <h2>Cálculos por Categoria</h2>
             <div className="chart-actions">
+              <div className="filter-dropdown">
+                <button 
+                  onClick={() => setShowCategoryFilters(prev => !prev)} 
+                  className="filter-button"
+                >
+                  <Filter size={16} />
+                  Filtrar
+                  <ChevronDown size={14} />
+                </button>
+                {showCategoryFilters && (
+                  <div className="filter-menu">
+                    <div className="filter-group">
+                      <label>Categoria:</label>
+                      <select 
+                        value={categoryFilter} 
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="filter-select"
+                      >
+                        <option value="all">Todas</option>
+                        {metrics.calculationsByCategory.map((item) => (
+                          <option key={item.category} value={item.category}>
+                            {item.category}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button 
-                onClick={() => exportAsCSV(metrics.calculationsByCategory, 'calculos-por-categoria')} 
+                onClick={() => exportAsCSV(filteredCalculationsByCategory, 'calculos-por-categoria')} 
                 className="export-button"
               >
                 <Download size={16} />
@@ -312,10 +446,10 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-container-inner">
-            <ResponsiveContainer width="100%" height={300} aspect={1.5}>
+            <ResponsiveContainer width="100%" height={300} aspect={undefined}>
               <BarChart
                 ref={barChartRef}
-                data={metrics.calculationsByCategory}
+                data={filteredCalculationsByCategory.length > 0 ? filteredCalculationsByCategory : metrics.calculationsByCategory}
                 margin={{
                   top: 20,
                   right: 30,
@@ -333,7 +467,7 @@ const Dashboard = () => {
             </ResponsiveContainer>
             
             <ul className="chart-data-list">
-              {metrics.calculationsByCategory.map((item, index) => (
+              {(filteredCalculationsByCategory.length > 0 ? filteredCalculationsByCategory : metrics.calculationsByCategory).map((item, index) => (
                 <li key={index}>
                   <span className="category-name">{item.category}</span>
                   <span className="category-count">{item.count} cálculos</span>
@@ -347,8 +481,46 @@ const Dashboard = () => {
           <div className="chart-header">
             <h2>Atividade de Usuários</h2>
             <div className="chart-actions">
+              <div className="filter-dropdown">
+                <button 
+                  onClick={() => setShowActivityFilters(prev => !prev)} 
+                  className="filter-button"
+                >
+                  <Filter size={16} />
+                  Filtrar
+                  <ChevronDown size={14} />
+                </button>
+                {showActivityFilters && (
+                  <div className="filter-menu">
+                    <div className="filter-group">
+                      <label>Período:</label>
+                      <select 
+                        value={dateRange} 
+                        onChange={(e) => setDateRange(e.target.value)}
+                        className="filter-select"
+                      >
+                        <option value="7d">Últimos 7 dias</option>
+                        <option value="30d">Últimos 30 dias</option>
+                        <option value="90d">Últimos 90 dias</option>
+                        <option value="all">Todo o período</option>
+                      </select>
+                    </div>
+                    <div className="filter-group">
+                      <label>Ordenação:</label>
+                      <select 
+                        value={activitySortOrder} 
+                        onChange={(e) => setActivitySortOrder(e.target.value)}
+                        className="filter-select"
+                      >
+                        <option value="desc">Mais recentes primeiro</option>
+                        <option value="asc">Mais antigos primeiro</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button 
-                onClick={() => exportAsCSV(metrics.userActivity, 'atividade-usuarios')} 
+                onClick={() => exportAsCSV(filteredUserActivity, 'atividade-usuarios')} 
                 className="export-button"
               >
                 <Download size={16} />
@@ -364,10 +536,10 @@ const Dashboard = () => {
             </div>
           </div>
           <div className="chart-container-inner">
-            <ResponsiveContainer width="100%" height={300} aspect={1.5}>
+            <ResponsiveContainer width="100%" height={300} aspect={undefined}>
               <LineChart
                 ref={lineChartRef}
-                data={metrics.userActivity}
+                data={filteredUserActivity.length > 0 ? filteredUserActivity : metrics.userActivity}
                 margin={{
                   top: 20,
                   right: 30,
@@ -399,7 +571,7 @@ const Dashboard = () => {
             </ResponsiveContainer>
             
             <ul className="chart-data-list">
-              {metrics.userActivity.map((item, index) => (
+              {(filteredUserActivity.length > 0 ? filteredUserActivity : metrics.userActivity).map((item, index) => (
                 <li key={index}>
                   <span className="date">{formatDate(item.date)}</span>
                   <span className="activity-count">{item.count} acessos</span>
@@ -413,13 +585,15 @@ const Dashboard = () => {
       <div className="recent-calculations">
         <div className="section-header">
           <h2>Cálculos Recentes</h2>
-          <button 
-            onClick={() => exportAsCSV(metrics.recentCalculations, 'calculos-recentes')} 
-            className="export-button"
-          >
-            <Download size={16} />
-            Exportar
-          </button>
+          <div className="chart-actions">
+            <button 
+              onClick={() => exportAsCSV(filteredRecentCalculations.length > 0 ? filteredRecentCalculations : metrics.recentCalculations, 'calculos-recentes')} 
+              className="export-button"
+            >
+              <Download size={16} />
+              CSV
+            </button>
+          </div>
         </div>
         <div className="calculations-table-container">
           <table className="calculations-table">
@@ -432,12 +606,14 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {metrics.recentCalculations.map((calc) => (
+              {(filteredRecentCalculations.length > 0 ? filteredRecentCalculations : metrics.recentCalculations).map((calc) => (
                 <tr key={calc.id}>
                   <td>{calc.name}</td>
                   <td>
                     {calc.categories && calc.categories.length > 0 
-                      ? metrics.calculationsByCategory.find(c => c.category === calc.categories[0])?.category || 'N/A'
+                      ? calc.categoryNames && calc.categoryNames.length > 0 
+                        ? calc.categoryNames.join(', ') 
+                        : 'N/A'
                       : 'N/A'}
                   </td>
                   <td>{formatDate(calc.createdAt)}</td>

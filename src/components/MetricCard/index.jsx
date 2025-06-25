@@ -5,7 +5,10 @@ const MetricCard = ({ title, value, icon, className = '' }) => {
   const renderIcon = () => {
     // Se o ícone já for um elemento JSX (React.ReactNode)
     if (React.isValidElement(icon)) {
-      return icon;
+      // Clonar o elemento e adicionar a classe text-white
+      return React.cloneElement(icon, {
+        className: `${icon.props.className || ''} text-white`
+      });
     }
     
     // Se o ícone for um componente React (função/classe)
@@ -26,7 +29,7 @@ const MetricCard = ({ title, value, icon, className = '' }) => {
           <p className="text-3xl font-bold text-[#00418F] leading-tight">{value}</p>
         </div>
         <div className="ml-4 p-4 bg-gradient-to-br from-[#00418F] to-[#00418F]/80 rounded-xl shadow-md">
-          {renderIcon()}
+          <div className="text-white">{renderIcon()}</div>
         </div>
       </div>
     </div>
