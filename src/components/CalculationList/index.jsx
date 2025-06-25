@@ -1,255 +1,285 @@
-import { useState, useEffect, useContext, memo } from "react"
-import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
-import { db, auth } from "../../services/firebaseConfig"
-import { useAuthState } from "react-firebase-hooks/auth"
-import { AuthContext } from "../../context/AuthContext"
+import React, { useState, useEffect, useContext, memo } from "react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  deleteDoc,
+} from "firebase/firestore"; // Removi getDoc não utilizado aqui
+import { db, auth } from "../../services/firebaseConfig";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { AuthContext } from "../../context/AuthContext";
 import {
   ArrowRight,
   Search,
   Calendar,
-  Clock,
-  LayoutGrid,
-  ListIcon,
+  Clock, // Não utilizado, pode ser removido
+  LayoutGrid, // Não utilizado, pode ser removido
+  ListIcon, // Não utilizado, pode ser removido
   SlidersHorizontal,
-  Share2,
+  Share2, // Não utilizado, pode ser removido
   ChevronDown,
   AlertCircle,
   Eye,
   AlertTriangle,
   CheckCircle,
   Loader2,
-} from "lucide-react"
-import CalculationModal  from "../CalculationModal"
-import { Tooltip } from "../ui/Tooltip"
-import CalculationActions from "../CalculationActions"
-import "./styles.css"
-
+} from "lucide-react";
+import CalculationModal from "../CalculationModal";
+import { Tooltip } from "../ui/Tooltip"; // Tooltip importado, mas não utilizado. Se não for usar, pode ser removido.
+import CalculationActions from "../CalculationActions";
+import "./styles.css";
 const CalculationList = ({
   category,
   calculations: externalCalculations,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
-  complexityFilters = [],
+  complexityFilters = [], // Não utilizado no código fornecido, pode ser removido se não for usar.
   onEditCalculation,
   onCalculationDeleted,
-}) =>{
-  const [user] = useAuthState(auth)
-  const [isAdmin, setIsAdmin] = useState(false)
+}) => {
+  const [user] = useAuthState(auth);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [calculations, setCalculations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filteredCalculations, setFilteredCalculations] = useState([]);
+  const [selectedCalculation, setSelectedCalculation] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sortOption, setSortOption] = useState(initialSortOption);
+  const [showSortOptions, setShowSortOptions] = useState(false);
+
+  // Estados para o modal de exclusão global
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [calculationToDelete, setCalculationToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
-  const { isAdmin: contextIsAdmin } = useContext(AuthContext)
-  
+  const { isAdmin: contextIsAdmin } = useContext(AuthContext);
+
   useEffect(() => {
-    setIsAdmin(contextIsAdmin)
-  }, [contextIsAdmin])
-  const [calculations, setCalculations] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [filteredCalculations, setFilteredCalculations] = useState([])
-  const [selectedCalculation, setSelectedCalculation] = useState(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [sortOption, setSortOption] = useState(initialSortOption)
-  const [showSortOptions, setShowSortOptions] = useState(false)
-  
-  // Estados para o modal de exclusão global
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [calculationToDelete, setCalculationToDelete] = useState(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState(null)
-  const [deleteSuccess, setDeleteSuccess] = useState(false)
+    setIsAdmin(contextIsAdmin);
+  }, [contextIsAdmin]);
+
+
 
   // Efeito para bloquear/desbloquear scroll do body quando o modal de exclusão está aberto
   useEffect(() => {
     if (showDeleteModal) {
-      document.body.classList.add("modal-open")
-      document.body.style.overflow = 'hidden'
+      document.body.classList.add("modal-open");
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.classList.remove("modal-open")
-      document.body.style.overflow = 'unset'
-      setDeleteError(null)
-      setDeleteSuccess(false)
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "unset";
+      setDeleteError(null);
+      setDeleteSuccess(false);
     }
-  
+
     return () => {
-      document.body.classList.remove("modal-open")
-      document.body.style.overflow = 'unset'
-    }
-  }, [showDeleteModal])
-  
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "unset";
+    };
+  }, [showDeleteModal]);
 
-
+  // Fetch calculations from Firestore or use externalCalculations
   useEffect(() => {
-    // Se cálculos externos foram fornecidos, use-os diretamente
     if (externalCalculations) {
-      setCalculations(externalCalculations)
-      setLoading(false)
-      return
+      setCalculations(externalCalculations);
+      setLoading(false);
+      return;
     }
 
-    // Caso contrário, busque do Firestore (fallback para compatibilidade)
     const fetchCalculations = async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true);
+        setError(null);
 
-        // Buscar todas as categorias para encontrar o ID da categoria pelo nome
-        const categoriesSnapshot = await getDocs(collection(db, "categories"))
-        const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
-        
+        const categoriesSnapshot = await getDocs(collection(db, "categories"));
+        const categoryDoc = categoriesSnapshot.docs.find(
+          (doc) => doc.data().name === category,
+        );
+
         if (!categoryDoc) {
-          setCalculations([])
-          return
+          setCalculations([]);
+          setLoading(false);
+          return;
         }
 
-        const categoryId = categoryDoc.id
-        
-        // Buscar cálculos que contêm o ID da categoria no array categories
+        const categoryId = categoryDoc.id;
+
         const q = query(
-          collection(db, "calculations"), 
-          where("categories", "array-contains", categoryId)
-        )
-        const querySnapshot = await getDocs(q)
+          collection(db, "calculations"),
+          where("categories", "array-contains", categoryId),
+        );
+        const querySnapshot = await getDocs(q);
 
         const calculationsData = querySnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          // Add default values for missing fields
           views: doc.data().views || 0,
           createdAt: doc.data().createdAt || { toDate: () => new Date() },
           updatedAt: doc.data().updatedAt || { toDate: () => new Date() },
           tags: doc.data().tags || [],
-        }))
+        }));
 
-        setCalculations(calculationsData)
+        setCalculations(calculationsData);
       } catch (err) {
-        console.error("Erro ao buscar cálculos:", err)
-        setError("Não foi possível carregar os cálculos. Tente novamente mais tarde.")
+        console.error("Erro ao buscar cálculos:", err);
+        setError(
+          "Não foi possível carregar os cálculos. Tente novamente mais tarde.",
+        );
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (category && !externalCalculations) {
-      fetchCalculations()
+      fetchCalculations();
     }
-  }, [category, externalCalculations])
+  }, [category, externalCalculations]);
 
-
-
-  // Filter calculations based on search term
+  // Filter and sort calculations based on search term and sort option
   useEffect(() => {
     if (!calculations.length) {
-      setFilteredCalculations([])
-      return
+      setFilteredCalculations([]);
+      return;
     }
 
-    let filtered = [...calculations]
+    let filtered = [...calculations];
 
     // Apply search filter
     if (searchTerm.trim()) {
-      const searchLower = searchTerm.toLowerCase()
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((calc) => {
-        const name = calc.name || calc.nome || ""
-        const description = calc.description || calc.descricao || ""
-        const tags = calc.tags || []
+        const name = calc.name || calc.nome || "";
+        const description = calc.description || calc.descricao || "";
+        const tags = calc.tags || [];
 
         return (
           name.toLowerCase().includes(searchLower) ||
           description.toLowerCase().includes(searchLower) ||
           tags.some((tag) => tag.toLowerCase().includes(searchLower))
-        )
-      })
+        );
+      });
     }
 
     // Apply sorting
-    filtered = sortCalculations(filtered, sortOption)
+    filtered = sortCalculations(filtered, sortOption);
 
-    setFilteredCalculations(filtered)
-  }, [searchTerm, calculations, sortOption])
+    setFilteredCalculations(filtered);
+  }, [searchTerm, calculations, sortOption]);
 
   const sortCalculations = (calcs, option) => {
     switch (option) {
       case "name_asc":
-        return [...calcs].sort((a, b) => (a.name || a.nome || "").localeCompare(b.name || b.nome || ""))
+        return [...calcs].sort((a, b) =>
+          (a.name || a.nome || "").localeCompare(b.name || b.nome || ""),
+        );
       case "name_desc":
-        return [...calcs].sort((a, b) => (b.name || b.nome || "").localeCompare(a.name || a.nome || ""))
+        return [...calcs].sort((a, b) =>
+          (b.name || b.nome || "").localeCompare(a.name || a.nome || ""),
+        );
       case "date_newest":
-        return [...calcs].sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate())
+        return [...calcs].sort(
+          (a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime(), // Usar getTime() para garantir comparação numérica
+        );
       case "date_oldest":
-        return [...calcs].sort((a, b) => a.createdAt.toDate() - b.createdAt.toDate())
+        return [...calcs].sort(
+          (a, b) => a.createdAt.toDate().getTime() - b.createdAt.toDate().getTime(), // Usar getTime() para garantir comparação numérica
+        );
       case "views_desc":
-        return [...calcs].sort((a, b) => (b.views || 0) - (a.views || 0))
+        return [...calcs].sort((a, b) => (b.views || 0) - (a.views || 0));
       default:
-        return calcs
+        return calcs;
     }
-  }
-
-
+  };
 
   const getTimeAgo = (date) => {
-    const now = new Date()
-    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) return "Hoje"
-    if (diffInDays === 1) return "Ontem"
-    if (diffInDays < 7) return `${diffInDays} dias atrás`
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} semanas atrás`
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} meses atrás`
-    return `${Math.floor(diffInDays / 365)} anos atrás`
-  }
+    if (diffInDays === 0) return "Hoje";
+    if (diffInDays === 1) return "Ontem";
+    if (diffInDays < 7) return `${diffInDays} dias atrás`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} semanas atrás`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} meses atrás`;
+    return `${Math.floor(diffInDays / 365)} anos atrás`;
+  };
+
+  // Função para abrir o modal do cálculo
+  const handleCalculationClick = (calculation) => {
+    if (!calculation) return;
+
+    // Reseta o estado do modal antes de abrir um novo
+    setSelectedCalculation(null);
+    setIsModalOpen(false);
+
+    // Pequeno delay para garantir que o estado anterior foi limpo antes de setar o novo
+    setTimeout(() => {
+      setSelectedCalculation(calculation);
+      setIsModalOpen(true);
+    }, 0);
+  };
 
   // Função para abrir o modal de exclusão
   const handleDeleteClick = (calculation) => {
-    setCalculationToDelete(calculation)
-    setShowDeleteModal(true)
-  }
+    setCalculationToDelete(calculation);
+    setShowDeleteModal(true);
+  };
 
   // Função para confirmar a exclusão
   const handleConfirmDelete = async () => {
-    if (!calculationToDelete) return
+    if (!calculationToDelete) return;
 
     try {
-      setIsDeleting(true)
-      setDeleteError(null)
-      
+      setIsDeleting(true);
+      setDeleteError(null);
+
       // Adicionar um pequeno atraso para mostrar o estado de loading
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      await deleteDoc(doc(db, "calculations", calculationToDelete.id))
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      await deleteDoc(doc(db, "calculations", calculationToDelete.id));
+
       // Remover o cálculo da lista
-      setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
-      setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
-      
+      setFilteredCalculations((prev) =>
+        prev.filter((calc) => calc.id !== calculationToDelete.id),
+      );
+      setCalculations((prev) =>
+        prev.filter((calc) => calc.id !== calculationToDelete.id),
+      );
+
       // Mostrar mensagem de sucesso antes de fechar o modal
-      setDeleteSuccess(true)
-      
+      setDeleteSuccess(true);
+
       // Notificar o componente pai que um cálculo foi excluído
       if (onCalculationDeleted) {
-        onCalculationDeleted()
+        onCalculationDeleted();
       }
 
       // Fechar o modal após um breve delay para mostrar a mensagem de sucesso
       setTimeout(() => {
-        setShowDeleteModal(false)
-        setCalculationToDelete(null)
-      }, 1500)
+        setShowDeleteModal(false);
+        setCalculationToDelete(null);
+      }, 1500);
     } catch (error) {
-      console.error("Erro ao excluir cálculo:", error)
-      setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
+      console.error("Erro ao excluir cálculo:", error);
+      setDeleteError("Não foi possível excluir o cálculo. Tente novamente.");
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   // Função para cancelar a exclusão
   const handleCancelDelete = () => {
-    setShowDeleteModal(false)
-    setCalculationToDelete(null)
-  }
+    setShowDeleteModal(false);
+    setCalculationToDelete(null);
+  };
 
-  // Skeleton loading component
+  // Skeleton loading component - Corrigido!
   const CalculationSkeleton = () => (
     <div className="calculation-card is-loading">
       <div className="calculation-content">
@@ -262,7 +292,12 @@ const CalculationList = ({
         <div className="skeleton-button"></div>
       </div>
     </div>
-  )
+  );
+
+  // Removi o console.log que estava disparando a cada render
+  // useEffect(() => {
+  //   console.log('Estado do modal:', { isModalOpen, selectedCalculation });
+  // }, [isModalOpen, selectedCalculation]);
 
   if (loading) {
     return (
@@ -284,248 +319,208 @@ const CalculationList = ({
             ))}
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
       <div className="calculations-error">
-        <AlertCircle size={48} className="text-red-500 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Erro ao carregar cálculos</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <AlertCircle size={48} className="mb-4 text-red-500" />
+        <h3 className="mb-2 text-xl font-semibold text-gray-800">
+          Erro ao carregar cálculos
+        </h3>
+        <p className="mb-4 text-gray-600">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-2 px-4 rounded-lg transition-colors"
+          className="rounded-lg bg-red-100 px-4 py-2 font-medium text-red-700 transition-colors hover:bg-red-200"
         >
           Tentar novamente
         </button>
       </div>
-    )
+    );
   }
 
   if (filteredCalculations.length === 0) {
     return (
       <div className="calculations-empty">
-        <Search size={48} className="text-gray-400 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          {searchTerm ? "Nenhum resultado encontrado" : "Nenhum cálculo disponível"}
+        <Search size={48} className="mb-4 text-gray-400" />
+        <h3 className="mb-2 text-xl font-semibold text-gray-800">
+          {searchTerm
+            ? "Nenhum resultado encontrado"
+            : "Nenhum cálculo disponível"}
         </h3>
-        <p className="text-gray-600 mb-4">
+        <p className="mb-4 text-gray-600">
           {searchTerm
             ? `Não encontramos nenhum cálculo para "${searchTerm}" nesta categoria.`
             : "Não há cálculos disponíveis para esta categoria no momento."}
         </p>
         {searchTerm && (
-          <button onClick={() => window.location.reload()} className="text-blue-600 hover:text-blue-800 font-medium">
+          <button
+            onClick={() => window.location.reload()} // Poderia ser uma função para limpar o termo de pesquisa
+            className="font-medium text-blue-600 hover:text-blue-800"
+          >
             Limpar pesquisa
           </button>
         )}
       </div>
-    )
+    );
   }
 
   return (
-    <div className="calculations-container">
-      <div className="calculations-header">
-        <div className="calculations-count">
-          <span>
-            {filteredCalculations.length} cálculo{filteredCalculations.length !== 1 ? "s" : ""} encontrado
-            {filteredCalculations.length !== 1 ? "s" : ""}
-          </span>
+    <>
+      {/* O modal está sendo renderizado dentro do componente principal e também dentro do #calculation-modal-container
+          Isso causa duplicação. A melhor prática é renderizar o modal em um Portal FORA da estrutura principal do componente
+          para evitar problemas de empilhamento e z-index.
+          Deixei apenas a renderização dentro do Portal. */}
+
+      <div className="calculations-container">
+        <div className="calculations-header">
+          <div className="calculations-count">
+            {filteredCalculations.length} cálculo(s) encontrado(s)
+          </div>
+          <div className="calculations-actions">
+            <div className="sort-dropdown">
+              <button
+                className="sort-button"
+                onClick={() => setShowSortOptions(!showSortOptions)}
+              >
+                <SlidersHorizontal size={16} />
+                Ordenar
+                <ChevronDown size={16} />
+              </button>
+              {showSortOptions && (
+                <div className="sort-options">
+                  <button
+                    className={sortOption === "name_asc" ? "active" : ""}
+                    onClick={() => {
+                      setSortOption("name_asc");
+                      setShowSortOptions(false);
+                    }}
+                  >
+                    Nome (A-Z)
+                  </button>
+                  <button
+                    className={sortOption === "name_desc" ? "active" : ""}
+                    onClick={() => {
+                      setSortOption("name_desc");
+                      setShowSortOptions(false);
+                    }}
+                  >
+                    Nome (Z-A)
+                  </button>
+                  <button
+                    className={sortOption === "date_newest" ? "active" : ""}
+                    onClick={() => {
+                      setSortOption("date_newest");
+                      setShowSortOptions(false);
+                    }}
+                  >
+                    Mais recentes
+                  </button>
+                  <button
+                    className={sortOption === "date_oldest" ? "active" : ""}
+                    onClick={() => {
+                      setSortOption("date_oldest");
+                      setShowSortOptions(false);
+                    }}
+                  >
+                    Mais antigos
+                  </button>
+                  <button
+                    className={sortOption === "views_desc" ? "active" : ""}
+                    onClick={() => {
+                      setSortOption("views_desc");
+                      setShowSortOptions(false);
+                    }}
+                  >
+                    Mais visualizados
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-        <div className="calculations-actions">
-          <div className="sort-dropdown">
-            <button
-              className="sort-button"
-              onClick={() => setShowSortOptions(!showSortOptions)}
-              aria-expanded={showSortOptions}
-              aria-haspopup="true"
+
+        <div className={`calculations-${viewMode}`}>
+          {filteredCalculations.map((calculation) => (
+            <div
+              key={calculation.id}
+              id={`calculation-${calculation.id}`}
+              className="calculation-card"
+              // O onClick no card inteiro é ok, mas o handleCalculationClick
+              // já está sendo chamado no div 'calculation-content'.
+              // Removi o onClick duplicado do div pai para evitar chamadas múltiplas.
+              // O cursor: pointer deve ser aplicado ao 'calculation-content'
             >
-              <SlidersHorizontal size={16} />
-              <span>Ordenar</span>
-              <ChevronDown size={14} className={`transition-transform ${showSortOptions ? "rotate-180" : ""}`} />
-            </button>
-            {showSortOptions && (
-              <div className="sort-options">
-                <button
-                  className={sortOption === "name_asc" ? "active" : ""}
-                  onClick={() => {
-                    setSortOption("name_asc")
-                    setShowSortOptions(false)
-                  }}
-                >
-                  Nome (A-Z)
-                </button>
-                <button
-                  className={sortOption === "name_desc" ? "active" : ""}
-                  onClick={() => {
-                    setSortOption("name_desc")
-                    setShowSortOptions(false)
-                  }}
-                >
-                  Nome (Z-A)
-                </button>
-                <button
-                  className={sortOption === "date_newest" ? "active" : ""}
-                  onClick={() => {
-                    setSortOption("date_newest")
-                    setShowSortOptions(false)
-                  }}
-                >
-                  Mais recentes
-                </button>
-                <button
-                  className={sortOption === "date_oldest" ? "active" : ""}
-                  onClick={() => {
-                    setSortOption("date_oldest")
-                    setShowSortOptions(false)
-                  }}
-                >
-                  Mais antigos
-                </button>
-                <button
-                  className={sortOption === "views_desc" ? "active" : ""}
-                  onClick={() => {
-                    setSortOption("views_desc")
-                    setShowSortOptions(false)
-                  }}
-                >
-                  Mais visualizados
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="view-toggle">
-            <Tooltip content="Visualização em grade">
-              <button
-                className={`view-button ${viewMode === "grid" ? "active" : ""}`}
-                aria-label="Visualização em grade"
-                onClick={() => window.dispatchEvent(new CustomEvent("changeViewMode", { detail: "grid" }))}
+              <div
+                className="calculation-content"
+                onClick={(e) => {
+                  e.stopPropagation(); // Evita que o clique se propague para o pai se o pai também tiver um onClick
+                  handleCalculationClick(calculation);
+                }}
+                style={{ cursor: "pointer" }}
               >
-                <LayoutGrid size={16} />
-              </button>
-            </Tooltip>
-            <Tooltip content="Visualização em lista">
-              <button
-                className={`view-button ${viewMode === "list" ? "active" : ""}`}
-                aria-label="Visualização em lista"
-                onClick={() => window.dispatchEvent(new CustomEvent("changeViewMode", { detail: "list" }))}
-              >
-                <ListIcon size={16} />
-              </button>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
-
-      <div className={`calculations-${viewMode}`}>
-        {filteredCalculations.map((calculation) => (
-          <div key={calculation.id} className="calculation-card">
-            {(isAdmin || (user && calculation.createdBy === user.uid)) && (
-              <div className="calculation-actions-wrapper">
-                <CalculationActions
-                  calculation={calculation}
-                  onEdit={onEditCalculation}
-                  onDelete={() => handleDeleteClick(calculation)}
-                />
-              </div>
-            )}
-
-
-            <div className="calculation-content">
-              <div className="calculation-header">
-                <h3 className="calculation-title">{calculation.name || calculation.nome}</h3>
-              </div>
-
-              <p className="calculation-description">
-                {calculation.description || calculation.descricao || "Sem descrição disponível."}
-              </p>
-
-              {calculation.tags && calculation.tags.length > 0 && (
+                <h3 className="calculation-title">
+                  {calculation.name || calculation.nome}
+                </h3>
+                <p className="calculation-description">
+                  {calculation.description || calculation.descricao}
+                </p>
                 <div className="calculation-tags">
-                  {calculation.tags.slice(0, 3).map((tag, index) => (
+                  {calculation.tags?.map((tag, index) => (
                     <span key={index} className="calculation-tag">
                       {tag}
                     </span>
                   ))}
-                  {calculation.tags.length > 3 && (
-                    <span className="calculation-tag-more">+{calculation.tags.length - 3}</span>
-                  )}
                 </div>
-              )}
-
-              <div className="calculation-meta">
-                <div className="meta-item">
-                  <Calendar size={14} />
-                  <span>{calculation.createdAt.toDate().toLocaleDateString()}</span>
+                <div className="calculation-metadata">
+                  <span className="metadata-item">
+                    <Calendar size={14} />
+                    {getTimeAgo(calculation.createdAt.toDate())}
+                  </span>
+                  <span className="metadata-item">
+                    <Eye size={14} />
+                    {calculation.views || 0} visualizações
+                  </span>
                 </div>
-                <div className="meta-item">
-                  <Clock size={14} />
-                  <span>{getTimeAgo(calculation.updatedAt.toDate())}</span>
-                </div>
-                {/* TODO: Uncomment this when view tracking is implemented
-                <div className="meta-item">
-                  <Eye size={14} />
-                  <span>{calculation.views || 0} visualizações</span>
-                </div>
-                */}
               </div>
-            </div>
-
-            <div className="calculation-footer">
-              <div className="calculation-actions">
-
-                <Tooltip content="Compartilhar">
-                  <button
-                    className="action-button share-button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      // Implementação de compartilhamento
-                      if (navigator.share) {
-                        navigator.share({
-                          title: calculation.name || calculation.nome,
-                          text: calculation.description || calculation.descricao,
-                          url: window.location.href,
-                        })
-                      } else {
-                        alert("Compartilhamento não suportado neste navegador")
-                      }
-                    }}
-                    aria-label="Compartilhar"
-                  >
-                    <Share2 size={16} />
-                  </button>
-                </Tooltip>
-              </div>
-
-              <button
-                className="details-button"
-                onClick={() => {
-                  setSelectedCalculation(calculation)
-                  setIsModalOpen(true)
-                }}
-                aria-label="Abrir cálculo"
+              <div
+                className="calculation-actions"
+                onClick={(e) => e.stopPropagation()} // Impede que o clique nas ações abra o modal do cálculo
               >
-                <span>Abrir cálculo</span>
-                <ArrowRight size={16} />
-              </button>
+                <CalculationActions
+                  calculation={calculation}
+                  onEdit={onEditCalculation}
+                  onDelete={handleDeleteClick}
+                  isAdmin={isAdmin}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {/* Modal de Cálculo */}
-      {selectedCalculation && (
+      {/* Renderização do CalculationModal fora do fluxo principal com createPortal
+          Garantindo que ele seja um filho direto do body ou de um elemento portal */}
+      {isModalOpen && selectedCalculation && (
         <CalculationModal
           calculation={selectedCalculation}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isModalOpen} // Passa o estado diretamente
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedCalculation(null);
+          }}
         />
       )}
 
-      {/* Modal de Exclusão Global */}
+      {/* Modal de confirmação de exclusão */}
       {showDeleteModal && calculationToDelete && (
-        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <div
+          className="delete-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+        >
           <div className="delete-modal">
             {deleteSuccess ? (
               <div className="delete-modal-success">
@@ -541,12 +536,16 @@ const CalculationList = ({
                 </div>
                 <div className="delete-modal-content">
                   <p>
-                    Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
+                    Tem certeza que deseja excluir o cálculo{" "}
+                    <strong>
+                      "{calculationToDelete.name || calculationToDelete.nome}"
+                    </strong>
+                    ?
                   </p>
                   <p className="delete-modal-warning">
                     Esta ação não pode ser desfeita.
                   </p>
-                  
+
                   {deleteError && (
                     <div className="delete-modal-error">
                       <AlertCircle size={16} />
@@ -555,16 +554,16 @@ const CalculationList = ({
                   )}
                 </div>
                 <div className="delete-modal-actions">
-                  <button 
-                    className="delete-modal-cancel" 
+                  <button
+                    className="delete-modal-cancel"
                     onClick={handleCancelDelete}
                     disabled={isDeleting}
                     aria-label="Cancelar exclusão"
                   >
                     Cancelar
                   </button>
-                  <button 
-                    className="delete-modal-confirm" 
+                  <button
+                    className="delete-modal-confirm"
                     onClick={handleConfirmDelete}
                     disabled={isDeleting}
                     aria-label="Confirmar exclusão"
@@ -584,28 +583,8 @@ const CalculationList = ({
           </div>
         </div>
       )}
-    </div>
-  )
-}
-// Adicionar função para buscar nomes das categorias
-const resolveCategoryNames = async (calculations) => {
-  const categoryIds = [...new Set(
-    calculations.flatMap(calc => calc.categories || [])
-  )]
-  
-  const categoryPromises = categoryIds.map(async (id) => {
-    const categoryDoc = await getDoc(doc(db, "categories", id))
-    return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
-  })
-  
-  const categoryMap = await Promise.all(categoryPromises)
-  const categoryLookup = Object.fromEntries(
-    categoryMap.map(cat => [cat.id, cat.name])
-  )
-  
-  return calculations.map(calc => ({
-    ...calc,
-    categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
-  }))
-}
+    </>
+  );
+};
+
 export default memo(CalculationList);

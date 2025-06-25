@@ -58,5 +58,7 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && 
         (request.auth.uid == resource.data.userId || isAdmin());
     }
+
+
   }
 }

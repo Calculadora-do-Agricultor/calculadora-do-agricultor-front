@@ -4,25 +4,25 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import {
   getDocs,
   collection,
-  getDoc,
-  doc,
-  query,
-  where,
+  // getDoc,
+  // doc,
+  // query,
+  // where,
 } from "firebase/firestore";
 import { AuthContext } from "../../context/AuthContext";
 import {
   PlusCircle,
   X,
   ChevronRight,
-  Filter,
+  // Filter,
   ArrowUpRight,
-  Sparkles,
-  Info,
+  // Sparkles,
+  // Info,
   CalculatorIcon,
   BookOpen,
   Users,
-  ChevronDown,
-  Loader2,
+  // ChevronDown,
+  // Loader2,
   Tags,
   FileSpreadsheet,
 } from "lucide-react";
@@ -31,6 +31,8 @@ import {
   CalculationList,
   Categories,
 } from "@/components";
+import CalculationModal from "@/components/CalculationModal";
+
 import CreateCategory from "@/components/CreateCategory";
 import EditCalculation from "@/components/EditCalculation";
 import logoClara from "@/assets/logoClara.svg";
@@ -46,27 +48,39 @@ export default function Calculator() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid ou list
-  const [showFilters, setShowFilters] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  // const [showFilters, setShowFilters] = useState(false); // Não usado no código atual
+  // const [showMobileMenu, setShowMobileMenu] = useState(false); // Não usado no código atual
 
   const [userCount, setUserCount] = useState(0);
   const [showUserCount, setShowUserCount] = useState(false);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation(); // Não usado no código atual
 
   const [showEditCalculation, setShowEditCalculation] = useState(false);
   const [calculationToEdit, setCalculationToEdit] = useState(null);
 
+  // ESTADOS NECESSÁRIOS PARA O MODAL DE CÁLCULO
+  const [selectedCalculation, setSelectedCalculation] = useState(null);
+  const [isCalculationModalOpen, setIsCalculationModalOpen] = useState(false);
+
   const [currentSortOption, setCurrentSortOption] = useState("name_asc");
   const [selectedComplexities, setSelectedComplexities] = useState([]);
   const [showCategoryDescription, setShowCategoryDescription] = useState(false);
-  const [calculos, setCalculos] = useState([]);
+  const [calculos, setCalculos] = useState([]); // Este estado armazena todos os cálculos
+
+  // --- FUNÇÕES E CALLBACKS DECLARADAS AQUI (INÍCIO) ---
+  // FUNÇÃO ADICIONADA: handleCalculationSelect para abrir o modal de cálculo
+  // Esta função precisa ser declarada antes de ser usada no JSX.
+  const handleCalculationSelect = useCallback((calculation) => {
+    setSelectedCalculation(calculation);
+    setIsCalculationModalOpen(true);
+  }, []);
 
   const fetchCategorias = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Buscar todas as categorias e todos os cálculos em paralelo
       const [categoriasSnapshot, calculosSnapshot] = await Promise.all([
         getDocs(collection(db, "categories")),
@@ -80,11 +94,14 @@ export default function Calculator() {
         categoriasMap.set(doc.id, categoria);
       });
 
-      // Agrupar cálculos por categoria
+      // Agrupar cálculos por categoria e também armazenar todos os cálculos
+      const allCalculations = [];
       calculosSnapshot.docs.forEach(doc => {
         const calculo = { id: doc.id, ...doc.data() };
+        allCalculations.push(calculo); // Adiciona ao array de todos os cálculos
+
         const categories = calculo.categories || [];
-        
+
         categories.forEach(categoryId => {
           const categoria = categoriasMap.get(categoryId);
           if (categoria) {
@@ -95,14 +112,33 @@ export default function Calculator() {
 
       const categoriasComCalculos = Array.from(categoriasMap.values());
       setCategorias(categoriasComCalculos);
-
+      setCalculos(allCalculations); // Define o estado com todos os cálculos
 
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
+      setCategorias([]); // Em caso de erro, garante que categorias seja um array vazio
+      setCalculos([]); // Em caso de erro, garante que cálculos seja um array vazio
     } finally {
       setLoading(false);
     }
-  }, [categoriaSelecionada]);
+  }, []); // Dependências vazias, pois a função não depende de estados mutáveis do Calculator para sua lógica central.
+
+  const fetchUserCount = useCallback(async () => {
+    try {
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      setUserCount(usersSnapshot.size);
+    } catch (error) {
+      console.error("Erro ao buscar contagem de usuários:", error);
+      setUserCount(0);
+    }
+  }, []);
+
+  // Handle edit calculation
+  const handleEditCalculation = (calculation) => {
+    setCalculationToEdit(calculation);
+    setShowEditCalculation(true);
+  };
+  // --- FUNÇÕES E CALLBACKS DECLARADAS AQUI (FIM) ---
 
   // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
@@ -111,13 +147,13 @@ export default function Calculator() {
     if (isAdmin) {
       fetchUserCount();
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchUserCount]); // fetchUserCount é uma dependência do useCallback
 
   useEffect(() => {
     if (user) {
       fetchCategorias();
     }
-  }, [user, fetchCategorias]);
+  }, [user, fetchCategorias]); // fetchCategorias é uma dependência do useCallback
 
   // Limpar categoria selecionada ao montar o componente
   useEffect(() => {
@@ -150,12 +186,6 @@ export default function Calculator() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Handle edit calculation
-  const handleEditCalculation = (calculation) => {
-    setCalculationToEdit(calculation);
-    setShowEditCalculation(true);
-  };
-
   // Total de cálculos em todas as categorias (memoizado)
   const totalCalculos = useMemo(() => {
     return categorias.reduce(
@@ -170,16 +200,6 @@ export default function Calculator() {
       (cat) => cat.name === categoriaSelecionada,
     );
   }, [categorias, categoriaSelecionada]);
-
-  const fetchUserCount = useCallback(async () => {
-    try {
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      setUserCount(usersSnapshot.size);
-    } catch (error) {
-      console.error("Erro ao buscar contagem de usuários:", error);
-      setUserCount(0);
-    }
-  }, []);
 
   return (
     <div className="calculator-page">
@@ -234,14 +254,29 @@ export default function Calculator() {
           <div className="mobile-categories-header">
             <h3>Categorias</h3>
           </div>
+          {/* O comentário // ... estava causando erro de sintaxe JSX aqui */}
           <div className="mobile-categories-content">
             <Categories
               categories={categorias}
+              calculations={calculos}
               onSelect={setCategoriaSelecionada}
               selectedCategory={categoriaSelecionada}
               onCategoryUpdated={fetchCategorias}
+              onCalculationSelect={handleCalculationSelect}
               idPrefix="mobile-"
             />
+
+            {/* Modal de Cálculo */}
+            {selectedCalculation && (
+              <CalculationModal
+                isOpen={isCalculationModalOpen}
+                onClose={() => {
+                  setIsCalculationModalOpen(false);
+                  setSelectedCalculation(null);
+                }}
+                calculation={selectedCalculation}
+              />
+            )}
           </div>
         </div>
 
@@ -264,11 +299,13 @@ export default function Calculator() {
                   </div>
                   <Categories
                     categories={categorias}
+                    calculations={calculos}
                     onSelect={(category) => {
                       setCategoriaSelecionada(category);
                     }}
                     selectedCategory={categoriaSelecionada}
                     onCategoryUpdated={fetchCategorias}
+                    onCalculationSelect={handleCalculationSelect}
                     idPrefix="desktop-"
                   />
                 </div>
@@ -360,7 +397,7 @@ export default function Calculator() {
                 )}
 
                 {/* Breadcrumbs */}
-                
+
                 <div className="breadcrumbs">
                   <span
                     className="breadcrumb-link"
@@ -436,6 +473,7 @@ export default function Calculator() {
                   sortOption={currentSortOption}
                   complexityFilters={selectedComplexities}
                   onEditCalculation={handleEditCalculation}
+                  onCalculationSelected={handleCalculationSelect}
                   onCalculationDeleted={fetchCategorias}
                 />
               </>
@@ -443,7 +481,7 @@ export default function Calculator() {
           </div>
         </div>
 
-        {/* Seção de recursos */}
+        {/* Seção de recursos (comentada) */}
         {/* <div className="resources-section">
           <div className="resources-content">
             <h2>Recursos Adicionais</h2>

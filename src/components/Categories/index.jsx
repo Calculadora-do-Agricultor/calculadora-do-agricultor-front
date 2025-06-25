@@ -5,10 +5,11 @@ import { Search, Filter, Loader2, AlertTriangle, X } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
+
 import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
-
-const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
+export { default as CalculationModal } from "../CalculationModal";
+const Categories = ({ categories, calculations, onSelect, selectedCategory, onCategoryUpdated, onCalculationSelect, idPrefix = "" }) => {
   // Add this style for hiding scrollbar in category names
   const scrollbarHideStyle = {
     scrollbarWidth: "none",
@@ -20,7 +21,9 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
+  const [filteredCalculations, setFilteredCalculations] = useState([])
   const [filterOption, setFilterOption] = useState("all")
+  const [searchType, setSearchType] = useState("all") // all, categories, calculations
   const { isAdmin, user } = useContext(AuthContext)
 
   // Estados para edição
@@ -28,26 +31,53 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
-    if (!categories) return
+    if (!categories && !calculations) return
 
-    let result = [...categories]
+    const searchTermLower = searchTerm.toLowerCase().trim()
 
-    // Aplicar filtro por quantidade de cálculos
-    if (filterOption === "most") {
-      result = result.sort((a, b) => (b.calculos?.length || 0) - (a.calculos?.length || 0))
-    } else if (filterOption === "least") {
-      result = result.sort((a, b) => (a.calculos?.length || 0) - (b.calculos?.length || 0))
-    } else if (filterOption === "alphabetical") {
-      result = result.sort((a, b) => a.name.localeCompare(b.name))
+    // Filtrar categorias
+    if (categories && (searchType === "all" || searchType === "categories")) {
+      let result = [...categories]
+
+      // Aplicar filtro por quantidade de cálculos
+      if (filterOption === "most") {
+        result = result.sort((a, b) => (b.calculos?.length || 0) - (a.calculos?.length || 0))
+      } else if (filterOption === "least") {
+        result = result.sort((a, b) => (a.calculos?.length || 0) - (b.calculos?.length || 0))
+      } else if (filterOption === "alphabetical") {
+        result = result.sort((a, b) => a.name.localeCompare(b.name))
+      }
+
+      // Aplicar busca por texto
+      if (searchTermLower !== "") {
+        result = result.filter((category) => category.name.toLowerCase().includes(searchTermLower))
+      }
+
+      setFilteredCategories(result)
     }
 
-    // Aplicar busca por texto
-    if (searchTerm.trim() !== "") {
-      result = result.filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    // Filtrar cálculos
+    if (calculations && (searchType === "all" || searchType === "calculations")) {
+      let result = [...calculations]
+
+      if (searchTermLower !== "") {
+        result = result.filter((calc) => {
+          const name = (calc.name || calc.nome || "").toLowerCase()
+          const description = (calc.description || calc.descricao || "").toLowerCase()
+          const tags = calc.tags || []
+
+          return (
+            name.includes(searchTermLower) ||
+            description.includes(searchTermLower) ||
+            tags.some((tag) => tag.toLowerCase().includes(searchTermLower))
+          )
+        })
+      }
+
+      setFilteredCalculations(result)
     }
 
-    setFilteredCategories(result)
-  }, [categories, searchTerm, filterOption])
+  }, [categories, calculations, searchTerm, filterOption, searchType])
 
   // Função para abrir o modal de edição
   const handleEditCategory = (category) => {
@@ -71,8 +101,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     }
   }
 
-
-
   // Verificar se o usuário pode editar a categoria
   const canEditCategory = (category) => {
     return isAdmin || (user && category.createdBy === user.uid)
@@ -90,6 +118,28 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     <div className="flex flex-col w-full h-full bg-white rounded-b-xl p-4 sm:p-5 lg:p-6">
       {/* Search and Filter Section */}
       <div className="mb-4 space-y-3 sm:space-y-4">
+        {/* Search Type Selector */}
+        <div className="flex gap-2 mb-2">
+          <button
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${searchType === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            onClick={() => setSearchType('all')}
+          >
+            Todos
+          </button>
+          <button
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${searchType === 'categories' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            onClick={() => setSearchType('categories')}
+          >
+            Categorias
+          </button>
+          <button
+            className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${searchType === 'calculations' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            onClick={() => setSearchType('calculations')}
+          >
+            Cálculos
+          </button>
+        </div>
+
         {/* Search Input */}
         <div className="relative">
           <Search
@@ -120,7 +170,8 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <Filter size={14} />
-            
+            {/* Added text for filter label */}
+            Filtrar por: 
           </div>
           <select
             className="flex-1 sm:flex-none sm:min-w-[140px] px-3 py-2 border border-gray-300 rounded-md text-sm font-medium bg-white text-gray-900 cursor-pointer transition-all duration-200 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
@@ -135,65 +186,97 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       </div>
 
-      {/* Categories List */}
+
+
+      {/* Results List */}
       <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
         <div className="space-y-2 pr-2">
-          {filteredCategories.length > 0 ? (
-            filteredCategories.map((category, index) => (
-              <div key={index} className="relative">
-                <div
-                  className={`flex items-center w-full p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-gray-300 ${
-                    selectedCategory === category.name
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-200 hover:bg-gray-50"
-                  }`}
-                  onClick={() => onSelect(category.name)}
-                >
-                  {/* Category Info */}
-                  <div className="flex-1 min-w-0 flex items-center justify-between ">
-                     <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
-                       <span 
-                         className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${ 
-                           selectedCategory === category.name
-                             ? "text-blue-700"
-                             : "text-gray-800 group-hover:text-blue-600"
-                         }`}
-                         style={{
-                           scrollbarWidth: "none",
-                           msOverflowStyle: "none",
-                         }}
-                       >
-                         {category.name}
-                       </span>
-                     </div>
- 
-                     <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
-                       {/* Count Badge */}
-                       <span
-                         className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${ 
-                           selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                         }`}
-                       >
-                         {category.calculos?.length || 0}
-                       </span>
-
-                       {/* Actions */}
-                       {canEditCategory(category) && (
-                         <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                           <CategoryActions 
-                            category={category} 
-                            onEdit={() => handleEditCategory(category)} 
-                           />
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                </div>
-              </div>
-            ))
-          ) : (
+          {/* Mostrar mensagem quando não há resultados */}
+          {filteredCategories.length === 0 && filteredCalculations.length === 0 && searchTerm && (
             <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg">
-              <p>Nenhuma categoria encontrada.</p>
+              <p>Nenhum resultado encontrado para "{searchTerm}"</p>
+            </div>
+          )}
+
+          {/* Lista de Categorias */}
+          {(searchType === "all" || searchType === "categories") && filteredCategories.length > 0 && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Categorias</h3>
+              {filteredCategories.map((category, index) => (
+                <div key={index} className="relative">
+                  <div
+                    className={`flex items-center w-full p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-gray-300 ${
+                      selectedCategory === category.name
+                        ? "bg-blue-50 border-blue-500"
+                        : "bg-white border-gray-200 hover:bg-gray-50"
+                    }`}
+                    onClick={() => onSelect(category.name)}
+                  >
+                    {/* Category Info */}
+                    <div className="flex-1 min-w-0 flex items-center justify-between ">
+                      <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
+                        <span
+                          className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${
+                            selectedCategory === category.name
+                              ? "text-blue-700"
+                              : "text-gray-800 group-hover:text-blue-600"
+                          }`}
+                          style={{
+                            scrollbarWidth: "none",
+                            msOverflowStyle: "none",
+                          }}
+                        >
+                          {category.name}
+                        </span>
+                      </div>
+
+                      <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
+                        {/* Count Badge */}
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${
+                            selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {category.calculos?.length || 0}
+                        </span>
+
+                        {/* Actions */}
+                        {canEditCategory(category) && (
+                          <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <CategoryActions
+                              category={category}
+                              onEdit={() => handleEditCategory(category)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Lista de Cálculos */}
+          {(searchType === "all" || searchType === "calculations") && filteredCalculations.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Cálculos</h3>
+              {filteredCalculations.map((calculation, index) => (
+                <div
+                  key={index}
+                  className="flex items-center w-full p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-gray-300 bg-white border-gray-200 hover:bg-gray-50 mb-2"
+                  onClick={() => onCalculationSelect(calculation)}
+                >
+                  <div className="flex-1 min-w-0">
+                    <span className="block font-medium text-sm sm:text-base text-gray-800">
+                      {calculation.name || calculation.nome}
+                    </span>
+                    {calculation.description && (
+                      <p className="text-sm text-gray-500 mt-1">{calculation.description}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -207,8 +290,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           onCancel={handleCloseEditModal}
         />
       )}
-
-
     </div>
   )
 }

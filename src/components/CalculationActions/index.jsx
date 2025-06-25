@@ -58,7 +58,11 @@ const CalculationActions = ({ calculation, onEdit, onDelete }) => {
     <div className="calculation-actions" ref={menuRef}>
       <button
         className="actions-toggle"
-        onClick={() => setShowMenu(!showMenu)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowMenu(!showMenu);
+        }}
         aria-label="Opções do cálculo"
       >
         <MoreVertical size={16} />
@@ -68,7 +72,11 @@ const CalculationActions = ({ calculation, onEdit, onDelete }) => {
         <div className="actions-menu">
           {canEdit ? (
             <>
-              <button className="action-item" onClick={handleEdit}>
+              <button className="action-item" onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleEdit();
+              }}>
                 <Edit size={16} />
                 <span>Editar</span>
               </button>
@@ -78,7 +86,11 @@ const CalculationActions = ({ calculation, onEdit, onDelete }) => {
               </button> */}
               <button
                 className="action-item delete"
-                onClick={handleDeleteClick}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDeleteClick();
+                }}
               >
                 <Trash2 size={16} />
                 <span>Excluir</span>
