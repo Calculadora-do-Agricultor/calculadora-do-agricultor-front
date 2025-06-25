@@ -8,7 +8,7 @@ import {
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
-const LogCard = ({ log, formatDate, openInMaps }) => {
+const LogCard = ({ log, formatDate, onLocationClick }) => {
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-[#00418F]/20 hover:border-[#00418F]/40 transition-colors duration-150">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -60,7 +60,7 @@ const LogCard = ({ log, formatDate, openInMaps }) => {
             <p className="text-sm text-[#00418F] font-medium mb-1">Localização</p>
             {log.location && log.location.latitude && log.location.longitude ? (
               <button
-                onClick={() => openInMaps(log.location.latitude, log.location.longitude)}
+                onClick={() => onLocationClick(log.location.latitude, log.location.longitude)}
                 className="text-sm text-[#00418F] hover:text-[#00418F]/80 transition-colors duration-300 flex items-center px-2 py-1 rounded-md hover:bg-[#00418F]/10"
                 title="Abrir localização no Google Maps"
               >
