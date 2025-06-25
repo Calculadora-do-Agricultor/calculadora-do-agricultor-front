@@ -76,12 +76,7 @@ const Login = () => {
       );
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        setError("Verifique seu e-mail antes de continuar.");
-        toastError("Verifique seu e-mail antes de continuar.");
-        setIsLoading(false);
-        return;
-      }
+      // Removida verificação de e-mail para melhorar experiência do usuário
 
       // Verificar se a conta está ativa antes de prosseguir
       const userDocRef = doc(db, "users", user.uid);
@@ -122,7 +117,7 @@ const Login = () => {
         localStorage.removeItem("rememberedEmail");
       }
 
-      success("Login realizado com sucesso!");
+      success("Bem-vindo de volta! Login realizado com sucesso.");
       navigate("/Calculator");
     } catch (error) {
       // Log do erro para monitoramento de segurança
@@ -139,13 +134,13 @@ const Login = () => {
       
       // Mensagens de erro mais específicas para o usuário
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        toastError("Email ou senha incorretos. Tente novamente.");
+        // Notificação de email ou senha incorretos removida conforme solicitado
       } else if (error.code === 'auth/too-many-requests') {
-        toastError("Muitas tentativas de login. Tente novamente mais tarde.");
+        // Notificação de muitas tentativas removida conforme solicitado
       } else if (error.code === 'auth/user-disabled') {
-        toastError("Sua conta foi desativada.");
+        // Mantendo apenas o registro do erro sem exibir notificação
       } else {
-        toastError("Erro ao fazer login. Tente novamente.");
+        // Notificação genérica de erro de login removida conforme solicitado
       }
       
       // Log adicional para erros críticos de segurança
