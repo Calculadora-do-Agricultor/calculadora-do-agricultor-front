@@ -42,6 +42,32 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
 
+  // Limites de caracteres
+  const NAME_MAX_LENGTH = 50
+  const DESCRIPTION_MAX_LENGTH = 200
+  const TAG_MAX_LENGTH = 20
+  
+  // Função para validar o tamanho do nome
+  const handleNameChange = (value) => {
+    if (value.length <= NAME_MAX_LENGTH) {
+      setCalculationName(value)
+    }
+  }
+
+  // Função para validar o tamanho da descrição
+  const handleDescriptionChange = (value) => {
+    if (value.length <= DESCRIPTION_MAX_LENGTH) {
+      setCalculationDescription(value)
+    }
+  }
+
+  // Função para validar o tamanho da tag
+  const handleTagChange = (value) => {
+    if (value.length <= TAG_MAX_LENGTH) {
+      setCurrentTag(value)
+    }
+  }
+
   // Dados dos parâmetros
   const [parameters, setParameters] = useState([
     { 
@@ -818,7 +844,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     type="text"
                     placeholder="Ex: Cálculo de Adubação, Conversão de Unidades..."
                     value={calculationName}
-                    onChange={(e) => setCalculationName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
+              maxLength={NAME_MAX_LENGTH}
                     className={validationErrors.basic?.name ? "input-error" : ""}
                   />
                   {validationErrors.basic?.name && <div className="error-text">{validationErrors.basic.name}</div>}
@@ -832,7 +859,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     id="calculationDescription"
                     placeholder="Descreva o propósito deste cálculo e como ele pode ser útil..."
                     value={calculationDescription}
-                    onChange={(e) => setCalculationDescription(e.target.value)}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+              maxLength={DESCRIPTION_MAX_LENGTH}
                     className={validationErrors.basic?.description ? "input-error" : ""}
                     rows={4}
                   />
@@ -881,7 +909,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                         type="text"
                         placeholder="Adicionar tag..."
                         value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
+                        onChange={(e) => handleTagChange(e.target.value)}
+                        maxLength={TAG_MAX_LENGTH}
                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
                       />
                       <button type="button" onClick={addTag} className="tag-add-button" disabled={!currentTag.trim()}>
