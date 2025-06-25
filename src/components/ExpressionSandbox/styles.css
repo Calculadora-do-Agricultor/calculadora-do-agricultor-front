@@ -1,0 +1,235 @@
+.expression-sandbox {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.sandbox-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sandbox-header h3 {
+  margin: 0;
+  color: #343a40;
+  font-size: 1.2rem;
+}
+
+.version-info {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.expression-input-container {
+  margin-bottom: 16px;
+}
+
+.expression-input-container label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.expression-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.expression-input:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Estilos para o status de validação */
+.validation-status {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.validation-status.valid {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.validation-status.invalid {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.valid-message {
+  display: flex;
+  align-items: center;
+  color: #28a745;
+}
+
+.invalid-message {
+  display: flex;
+  align-items: center;
+  color: #dc3545;
+}
+
+.validation-status i {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Estilos para os valores de exemplo */
+.example-values {
+  margin-bottom: 16px;
+}
+
+.example-values h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.parameters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.parameter-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.parameter-input label {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.parameter-input input {
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Estilos para o resultado do teste */
+.test-result {
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f1f3f5;
+  border-radius: 6px;
+}
+
+.test-result h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.result-value {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.result-value .success {
+  color: #28a745;
+}
+
+.result-value .error {
+  color: #dc3545;
+}
+
+/* Estilos para opções avançadas */
+.advanced-options {
+  margin-bottom: 16px;
+}
+
+.toggle-advanced-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-advanced-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Estilos para funções disponíveis */
+.available-functions {
+  margin-bottom: 16px;
+}
+
+.available-functions h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.functions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.function-item {
+  padding: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.function-name {
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #495057;
+}
+
+.function-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Estilos para informações do sandbox */
+.sandbox-info {
+  font-size: 0.9rem;
+  color: #6c757d;
+  padding: 12px;
+  background-color: #e9ecef;
+  border-radius: 6px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .sandbox-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .version-info {
+    margin-top: 8px;
+  }
+  
+  .parameters-grid,
+  .functions-grid {
+    grid-template-columns: 1fr;
+  }
+}

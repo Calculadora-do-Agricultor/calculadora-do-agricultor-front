@@ -105,6 +105,7 @@ const NavLinks = ({ user }) => {
                       <span>Gerenciar Usuários</span>
                     </div>
                   </Link>
+
                 </div>
               )}
             </div>

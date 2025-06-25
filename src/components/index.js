@@ -5,6 +5,10 @@ export { default as Footer } from './Footer';
 export { default as PrivateRoute } from './PrivateRoute';
 export { default as ProtectedRoute } from './ProtectedRoute';
 
+// Componentes de expressões matemáticas
+export { default as ExpressionValidator } from './ExpressionValidator';
+export { default as ExpressionSandbox } from './ExpressionSandbox';
+
 // Componentes específicos da calculadora - lazy load quando necessário
 export { default as CalculationList } from './CalculationList';
 export { default as Categories } from './Categories';

@@ -3,6 +3,9 @@
  * Utiliza Function constructor com escopo limitado para maior segurança
  */
 
+// Importação do math.js
+import * as mathjs from 'mathjs';
+
 // Lista de funções matemáticas permitidas
 const allowedMathFunctions = {
   Math: {
@@ -22,6 +25,27 @@ const allowedMathFunctions = {
     max: Math.max,
     min: Math.min
   }
+}
+
+// Funções matemáticas seguras disponíveis para uso
+const safeMathFunctions = {
+  // Funções matemáticas básicas
+  abs: mathjs.abs,
+  add: mathjs.add,
+  subtract: mathjs.subtract,
+  multiply: mathjs.multiply,
+  divide: mathjs.divide,
+  pow: mathjs.pow,
+  sqrt: mathjs.sqrt,
+  // Funções trigonométricas
+  sin: mathjs.sin,
+  cos: mathjs.cos,
+  tan: mathjs.tan,
+  // Funções de análise
+  derivative: mathjs.derivative,
+  simplify: mathjs.simplify,
+  // Função de parsing para validação de sintaxe
+  parse: mathjs.parse
 }
 
 /**
@@ -47,7 +71,7 @@ export const ExpressionErrorType = {
  */
 export const evaluateExpression = (expression, variables = {}, throwOnError = false) => {
   try {
-        // Valida a expressão usando a função de validação completaAdd commentMore actions
+    // Valida a expressão usando a função de validação completa
     const validation = validateExpression(expression, variables)
     if (!validation.isValid) {
       throw new Error(validation.errorMessage || 'Expressão inválida')
@@ -65,12 +89,59 @@ export const evaluateExpression = (expression, variables = {}, throwOnError = fa
     if (processedExpression.includes('@[')) {
       throw new Error('Variáveis não definidas encontradas na expressão')
     }
-
-    // Cria uma função com escopo limitado
-    const func = new Function('Math', `"use strict"; return (${processedExpression})`)
     
-    // Executa a função com apenas as funções Math permitidas
-    const result = func(allowedMathFunctions.Math)
+    // Verifica se há funções matemáticas sem argumentos
+    // Separa pow das outras funções, pois pow precisa de dois argumentos
+    const mathFunctions = ['abs', 'sqrt', 'round', 'floor', 'ceil', 'sin', 'cos', 'tan', 'log', 'exp', 'max', 'min']
+    const powFunction = 'pow'
+    for (const func of mathFunctions) {
+      // Verifica tanto para Math.func() quanto para func()
+      // Usa expressões regulares mais precisas para detectar funções sem argumentos
+      // Verifica se a função é chamada sem argumentos, mas permite espaços
+      const mathPattern = new RegExp('Math\\.' + func + '\\(\\s*\\)');
+      const funcPattern = new RegExp('\\b' + func + '\\(\\s*\\)');
+      
+      if (mathPattern.test(processedExpression) || funcPattern.test(processedExpression)) {
+        throw new Error(`A função ${func}() precisa de pelo menos um argumento`)
+      }
+    }
+
+    // Verifica especificamente a função pow que precisa de dois argumentos
+    // Verifica se pow ou Math.pow é chamada sem o segundo argumento
+    if ((processedExpression.includes('pow(') && !processedExpression.match(/pow\([^,]+,[^)]+\)/)) ||
+        (processedExpression.includes('Math.pow(') && !processedExpression.match(/Math\.pow\([^,]+,[^)]+\)/))) {
+      throw new Error(`A função pow() precisa de pelo menos dois argumentos (base, expoente)`)
+    }
+    
+    // Normaliza funções matemáticas
+    processedExpression = normalizeMathFunctions(processedExpression)
+    
+    // Substitui funções Math.* pelas equivalentes do mathjs
+    processedExpression = processedExpression
+      .replace(/Math\.abs\(/g, 'abs(')
+      .replace(/Math\.pow\(/g, 'pow(')
+      .replace(/Math\.sqrt\(/g, 'sqrt(')
+      .replace(/Math\.round\(/g, 'round(')
+      .replace(/Math\.floor\(/g, 'floor(')
+      .replace(/Math\.ceil\(/g, 'ceil(')
+      .replace(/Math\.sin\(/g, 'sin(')
+      .replace(/Math\.cos\(/g, 'cos(')
+      .replace(/Math\.tan\(/g, 'tan(')
+      .replace(/Math\.log\(/g, 'log(')
+      .replace(/Math\.exp\(/g, 'exp(')
+      .replace(/Math\.PI/g, 'pi')
+      .replace(/Math\.E/g, 'e')
+      .replace(/Math\.max\(/g, 'max(')
+      .replace(/Math\.min\(/g, 'min(')
+    
+    // Avalia a expressão usando o mathjs diretamente
+    // Isso é mais seguro do que usar o sandbox personalizado para avaliação
+    // Verifica se há chamadas para pow() sem argumentos suficientes
+    if (processedExpression.includes('pow(') && !processedExpression.match(/pow\([^,]+,[^)]+\)/)) {
+      throw new Error('A função pow() precisa de pelo menos dois argumentos (base, expoente)')
+    }
+    
+    const result = mathjs.evaluate(processedExpression)
     
     // Verifica se o resultado é um número válido
     if (typeof result !== 'number' || !isFinite(result)) {
@@ -140,7 +211,44 @@ export const validateExpression = (expression, variables = {}) => {
     })
     return result
   }
+  
+  // Verifica se há funções matemáticas sem argumentos
+  // Separa pow das outras funções, pois pow precisa de dois argumentos
+  const mathFunctions = ['abs', 'sqrt', 'round', 'floor', 'ceil', 'sin', 'cos', 'tan', 'log', 'exp', 'max', 'min']
+  const powFunction = 'pow'
+  for (const func of mathFunctions) {
+    // Verifica tanto para Math.func() quanto para func()
+    // Usa expressões regulares mais precisas para detectar funções sem argumentos
+    // Verifica se a função é chamada sem argumentos, mas permite espaços
+    const mathPattern = new RegExp('Math\\.' + func + '\\(\\s*\\)');
+    const funcPattern = new RegExp('\\b' + func + '\\(\\s*\\)');
+    
+    if (mathPattern.test(expression) || funcPattern.test(expression)) {
+      result.isValid = false
+      result.errorType = ExpressionErrorType.SYNTAX_ERROR
+      result.errorMessage = `A função ${func}() precisa de pelo menos um argumento`
+      result.errors.push({
+        type: ExpressionErrorType.SYNTAX_ERROR,
+        message: `A função ${func}() precisa de pelo menos um argumento`
+      })
+      return result
+    }
+  }
 
+  // Verifica especificamente a função pow que precisa de dois argumentos
+  // Verifica se pow ou Math.pow é chamada sem o segundo argumento
+  if ((expression.includes('pow(') && !expression.match(/pow\([^,]+,[^)]+\)/)) ||
+      (expression.includes('Math.pow(') && !expression.match(/Math\.pow\([^,]+,[^)]+\)/))) {
+    result.isValid = false
+    result.errorType = ExpressionErrorType.SYNTAX_ERROR
+    result.errorMessage = `A função pow() precisa de pelo menos dois argumentos (base, expoente)`
+    result.errors.push({
+      type: ExpressionErrorType.SYNTAX_ERROR,
+      message: `A função pow() precisa de pelo menos dois argumentos (base, expoente)`
+    })
+    return result
+  }
+  
   // Verifica caracteres inválidos
   const safePattern = /^[0-9+\-*/().\ s@\[\]a-zA-Z_]+$/
   if (!safePattern.test(expression)) {
@@ -219,7 +327,7 @@ export const validateExpression = (expression, variables = {}) => {
     })
   }
 
-  // Verifica sintaxe da expressão
+  // Verifica sintaxe da expressão usando math.js
   if (result.isValid) {
     try {
       // Substitui as variáveis por valores de teste para verificar a sintaxe
@@ -228,9 +336,30 @@ export const validateExpression = (expression, variables = {}) => {
         const regex = new RegExp(`@\\[${varName}\\]`, 'g')
         testExpression = testExpression.replace(regex, '1') // Substitui por 1 para teste
       })
-
-      // Tenta criar uma função para verificar a sintaxe
-      new Function('Math', `"use strict"; return (${testExpression})`) // eslint-disable-line no-new-func
+      
+      // Normaliza funções matemáticas
+      testExpression = normalizeMathFunctions(testExpression)
+      
+      // Substitui funções Math.* pelas equivalentes do mathjs
+      testExpression = testExpression
+        .replace(/Math\.abs\(/g, 'abs(')
+        .replace(/Math\.pow\(/g, 'pow(')
+        .replace(/Math\.sqrt\(/g, 'sqrt(')
+        .replace(/Math\.round\(/g, 'round(')
+        .replace(/Math\.floor\(/g, 'floor(')
+        .replace(/Math\.ceil\(/g, 'ceil(')
+        .replace(/Math\.sin\(/g, 'sin(')
+        .replace(/Math\.cos\(/g, 'cos(')
+        .replace(/Math\.tan\(/g, 'tan(')
+        .replace(/Math\.log\(/g, 'log(')
+        .replace(/Math\.exp\(/g, 'exp(')
+        .replace(/Math\.PI/g, 'pi')
+        .replace(/Math\.E/g, 'e')
+        .replace(/Math\.max\(/g, 'max(')
+        .replace(/Math\.min\(/g, 'min(')
+      
+      // Tenta analisar a expressão com math.js para verificar a sintaxe
+      mathjs.parse(testExpression)
     } catch (error) {
       result.isValid = false
       result.errorType = ExpressionErrorType.SYNTAX_ERROR
@@ -244,13 +373,14 @@ export const validateExpression = (expression, variables = {}) => {
 
   return result
 }
-/**Add commentMore actions
+/**
  * Substitui funções matemáticas na expressão para garantir compatibilidade
  * @param {string} expression - A expressão original
  * @returns {string} - A expressão com funções matemáticas normalizadas
  */
 export const normalizeMathFunctions = (expression) => {
-  return expression
+  // Primeiro, mantém a compatibilidade com código existente que já usa Math.*
+  const normalized = expression
     .replace(/Math\.pow\(/g, 'Math.pow(')
     .replace(/Math\.sqrt\(/g, 'Math.sqrt(')
     .replace(/Math\.abs\(/g, 'Math.abs(')
@@ -266,6 +396,8 @@ export const normalizeMathFunctions = (expression) => {
     .replace(/Math\.E/g, 'Math.E')
     .replace(/Math\.max\(/g, 'Math.max(')
     .replace(/Math\.min\(/g, 'Math.min(')
+  
+  return normalized;
 }
 
 /**
@@ -290,7 +422,7 @@ export const testExpression = (expression, exampleValues = {}) => {
     result.error = validation.errorMessage
     return result
   }
-
+  
   // Se a validação passou, tenta avaliar a expressão
   try {
     const value = evaluateExpression(expression, exampleValues, true)
@@ -311,7 +443,7 @@ export const testExpression = (expression, exampleValues = {}) => {
 export const getExpressionSyntaxDocs = () => {
   return {
     title: 'Documentação de Sintaxe para Expressões Matemáticas',
-    description: 'Este guia explica a sintaxe suportada para criar expressões matemáticas válidas.',
+    description: 'Este guia explica a sintaxe suportada para criar expressões matemáticas válidas. Você pode usar tanto as funções do Math.js diretamente quanto as funções do objeto Math do JavaScript.',
     variableSyntax: {
       format: '@[NomeDaVariavel]',
       example: '@[Comprimento] * @[Largura]',
@@ -325,23 +457,23 @@ export const getExpressionSyntaxDocs = () => {
       { symbol: '()', description: 'Parênteses para controlar a ordem das operações', example: '(@[A] + @[B]) * @[C]' }
     ],
     mathFunctions: [
-      { name: 'Math.pow(x, y)', description: 'Potência: x elevado a y', example: 'Math.pow(@[Base], @[Expoente])' },
-      { name: 'Math.sqrt(x)', description: 'Raiz quadrada de x', example: 'Math.sqrt(@[Valor])' },
-      { name: 'Math.abs(x)', description: 'Valor absoluto de x', example: 'Math.abs(@[Valor])' },
-      { name: 'Math.round(x)', description: 'Arredonda x para o inteiro mais próximo', example: 'Math.round(@[Valor])' },
-      { name: 'Math.floor(x)', description: 'Arredonda x para baixo', example: 'Math.floor(@[Valor])' },
-      { name: 'Math.ceil(x)', description: 'Arredonda x para cima', example: 'Math.ceil(@[Valor])' },
-      { name: 'Math.sin(x)', description: 'Seno de x (em radianos)', example: 'Math.sin(@[Angulo])' },
-      { name: 'Math.cos(x)', description: 'Cosseno de x (em radianos)', example: 'Math.cos(@[Angulo])' },
-      { name: 'Math.tan(x)', description: 'Tangente de x (em radianos)', example: 'Math.tan(@[Angulo])' },
-      { name: 'Math.log(x)', description: 'Logaritmo natural de x', example: 'Math.log(@[Valor])' },
-      { name: 'Math.exp(x)', description: 'e elevado a x', example: 'Math.exp(@[Valor])' },
-      { name: 'Math.max(x, y, ...)', description: 'Retorna o maior valor', example: 'Math.max(@[A], @[B])' },
-      { name: 'Math.min(x, y, ...)', description: 'Retorna o menor valor', example: 'Math.min(@[A], @[B])' }
+      { name: 'abs(x) ou Math.abs(x)', description: 'Valor absoluto de x', example: 'abs(@[Valor]) ou Math.abs(@[Valor])' },
+      { name: 'pow(x, y) ou Math.pow(x, y)', description: 'Potência: x elevado a y', example: 'pow(@[Base], @[Expoente]) ou Math.pow(@[Base], @[Expoente])' },
+      { name: 'sqrt(x) ou Math.sqrt(x)', description: 'Raiz quadrada de x', example: 'sqrt(@[Valor]) ou Math.sqrt(@[Valor])' },
+      { name: 'round(x) ou Math.round(x)', description: 'Arredonda x para o inteiro mais próximo', example: 'round(@[Valor]) ou Math.round(@[Valor])' },
+      { name: 'floor(x) ou Math.floor(x)', description: 'Arredonda x para baixo', example: 'floor(@[Valor]) ou Math.floor(@[Valor])' },
+      { name: 'ceil(x) ou Math.ceil(x)', description: 'Arredonda x para cima', example: 'ceil(@[Valor]) ou Math.ceil(@[Valor])' },
+      { name: 'sin(x) ou Math.sin(x)', description: 'Seno de x (em radianos)', example: 'sin(@[Angulo]) ou Math.sin(@[Angulo])' },
+      { name: 'cos(x) ou Math.cos(x)', description: 'Cosseno de x (em radianos)', example: 'cos(@[Angulo]) ou Math.cos(@[Angulo])' },
+      { name: 'tan(x) ou Math.tan(x)', description: 'Tangente de x (em radianos)', example: 'tan(@[Angulo]) ou Math.tan(@[Angulo])' },
+      { name: 'log(x) ou Math.log(x)', description: 'Logaritmo natural de x', example: 'log(@[Valor]) ou Math.log(@[Valor])' },
+      { name: 'exp(x) ou Math.exp(x)', description: 'e elevado a x', example: 'exp(@[Valor]) ou Math.exp(@[Valor])' },
+      { name: 'max(x, y, ...) ou Math.max(x, y, ...)', description: 'Retorna o maior valor', example: 'max(@[A], @[B]) ou Math.max(@[A], @[B])' },
+      { name: 'min(x, y, ...) ou Math.min(x, y, ...)', description: 'Retorna o menor valor', example: 'min(@[A], @[B]) ou Math.min(@[A], @[B])' }
     ],
     constants: [
-      { name: 'Math.PI', description: 'Valor de π (pi)', example: '@[Raio] * Math.PI * 2' },
-      { name: 'Math.E', description: 'Valor de e (base do logaritmo natural)', example: 'Math.E * @[Valor]' }
+      { name: 'pi ou Math.PI', description: 'Valor de π (pi)', example: '@[Raio] * pi * 2 ou @[Raio] * Math.PI * 2' },
+      { name: 'e ou Math.E', description: 'Valor de e (base do logaritmo natural)', example: 'e * @[Valor] ou Math.E * @[Valor]' }
     ],
     examples: [
       { description: 'Cálculo de área', expression: '@[Comprimento] * @[Largura]' },
@@ -354,7 +486,8 @@ export const getExpressionSyntaxDocs = () => {
       'Não são permitidas estruturas de controle (if, for, while)',
       'Não são permitidas atribuições de variáveis',
       'Não são permitidas chamadas a métodos de objetos',
-      'Não são permitidas referências a objetos globais como window ou document'
+      'Não são permitidas referências a objetos globais como window ou document',
+      'Todas as funções matemáticas precisam de pelo menos um argumento (ex: sqrt() não é válido, use sqrt(x))'
     ]
   }
 }

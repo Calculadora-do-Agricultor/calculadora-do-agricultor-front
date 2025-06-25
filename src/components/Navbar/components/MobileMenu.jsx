@@ -138,6 +138,7 @@ const MobileMenu = ({ user, userName }) => {
                         <UsersIcon className="w-5 h-5 mr-2" />
                         Gerenciar Usuários
                       </Link>
+
                     </div>
                   )}
                 </div>
