@@ -52,6 +52,11 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       description: "", 
       required: true, 
       options: [],
+      min: "",
+      max: "",
+      step: "0.01",
+      mask: "", // Máscara opcional
+      tooltip: "Digite um valor numérico",
       ordem: 1
     },
   ])
@@ -220,6 +225,11 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       description: "", 
       required: true, 
       options: [],
+      min: "",
+      max: "",
+      step: "0.01",
+      mask: "", // Máscara opcional
+      tooltip: "Digite um valor numérico",
       ordem: parameters.length + 1
     }
     setParameters([...parameters, newParam])
@@ -237,7 +247,32 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
   const updateParameter = (index, field, value) => {
     const updatedParameters = [...parameters]
-    updatedParameters[index][field] = value
+    
+    if (field === 'type' && value === 'number') {
+      updatedParameters[index] = {
+        ...updatedParameters[index],
+        [field]: value,
+        min: '',
+        max: '',
+        step: '0.01',
+        mask: '', // Máscara opcional
+        tooltip: 'Digite um valor numérico'
+      }
+    } else if (field === 'min' || field === 'max' || field === 'step') {
+      // Validação para campos numéricos
+      const numValue = value === '' ? '' : Number(value)
+      if (!isNaN(numValue) || value === '') {
+        updatedParameters[index][field] = value
+      }
+    } else if (field === 'mask') {
+      // Validação para máscara (apenas # e . são permitidos)
+      if (/^[#.]*$/.test(value)) {
+        updatedParameters[index][field] = value
+      }
+    } else {
+      updatedParameters[index][field] = value
+    }
+    
     setParameters(updatedParameters)
   }
 
@@ -451,6 +486,29 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
           if (!errors.parameters[index]) errors.parameters[index] = {}
           errors.parameters[index].name = "O nome do parâmetro é obrigatório."
           isValid = false
+        }
+
+        if (param.type === "number") {
+          // Validação de min/max
+          if (param.min !== "" && param.max !== "" && Number(param.min) >= Number(param.max)) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].range = "O valor mínimo deve ser menor que o valor máximo."
+            isValid = false
+          }
+
+          // Validação do step
+          if (param.step !== "" && Number(param.step) <= 0) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].step = "O incremento deve ser maior que zero."
+            isValid = false
+          }
+
+          // Validação da máscara (opcional)
+          if (param.mask && param.mask.trim() !== '' && !/^[#.]+$/.test(param.mask)) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].mask = "A máscara deve conter apenas # e ."
+            isValid = false
+          }
         }
 
         if (param.type === "select" && (!param.options || param.options.length === 0)) {
@@ -883,45 +941,49 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                   </div>
 
                 <div className="parameter-form">
-                  <div className="form-row">
-                    <div className="form-group flex-1">
-                      <label htmlFor={`param-name-${index}`}>
-                        Nome <span className="required">*</span>
-                      </label>
-                      <input
-                        id={`param-name-${index}`}
-                        type="text"
-                        placeholder="Ex: Comprimento, Peso, Quantidade..."
-                        value={param.name}
-                        onChange={(e) => updateParameter(index, "name", e.target.value)}
-                        className={validationErrors.parameters[index]?.name ? "input-error" : ""}
-                      />
-                      {validationErrors.parameters[index]?.name && (
-                        <div className="error-text">{validationErrors.parameters[index].name}</div>
-                      )}
+                  <div className="form-rows-container">
+                    <div className="form-row">
+                      <div className="form-group name-field">
+                        <label htmlFor={`param-name-${index}`} className="name-label">
+                          Nome<span className="required">*</span>
+                        </label>
+                        <input
+                          id={`param-name-${index}`}
+                          type="text"
+                          placeholder="Ex: Comprimento, Peso, Quantidade..."
+                          value={param.name}
+                          onChange={(e) => updateParameter(index, "name", e.target.value)}
+                          className={validationErrors.parameters[index]?.name ? "input-error" : ""}
+                        />
+                        {validationErrors.parameters[index]?.name && (
+                          <div className="error-text">{validationErrors.parameters[index].name}</div>
+                        )}
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor={`param-type-${index}`}>Tipo</label>
+                        <select
+                          id={`param-type-${index}`}
+                          value={param.type}
+                          onChange={(e) => updateParameter(index, "type", e.target.value)}
+                        >
+                          <option value="number">Número</option>
+                          <option value="select">Seleção</option>
+                        </select>
+                      </div>
                     </div>
 
-                    <div className="form-group">
-                      <label htmlFor={`param-type-${index}`}>Tipo</label>
-                      <select
-                        id={`param-type-${index}`}
-                        value={param.type}
-                        onChange={(e) => updateParameter(index, "type", e.target.value)}
-                      >
-                        <option value="number">Número</option>
-                        <option value="select">Seleção</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor={`param-unit-${index}`}>Unidade</label>
-                      <input
-                        id={`param-unit-${index}`}
-                        type="text"
-                        placeholder="Ex: kg, m, L..."
-                        value={param.unit || ""}
-                        onChange={(e) => updateParameter(index, "unit", e.target.value)}
-                      />
+                    <div className="form-row secondary-row">
+                      <div className="form-group">
+                        <label htmlFor={`param-unit-${index}`}>Unidade</label>
+                        <input
+                          id={`param-unit-${index}`}
+                          type="text"
+                          placeholder="Ex: kg, m, L..."
+                          value={param.unit || ""}
+                          onChange={(e) => updateParameter(index, "unit", e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -945,6 +1007,90 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     />
                     <label htmlFor={`param-required-${index}`}>Obrigatório</label>
                   </div>
+
+                  {param.type === "number" && (
+                    <div className="numeric-config">
+                      <div className="form-rows-container">
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor={`param-min-${index}`}>Valor Mínimo</label>
+                            <input
+                              id={`param-min-${index}`}
+                              type="number"
+                              placeholder="Ex: 0"
+                              value={param.min}
+                              onChange={(e) => updateParameter(index, "min", e.target.value)}
+                              className={validationErrors.parameters[index]?.range ? "input-error" : ""}
+                              step="0.01"
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label htmlFor={`param-max-${index}`}>Valor Máximo</label>
+                            <input
+                              id={`param-max-${index}`}
+                              type="number"
+                              placeholder="Ex: 100"
+                              value={param.max}
+                              onChange={(e) => updateParameter(index, "max", e.target.value)}
+                              className={validationErrors.parameters[index]?.range ? "input-error" : ""}
+                              step="0.01"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row secondary-row">
+                          <div className="form-group">
+                            <label htmlFor={`param-step-${index}`}>Incremento</label>
+                            <input
+                              id={`param-step-${index}`}
+                              type="number"
+                              placeholder="Ex: 0.01"
+                              value={param.step}
+                              onChange={(e) => updateParameter(index, "step", e.target.value)}
+                              step="0.01"
+                              min="0.01"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {validationErrors.parameters[index]?.range && (
+                        <div className="error-text">{validationErrors.parameters[index].range}</div>
+                      )}
+
+                      {validationErrors.parameters[index]?.step && (
+                        <div className="error-text">{validationErrors.parameters[index].step}</div>
+                      )}
+
+                      <div className="mask-tooltip-row">
+                        <div className="form-group">
+                          <label htmlFor={`param-mask-${index}`}>Máscara</label>
+                          <input
+                            id={`param-mask-${index}`}
+                            type="text"
+                            placeholder="Ex: #.##"
+                            value={param.mask}
+                            onChange={(e) => updateParameter(index, "mask", e.target.value)}
+                            className={validationErrors.parameters[index]?.mask ? "input-error" : ""}
+                          />
+                          {validationErrors.parameters[index]?.mask && (
+                            <div className="error-text">{validationErrors.parameters[index].mask}</div>
+                          )}
+                        </div>
+                        <div className="form-group">
+                          <label htmlFor={`param-tooltip-${index}`}>Tooltip</label>
+                          <input
+                            id={`param-tooltip-${index}`}
+                            type="text"
+                            placeholder="Digite o parâmetro"
+                            value={param.tooltip}
+                            onChange={(e) => updateParameter(index, "tooltip", e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {param.type === "select" && (
                     <div className="select-options-container">

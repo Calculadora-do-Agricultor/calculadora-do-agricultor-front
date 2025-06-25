@@ -163,22 +163,72 @@
   gap: 0.5rem;
 }
 
+.calculation-modal-parameter {
+  margin-bottom: 1rem;
+}
+
 .calculation-modal-parameter label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4b5563;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 4px;
 }
 
-.unit {
-  font-size: 0.75rem;
+.calculation-modal-parameter .unit {
+  margin-left: 0.25rem;
   color: #6b7280;
-  font-weight: normal;
+  font-size: 0.875rem;
 }
 
-.calculation-modal-parameter input,
+.calculation-modal-parameter .required {
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper input,
+.calculation-modal-parameter select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #1f2937;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.input-wrapper input:hover {
+  border-color: #9ca3af;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: #00418f;
+  box-shadow: 0 0 0 2px rgba(0, 65, 143, 0.1);
+}
+
+.input-constraints {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: var(--text-color-light);
+  text-align: right;
+}
+
+.constraint-range {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 .calculation-modal-parameter select {
   padding: 0.75rem 1rem;
   border: 1px solid #d1d5db;
@@ -187,6 +237,17 @@
   width: 100%;
   transition: all 0.2s;
   background-color: #f9fafb;
+}
+
+/* Remove as setas do input number */
+.input-wrapper input[type="number"]::-webkit-outer-spin-button,
+.input-wrapper input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-wrapper input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .calculation-modal-parameter select {

@@ -149,11 +149,62 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   }
 
   // Atualiza o valor de um parâmetro
-  const handleParamChange = (paramName, value) => {
-    setParamValues((prev) => ({
-      ...prev,
-      [paramName]: value,
-    }))
+  const handleParamChange = (paramName, value, param) => {
+    if (param.type === 'number') {
+      // Remove caracteres não numéricos, exceto ponto decimal e sinal de menos
+      let numericValue = value.replace(/[^0-9.-]/g, '')
+      
+      // Garante apenas um ponto decimal e um sinal de menos no início
+      const parts = numericValue.split('.')
+      if (parts.length > 2) {
+        numericValue = parts[0] + '.' + parts.slice(1).join('')
+      }
+      if (numericValue.indexOf('-') > 0) {
+        numericValue = numericValue.replace(/-/g, '')
+        if (numericValue[0] !== '-') {
+          numericValue = '-' + numericValue
+        }
+      }
+      
+      // Aplica a máscara se estiver definida
+      if (param.mask && param.mask.trim() !== '') {
+        const maskParts = param.mask.split('.')
+        const valueParts = numericValue.split('.')
+        
+        // Limita os dígitos antes do ponto decimal
+        if (maskParts[0]) {
+          valueParts[0] = valueParts[0].slice(0, maskParts[0].length)
+        }
+        
+        // Limita os dígitos após o ponto decimal
+        if (maskParts[1] && valueParts[1]) {
+          valueParts[1] = valueParts[1].slice(0, maskParts[1].length)
+        }
+        
+        numericValue = valueParts.join('.')
+      }
+      
+      // Converte para número para validar min/max
+      const numValue = parseFloat(numericValue)
+      if (!isNaN(numValue)) {
+        if (param.min !== '' && numValue < parseFloat(param.min)) {
+          numericValue = param.min
+        }
+        if (param.max !== '' && numValue > parseFloat(param.max)) {
+          numericValue = param.max
+        }
+      }
+      
+      setParamValues((prev) => ({
+        ...prev,
+        [paramName]: numericValue,
+      }))
+    } else {
+      setParamValues((prev) => ({
+        ...prev,
+        [paramName]: value,
+      }))
+    }
   }
 
   // Copia o resultado para a área de transferência
@@ -241,36 +292,45 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             <div className="calculation-modal-parameters">
               {calculation.parameters &&
                 calculation.parameters.map((param, index) => (
-                  <div key={index} className="calculation-modal-parameter">
-                    <label htmlFor={`param-${index}`}>
+                  <div key={param.name} className="calculation-modal-parameter">
+                    <label htmlFor={param.name}>
                       {param.name}
+                      {param.required && <span className="required">*</span>}
                       {param.unit && <span className="unit">({param.unit})</span>}
                     </label>
                     {param.type === "select" ? (
-                      <div className="select-wrapper">
-                        <select
-                          id={`param-${index}`}
-                          value={paramValues[param.name] || ""}
-                          onChange={(e) => handleParamChange(param.name, e.target.value)}
-                        >
-                          <option value="">Selecione uma opção</option>
-                          {param.options &&
-                            param.options.map((option, idx) => (
-                              <option key={idx} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    ) : (
-                      <input
-                        id={`param-${index}`}
-                        type="number"
+                      <select
+                        id={param.name}
                         value={paramValues[param.name] || ""}
-                        onChange={(e) => handleParamChange(param.name, e.target.value)}
-                        placeholder={`Digite ${param.name.toLowerCase()}`}
-                      />
+                        onChange={(e) => handleParamChange(param.name, e.target.value, param)}
+                      >
+                        <option value="">Selecione...</option>
+                        {param.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="input-wrapper">
+                        <input
+                          type="text"
+                          id={param.name}
+                          value={paramValues[param.name] || ""}
+                          onChange={(e) => handleParamChange(param.name, e.target.value, param)}
+                          placeholder={param.description || `Digite o valor para ${param.name}`}
+                          title={param.tooltip || param.description}
+                        />
+                        {param.min !== "" && param.max !== "" && (
+                          <div className="input-constraints">
+                            <div className="constraint-range">
+                              <span>Min: {param.min} | Max: {param.max}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
+                    {param.description && <div className="parameter-description">{param.description}</div>}
                   </div>
                 ))}
             </div>
