@@ -17,6 +17,7 @@ const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculation
 const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 
 // Componente de loading otimizado
 const PageLoader = () => (
@@ -95,6 +96,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly={true} redirectTo="/">
                     <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <Dashboard />
                   </ProtectedRoute>
                 }
               />
