@@ -1,25 +1,29 @@
 import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
+  const { success, error: toastError, info } = useToast()
 
   const handleParamChange = (paramName, value) => {
     setParamValues(prev => ({ ...prev, [paramName]: value }))
   }
 
-  const copyToClipboard = (text, key) => {
+  const copyToClipboard = (text, key, resultName) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopied(prev => ({ ...prev, [key]: false }))
       }, 2000)
+      success(`Valor "${resultName || 'Resultado'}" copiado para a área de transferência!`)
     }).catch(err => {
       console.error("Copy error:", err)
+      toastError("Não foi possível copiar o resultado. Tente novamente.")
     })
   }
 
@@ -38,6 +42,14 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
+  
+  useEffect(() => {
+    if (error) {
+      toastError("Erro no cálculo: " + error)
+    } else if (allFieldsFilled && Object.keys(results).length > 0) {
+      info("Cálculo realizado com sucesso!")
+    }
+  }, [error, allFieldsFilled, results, toastError, info])
 
   if (!isOpen || !calculation) return null
 
@@ -127,7 +139,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                     <div className="calculation-result-value">
                       <span>{results[key]?.value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results[key]?.value || "0", key)}
+                        onClick={() => copyToClipboard(results[key]?.value || "0", key, results[key]?.name)}
                         className={`copy-button ${copied[key] ? "copied" : ""}`}
                         aria-label="Copy result"
                         disabled={!allFieldsFilled}
@@ -151,7 +163,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                     <div className="calculation-result-value">
                       <span>{results.value || "0"}</span>
                       <button
-                        onClick={() => copyToClipboard(results.value || "0", "main")}
+                        onClick={() => copyToClipboard(results.value || "0", "main", calculation.resultName || "Resultado")}
                         className={`copy-button ${copied["main"] ? "copied" : ""}`}
                         aria-label="Copy result"
                         disabled={!allFieldsFilled}
@@ -171,7 +183,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       <div className="calculation-result-value">
                         <span>{results[result.key] || "0"}</span>
                         <button
-                          onClick={() => copyToClipboard(results[result.key] || "0", result.key)}
+                          onClick={() => copyToClipboard(results[result.key] || "0", result.key, result.name)}
                           className={`copy-button ${copied[result.key] ? "copied" : ""}`}
                           aria-label="Copy result"
                           disabled={!allFieldsFilled}

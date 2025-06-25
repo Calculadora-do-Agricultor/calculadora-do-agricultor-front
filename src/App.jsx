@@ -4,6 +4,8 @@ import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
 import { useIntelligentPreload } from "./utils/preloadRoutes";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
+import { ToastProvider } from "./context/ToastContext";
+
 
 // Lazy loading das páginas para reduzir bundle inicial
 const Home = React.lazy(() => import("./pages/Home/Home"));
@@ -31,11 +33,12 @@ function App() {
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
   
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Router>
-        <Navbar />
-        <main className="flex-grow pt-20">
-          <Suspense fallback={<PageLoader />}>
+    <ToastProvider>
+      <div className="flex min-h-screen w-full flex-col">
+        <Router>
+          <Navbar />
+          <main className="flex-grow pt-20">
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route
@@ -97,10 +100,11 @@ function App() {
               />
             </Routes>
           </Suspense>
-        </main>
-        <Footer />
-      </Router>
-    </div>
+          </main>
+          <Footer />
+        </Router>
+      </div>
+    </ToastProvider>
   );
 }
 
