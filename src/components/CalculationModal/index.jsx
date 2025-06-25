@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
 import "./styles.css"
+import CalculationResult from "../CalculationResult"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
@@ -60,15 +61,15 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         <div className="calculation-modal-content">
           <div className="calculation-modal-section">
             <div className="section-header">
-              <h3>Parameters</h3>
+              <h3>Parâmetros</h3>
               <div className="section-badge">
                 {allFieldsFilled ? (
                   <span className="badge success">
-                    <Check size={14} /> Complete
+                    <Check size={14} /> Completo
                   </span>
                 ) : (
                   <span className="badge warning">
-                    <Info size={14} /> Fill all fields
+                    <Info size={14} /> Preencha todos os campos
                   </span>
                 )}
               </div>
@@ -86,7 +87,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       value={paramValues[param.name] || ""}
                       onChange={e => handleParamChange(param.name, e.target.value)}
                     >
-                      <option value="">Select an option</option>
+                      <option value="">Selecione uma opção</option>
                       {param.options?.map((opt, idx) => (
                         <option key={idx} value={opt.value}>
                           {opt.label}
@@ -99,7 +100,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       type="number"
                       value={paramValues[param.name] || ""}
                       onChange={e => handleParamChange(param.name, e.target.value)}
-                      placeholder={`Enter ${param.name.toLowerCase()}`}
+                      placeholder={`Digite ${param.name.toLowerCase()}`}
                     />
                   )}
                 </div>
@@ -111,7 +112,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
 
           <div className="calculation-modal-section">
             <div className="section-header">
-              <h3>Results</h3>
+              <h3>Resultados</h3>
             </div>
 
             <div className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}>
@@ -119,76 +120,48 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
 
               {calculation.results && calculation.results.length > 0 ? (
                 Object.keys(results).map(key => (
-                  <div key={key} className="calculation-result">
-                    <div className="calculation-result-label">
-                      <span className="result-name">{results[key]?.name}</span>
-                      {results[key]?.unit && <span className="unit">({results[key]?.unit})</span>}
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results[key]?.value || "0"}</span>
-                      <button
-                        onClick={() => copyToClipboard(results[key]?.value || "0", key)}
-                        className={`copy-button ${copied[key] ? "copied" : ""}`}
-                        aria-label="Copy result"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied[key] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied[key] ? "Copied" : "Copy"}</span>
-                      </button>
-                    </div>
-                    {results[key]?.description && (
-                      <div className="calculation-result-description">{results[key].description}</div>
-                    )}
-                  </div>
+                  <CalculationResult
+                    key={key}
+                    name={results[key]?.name}
+                    value={results[key]?.value}
+                    unit={results[key]?.unit}
+                    description={results[key]?.description}
+                    copied={copied[key]}
+                    onCopy={() => copyToClipboard(results[key]?.value || "0", key)}
+                    disabled={!allFieldsFilled}
+                  />
                 ))
               ) : (
                 <>
-                  <div className="calculation-result primary">
-                    <div className="calculation-result-label">
-                      <span className="result-name">{calculation.resultName || "Result"}</span>
-                      <span className="unit">{calculation.resultUnit || ""}</span>
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results.value || "0"}</span>
-                      <button
-                        onClick={() => copyToClipboard(results.value || "0", "main")}
-                        className={`copy-button ${copied["main"] ? "copied" : ""}`}
-                        aria-label="Copy result"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied["main"] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied["main"] ? "Copied" : "Copy"}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <CalculationResult
+                    name={calculation.resultName || "Result"}
+                    value={results.value || "0"}
+                    unit={calculation.resultUnit || ""}
+                    copied={copied["main"]}
+                    onCopy={() => copyToClipboard(results.value || "0", "main")}
+                    disabled={!allFieldsFilled}
+                    primary
+                  />
 
                   {calculation.additionalResults?.map((result, i) => (
-                    <div key={i} className="calculation-result secondary">
-                      <div className="calculation-result-label">
-                        <span className="result-name">{result.name}</span>
-                        <span className="unit">{result.unit}</span>
-                      </div>
-                      <div className="calculation-result-value">
-                        <span>{results[result.key] || "0"}</span>
-                        <button
-                          onClick={() => copyToClipboard(results[result.key] || "0", result.key)}
-                          className={`copy-button ${copied[result.key] ? "copied" : ""}`}
-                          aria-label="Copy result"
-                          disabled={!allFieldsFilled}
-                        >
-                          {copied[result.key] ? <Check size={16} /> : <Copy size={16} />}
-                          <span className="copy-text">{copied[result.key] ? "Copied" : "Copy"}</span>
-                        </button>
-                      </div>
-                    </div>
+                    <CalculationResult
+                      key={i}
+                      name={result.name}
+                      value={results[result.key] || "0"}
+                      unit={result.unit}
+                      copied={copied[result.key]}
+                      onCopy={() => copyToClipboard(results[result.key] || "0", result.key)}
+                      disabled={!allFieldsFilled}
+                    />
                   ))}
                 </>
               )}
+
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 
