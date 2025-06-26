@@ -523,7 +523,7 @@ const Settings = () => {
                             segurança, confirme sua senha atual.
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="grid gap-4 py-4">
+                        <div className="space-y-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
                             <label htmlFor="email" className="text-right">
                               E-mail
@@ -572,15 +572,15 @@ const Settings = () => {
                               </button>
                             </div>
                           </div>
-                          {error && (
-                            <p className="col-span-4 mt-2 text-center text-sm text-red-500">
-                              {error}
-                            </p>
-                          )}
-                          {success && (
-                            <p className="col-span-4 mt-2 text-center text-sm text-green-500">
-                              {success}
-                            </p>
+                          {(error || success) && (
+                            <div className="flex justify-center">
+                              {error && (
+                                <p className="text-sm text-red-500">{error}</p>
+                              )}
+                              {success && (
+                                <p className="text-sm text-green-500">{success}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                         <DialogFooter>
@@ -819,7 +819,7 @@ const Settings = () => {
                           segurança, confirme sua senha atual.
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="grid gap-4 py-4">
+                      <div className="space-y-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
                           <label
                             htmlFor="currentPasswordSecurity"
