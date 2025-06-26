@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { HomeIcon, CalculatorIcon, CogIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const NavLinks = ({ user }) => {
@@ -30,6 +30,10 @@ const NavLinks = ({ user }) => {
       <Link className={linkStyle('/')} to="/">
         <HomeIcon className="w-5 h-5 mr-2" />
         Página Inicial
+      </Link>
+      <Link className={linkStyle('/glossario')} to="/glossario">
+        <BookOpenIcon className="w-5 h-5 mr-2" />
+        Glossário
       </Link>
       {user === null ? (
         <>
