@@ -1,129 +1,22 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  X,
-  Copy,
-  Calculator,
-  Check,
-  Info,
-  FileText,
-  Calendar,
-  User,
-  Eye,
-  HelpCircle,
-} from "lucide-react";
-import { Tooltip } from "../ui/Tooltip";
-import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
-import { db } from "../../services/firebaseConfig";
-import DraggableList from "../DraggableList";
-import {
-  evaluateExpression,
-  normalizeMathFunctions,
-  validateExpression,
-} from "../../utils/mathEvaluator";
-import { useCalculationResult } from "../../hooks/useCalculationResult";
-import { useFormParameters } from "../../hooks/useFormParameters";
-import { useToast } from "../../context/ToastContext";
-import { useAuth } from "../../context/useAuth";
-import CalculationResult from "../CalculationResult";
-import "./styles.css";
+import React, { useRef, useEffect } from "react"
+import { X, Copy, Calculator, Check, Info, HelpCircle } from "lucide-react"
+import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import { useToast } from "../../context/ToastContext"
+import "./styles.css"
+import CalculationResult from "../CalculationResult"
+import { Tooltip } from "../ui/Tooltip"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-  // Estados da branch feat/validador-parametros-calculo
-  const [paramValues, setParamValues] = useState({});
-  const [results, setResults] = useState({});
-  const [copied, setCopied] = useState({});
-  const [allFieldsFilled, setAllFieldsFilled] = useState(false);
-  const modalRef = useRef(null);
+  const { paramValues, setParamValues, results, setResults, allFieldsFilled, error } = useCalculationResult(calculation)
+  const { success, error: toastError } = useToast()
+  const modalRef = useRef(null)
+  const [copied, setCopied] = React.useState({})
 
-  // Hooks da branch develop
-  const { success, error: toastError, info } = useToast();
-  const { user } = useAuth();
 
-  // useEffect para registrar visualização (da branch develop)
-  useEffect(() => {
-    if (!isOpen || !user?.uid || !calculation?.id) return;
 
-    let cancelled = false;
 
-    const registerView = async () => {
-      try {
-        const viewRef = doc(
-          db,
-          "calculations",
-          calculation.id,
-          "views",
-          user.uid,
-        );
-        const viewSnap = await getDoc(viewRef);
 
-        if (!viewSnap.exists() && !cancelled) {
-          await setDoc(viewRef, { viewedAt: new Date() });
-
-          const calcRef = doc(db, "calculations", calculation.id);
-          await updateDoc(calcRef, {
-            views: increment(1),
-          });
-        }
-      } catch (err) {
-        console.error("Erro ao registrar visualização:", err);
-      }
-    };
-
-    registerView();
-
-    return () => {
-      cancelled = true; // evita duplicação se o componente desmontar rapidamente
-    };
-  }, [isOpen, calculation?.id, user?.uid]);
-
-  // useEffect para inicializar valores (da branch feat/validador-parametros-calculo)
-  useEffect(() => {
-    if (calculation && calculation.parameters) {
-      const initialValues = {};
-      calculation.parameters.forEach((param) => {
-        initialValues[param.name] = "";
-      });
-      setParamValues(initialValues);
-
-      // Initialize results with zero values to maintain stable layout
-      const initialResults = {};
-      if (calculation.results && calculation.results.length > 0) {
-        calculation.results.forEach((result, index) => {
-          initialResults[`result_${index}`] = {
-            name: result.name,
-            description: result.description,
-            value: "0",
-            unit: result.unit || "",
-          };
-        });
-      } else {
-        initialResults.value = "0";
-        if (
-          calculation.additionalResults &&
-          calculation.additionalResults.length > 0
-        ) {
-          calculation.additionalResults.forEach((result) => {
-            initialResults[result.key] = "0";
-          });
-        }
-      }
-      setResults(initialResults);
-
-      setAllFieldsFilled(false);
-    }
-  }, [calculation]);
-
-  // Verifica se todos os campos estão preenchidos
-  useEffect(() => {
-    if (calculation && calculation.parameters) {
-      const filled = calculation.parameters.every(
-        (param) => paramValues[param.name] && paramValues[param.name] !== "",
-      );
-      setAllFieldsFilled(filled);
-    }
-  }, [paramValues, calculation]);
-
-  // Calcula os resultados quando os valores dos parâmetros mudam
   useEffect(() => {
     if (calculation && Object.keys(paramValues).length > 0 && allFieldsFilled) {
       try {
@@ -313,19 +206,12 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       document.body.style.overflow = "unset";
     }
     return () => {
-      window.removeEventListener("keydown", handleEsc);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
-
-  // useEffect para toast de feedback (da branch develop)
-  useEffect(() => {
-    if (allFieldsFilled && Object.keys(results).length > 0 && info) {
-      info("Cálculo realizado com sucesso!");
+      window.removeEventListener("keydown", handleEsc)
+      document.body.style.overflow = "unset"
     }
-  }, [allFieldsFilled, results, info]);
+  }, [isOpen, onClose])
 
-  if (!isOpen || !calculation) return null;
+  if (!isOpen || !calculation) return null
 
   return (
     <div className="calculation-modal-overlay">
@@ -517,8 +403,8 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    </div >
+  )
+}
 
 export default CalculationModal;

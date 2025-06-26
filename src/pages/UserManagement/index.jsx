@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
+import { AdminContext } from "../../context/AdminContext";
 import { Navigate } from "react-router-dom";
 import {
   ArrowPathIcon,
@@ -108,7 +109,8 @@ const UserManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const usersPerPage = 10;
 
-  const { user, isAdmin } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
 
   // Função para buscar os usuários
   const fetchUsers = async () => {

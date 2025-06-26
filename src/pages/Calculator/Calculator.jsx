@@ -10,6 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { AuthContext } from "../../context/AuthContext";
+import { AdminContext } from "../../context/AdminContext";
 import {
   PlusCircle,
   X,
@@ -27,10 +28,8 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { auth, db } from "../../services/firebaseConfig";
-import {
-  CalculationList,
-  Categories,
-} from "@/components";
+import CalculationList from "@/components/CalculationList";
+import { Categories } from "@/components";
 import CreateCategory from "@/components/CreateCategory";
 import EditCalculation from "@/components/EditCalculation";
 import logoClara from "@/assets/logoClara.svg";
@@ -40,7 +39,7 @@ export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [user] = useAuthState(auth);
-  const { isAdmin } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
   const [showOptions, setShowOptions] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [loading, setLoading] = useState(true);

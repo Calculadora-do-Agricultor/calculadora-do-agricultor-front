@@ -7,8 +7,9 @@ import {
   limit,
   where,
 } from "firebase/firestore";
-import { db } from "@/services/firebaseConfig";
-import { AuthContext } from "@/context/AuthContext";
+import { db } from "../../services/firebaseConfig";
+import { AuthContext } from "../../context/AuthContext";
+import { AdminContext } from "../../context/AdminContext";
 import { Navigate } from "react-router-dom";
 import {
   ClockIcon,
@@ -33,9 +34,9 @@ import {
   FunnelIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import MetricCard from "@/components/MetricCard";
-import LogCard from "@/components/LogCard";
-import EmptyState from "@/components/ui/EmptyState";
+import MetricCard from "../../components/MetricCard";
+import LogCard from "../../components/LogCard";
+import EmptyState from "../../components/ui/EmptyState";
 import "./LogsManagement.css";
 
 // Constantes para tooltips das métricas
@@ -66,12 +67,13 @@ const LogsManagement = () => {
   const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
 
+  const { user } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
+
   // Título e descrição da página
   const pageTitle = "Histórico de Atividades";
   const pageDescription =
     "Visualize e analise todas as atividades realizadas no sistema, com informações detalhadas sobre cada ação.";
-
-  const { user, isAdmin } = useContext(AuthContext);
 
   // Função para formatar a data
   const formatDate = (timestamp) => {

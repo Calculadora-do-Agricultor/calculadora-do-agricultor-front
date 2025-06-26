@@ -4,6 +4,7 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "fireb
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
+import { AdminContext } from "../../context/AdminContext"
 import { useToast } from "../../context/ToastContext"
 import {
   ArrowRight,
@@ -43,9 +44,9 @@ const CalculationList = ({
   const navigate = useNavigate()
   const { success, error: toastError } = useToast()
 
-  // Usar o isAdmin do AuthContext em vez de verificar localmente
-  const { isAdmin: contextIsAdmin } = useContext(AuthContext)
-
+  // Usar o isAdmin do AdminContext (nova funcionalidade)
+  const { isAdmin: contextIsAdmin } = useContext(AdminContext)
+  
   useEffect(() => {
     setIsAdmin(contextIsAdmin)
   }, [contextIsAdmin])
@@ -547,7 +548,7 @@ const CalculationList = ({
               <>
                 <div className="delete-modal-header">
                   <AlertTriangle className="delete-modal-icon" size={48} />
-                  <h2 id="delete-confirmation-modal-title">Confirmar exclusão</h2>
+                  <h2 id="delete-modal-title">Confirmar exclusão</h2>
                 </div>
                 <div className="delete-modal-content">
                   <p>
