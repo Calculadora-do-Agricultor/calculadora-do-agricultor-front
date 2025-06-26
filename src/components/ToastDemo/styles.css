@@ -1,0 +1,115 @@
+.toast-demo-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  max-width: 800px;
+  margin: 2rem auto;
+}
+
+.toast-demo-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.toast-demo-description {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.toast-demo-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.toast-demo-button {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toast-demo-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.toast-demo-button.success {
+  background-color: #10b981;
+}
+
+.toast-demo-button.success:hover {
+  background-color: #059669;
+}
+
+.toast-demo-button.error {
+  background-color: #ef4444;
+}
+
+.toast-demo-button.error:hover {
+  background-color: #dc2626;
+}
+
+.toast-demo-button.info {
+  background-color: #3b82f6;
+}
+
+.toast-demo-button.info:hover {
+  background-color: #2563eb;
+}
+
+.toast-demo-button.warning {
+  background-color: #f59e0b;
+}
+
+.toast-demo-button.warning:hover {
+  background-color: #d97706;
+}
+
+.toast-demo-info {
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+}
+
+.toast-demo-info h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: #334155;
+}
+
+.toast-demo-code {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  font-family: monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+@media (max-width: 640px) {
+  .toast-demo-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  
+  .toast-demo-buttons {
+    flex-direction: column;
+  }
+  
+  .toast-demo-button {
+    width: 100%;
+  }
+}

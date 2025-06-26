@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "fireb
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
 import {
   ArrowRight,
   Search,
@@ -37,6 +38,7 @@ const CalculationList = ({
 }) => {
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
+  const { success, error: toastError } = useToast()
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
   const { isAdmin: contextIsAdmin } = useContext(AuthContext)
@@ -225,7 +227,8 @@ const CalculationList = ({
 
       // Mostrar mensagem de sucesso antes de fechar o modal
       setDeleteSuccess(true)
-
+      success(`Cálculo "${calculationToDelete.name || calculationToDelete.nome}" excluído com sucesso!`)
+      
       // Notificar o componente pai que um cálculo foi excluído
       if (onCalculationDeleted) {
         onCalculationDeleted()
@@ -239,6 +242,7 @@ const CalculationList = ({
     } catch (error) {
       console.error("Erro ao excluir cálculo:", error)
       setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
+      toastError("Falha ao excluir cálculo. Tente novamente.")
     } finally {
       setFIsDeleting(false)
     }
@@ -463,12 +467,10 @@ const CalculationList = ({
                   <Clock size={14} />
                   <span>{getTimeAgo(calculation.updatedAt.toDate())}</span>
                 </div>
-                {/* TODO: Uncomment this when view tracking is implemented
                 <div className="meta-item">
                   <Eye size={14} />
                   <span>{calculation.views || 0} visualizações</span>
                 </div>
-                */}
               </div>
             </div>
 

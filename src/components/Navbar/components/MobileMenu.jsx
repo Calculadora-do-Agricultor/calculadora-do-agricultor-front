@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const MobileMenu = ({ user, userName }) => {
@@ -57,6 +57,15 @@ const MobileMenu = ({ user, userName }) => {
             Página Inicial
           </Link>
 
+          <Link
+            to="/glossario"
+            className={`${linkStyle('/glossario')} border-b border-[#00418F]/80`}
+            onClick={() => setIsOpen(false)}
+          >
+            <BookOpenIcon className="w-5 h-5 mr-2" />
+            Glossário
+          </Link>
+
           {user === null ? (
             <>
               <Link
@@ -100,6 +109,22 @@ const MobileMenu = ({ user, userName }) => {
                   
                   {adminMenuOpen && (
                     <div className="bg-[#00418F]/80 pl-6">
+                      <Link
+                        to="/admin/dashboard"
+                        className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/dashboard' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2">
+                          <rect width="7" height="9" x="3" y="3" rx="1" />
+                          <rect width="7" height="5" x="14" y="3" rx="1" />
+                          <rect width="7" height="9" x="14" y="12" rx="1" />
+                          <rect width="7" height="5" x="3" y="16" rx="1" />
+                        </svg>
+                        Dashboard
+                      </Link>
                       <Link
                         to="/admin/logs"
                         className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/logs' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}

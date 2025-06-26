@@ -1,26 +1,63 @@
 import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useToast } from "../../context/ToastContext"
 import "./styles.css"
-import { useFormParameters } from "../../hooks/useFormParameters"
+import { doc, updateDoc, increment, getDoc, setDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
+import { useAuth } from "../../context/useAuth"
+import CalculationResult from "../CalculationResult"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
-const { results, error } = useCalculationResult(calculation, paramValues, allFieldsFilled)
-
+  const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
+  const { success, error: toastError, info } = useToast()
+  const { user } = useAuth()
 
-const handleParamChange = setParamValue
+  useEffect(() => {
+    if (!isOpen || !user?.uid || !calculation?.id) return
 
-  const copyToClipboard = (text, key) => {
+    let cancelled = false
+
+    const registerView = async () => {
+      try {
+        const viewRef = doc(db, "calculations", calculation.id, "views", user.uid)
+        const viewSnap = await getDoc(viewRef)
+
+        if (!viewSnap.exists() && !cancelled) {
+          await setDoc(viewRef, { viewedAt: new Date() })
+
+          const calcRef = doc(db, "calculations", calculation.id)
+          await updateDoc(calcRef, {
+            views: increment(1)
+          })
+        }
+      } catch (err) {
+        console.error("Erro ao registrar visualização:", err)
+      }
+    }
+
+    registerView()
+
+    return () => {
+      cancelled = true // evita duplicação se o componente desmontar rapidamente
+    }
+  }, [isOpen, calculation?.id, user?.uid])
+  const handleParamChange = (paramName, value) => {
+    setParamValues(prev => ({ ...prev, [paramName]: value }))
+  }
+
+  const copyToClipboard = (text, key, resultName) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopied(prev => ({ ...prev, [key]: false }))
       }, 2000)
+      success(`Valor "${resultName || 'Resultado'}" copiado para a área de transferência!`)
     }).catch(err => {
       console.error("Copy error:", err)
+      toastError("Não foi possível copiar o resultado. Tente novamente.")
     })
   }
 
@@ -39,6 +76,14 @@ const handleParamChange = setParamValue
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
+  
+  useEffect(() => {
+    if (error) {
+      toastError("Erro no cálculo: " + error)
+    } else if (allFieldsFilled && Object.keys(results).length > 0) {
+      info("Cálculo realizado com sucesso!")
+    }
+  }, [error, allFieldsFilled, results, toastError, info])
 
   if (!isOpen || !calculation) return null
 
@@ -49,8 +94,8 @@ const handleParamChange = setParamValue
           <div className="calculation-modal-title">
             <div className="calculation-modal-icon"><Calculator size={24} /></div>
             <div>
-              <h2>{calculation.name || "Cálculo"}</h2>
-              <p>{calculation.description || "Nenhuma descrição disponível"}</p>
+              <h2>{calculation.name || "Calculation"}</h2>
+              <p>{calculation.description || "Calculation description"}</p>
             </div>
           </div>
           <button onClick={onClose} className="calculation-modal-close" aria-label="Close">
@@ -116,79 +161,54 @@ const handleParamChange = setParamValue
             </div>
 
             <div className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}>
-              {error && <p className="error-message">{error}</p>}
+              {error && <p style={{ color: "red" }}>{error}</p>}
 
-              {calculation.results && calculation.results.length > 0 && Object.keys(results).map(key => (
-                <div key={key} className="calculation-result">
-                  <div className="calculation-result-label">
-                    <span className="result-name">{results[key]?.name}</span>
-                    {results[key]?.unit && <span className="unit">({results[key]?.unit})</span>}
-                  </div>
-                  <div className="calculation-result-value">
-                    <span>{results[key]?.value || "0"}</span>
-                    <button
-                      onClick={() => copyToClipboard(results[key]?.value || "0", key)}
-                      className={`copy-button ${copied[key] ? "copied" : ""}`}
-                      aria-label="Copy result"
-                      disabled={!allFieldsFilled}
-                    >
-                      {copied[key] ? <Check size={16} /> : <Copy size={16} />}
-                      <span className="copy-text">{copied[key] ? "Copiado" : "Copiar"}</span>
-                    </button>
-                  </div>
-                  {results[key]?.description && (
-                    <div className="calculation-result-description">{results[key].description}</div>
-                  )}
-                </div>
-              ))}
-              {(!calculation.results || calculation.results.length === 0) && (
+              {calculation.results && calculation.results.length > 0 ? (
+                Object.keys(results).map(key => (
+
+                  <CalculationResult
+                    key={key}
+                    name={results[key]?.name}
+                    value={results[key]?.value}
+                    unit={results[key]?.unit}
+                    description={results[key]?.description}
+                    copied={copied[key]}
+                    onCopy={() => copyToClipboard(results[key]?.value || "0", key)}
+                    disabled={!allFieldsFilled}
+                  />
+                ))
+              ) : (
                 <>
-                  <div className="calculation-result primary">
-                    <div className="calculation-result-label">
-                      <span className="result-name">{calculation.resultName || "Resultado"}</span>
-                      <span className="unit">{calculation.resultUnit || ""}</span>
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results.value || "0"}</span>
-                      <button
-                        onClick={() => copyToClipboard(results.value || "0", "main")}
-                        className={`copy-button ${copied["main"] ? "copied" : ""}`}
-                        aria-label="Copy result"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied["main"] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied["main"] ? "Copiado" : "Copiar"}</span>
-                      </button>
-                    </div>
-                  </div>
+                  <CalculationResult
+                    name={calculation.resultName || "Result"}
+                    value={results.value || "0"}
+                    unit={calculation.resultUnit || ""}
+                    copied={copied["main"]}
+                    onCopy={() => copyToClipboard(results.value || "0", "main")}
+                    disabled={!allFieldsFilled}
+                    primary
+                  />
 
                   {calculation.additionalResults?.map((result, i) => (
-                    <div key={i} className="calculation-result secondary">
-                      <div className="calculation-result-label">
-                        <span className="result-name">{result.name}</span>
-                        <span className="unit">{result.unit}</span>
-                      </div>
-                      <div className="calculation-result-value">
-                        <span>{results[result.key] || "0"}</span>
-                        <button
-                          onClick={() => copyToClipboard(results[result.key] || "0", result.key)}
-                          className={`copy-button ${copied[result.key] ? "copied" : ""}`}
-                          aria-label="Copy result"
-                          disabled={!allFieldsFilled}
-                        >
-                          {copied[result.key] ? <Check size={16} /> : <Copy size={16} />}
-                          <span className="copy-text">{copied[result.key] ? "Copiado" : "Copiar"}</span>
-                        </button>
-                      </div>
-                    </div>
+                    <CalculationResult
+                      key={i}
+                      name={result.name}
+                      value={results[result.key] || "0"}
+                      unit={result.unit}
+                      copied={copied[result.key]}
+                      onCopy={() => copyToClipboard(results[result.key] || "0", result.key)}
+                      disabled={!allFieldsFilled}
+                    />
+
                   ))}
                 </>
               )}
+
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 

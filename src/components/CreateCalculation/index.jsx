@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, addDoc, getDocs, query, where, writeBatch, doc } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -34,6 +35,9 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
@@ -612,6 +616,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
     // Valida o formulário
     if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
       return
     }
 
@@ -647,6 +652,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
       setSuccess(true)
       setError("")
+      toastSuccess(`Cálculo "${calculationName}" criado com sucesso!`)
 
       // Aguarda um momento para mostrar a mensagem de sucesso antes de redirecionar
       setTimeout(() => {
@@ -655,6 +661,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     } catch (err) {
       console.error("Erro ao criar cálculo:", err)
       setError("Erro ao criar cálculo. Verifique sua conexão e tente novamente.")
+      toastError("Falha ao criar cálculo. Verifique sua conexão e tente novamente.")
       setSuccess(false)
     } finally {
       setLoading(false)
