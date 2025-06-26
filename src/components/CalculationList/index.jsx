@@ -3,7 +3,8 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "fireb
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
-import { useToast } from "../../context/ToastContext"
+import { useToast } from "@/context/ToastContext"
+import { updateDoc, setDoc, increment } from "firebase/firestore"
 import {
   ArrowRight,
   Search,
@@ -20,7 +21,7 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react"
-import CalculationModal  from "../CalculationModal"
+import CalculationModal from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
 import CalculationActions from "../CalculationActions"
 import "./styles.css"
@@ -34,14 +35,14 @@ const CalculationList = ({
   complexityFilters = [],
   onEditCalculation,
   onCalculationDeleted,
-}) =>{
+}) => {
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
   const { success, error: toastError } = useToast()
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
   const { isAdmin: contextIsAdmin } = useContext(AuthContext)
-  
+
   useEffect(() => {
     setIsAdmin(contextIsAdmin)
   }, [contextIsAdmin])
@@ -53,7 +54,7 @@ const CalculationList = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sortOption, setSortOption] = useState(initialSortOption)
   const [showSortOptions, setShowSortOptions] = useState(false)
-  
+
   // Estados para o modal de exclusão global
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [calculationToDelete, setCalculationToDelete] = useState(null)
@@ -72,13 +73,33 @@ const CalculationList = ({
       setDeleteError(null)
       setDeleteSuccess(false)
     }
-  
+
     return () => {
       document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
     }
   }, [showDeleteModal])
-  
+
+
+
+  // Incrementa visualização única por usuário
+  async function incrementViews(calculationId, userId) {
+    if (!calculationId || !userId) return
+
+    const userViewRef = doc(db, "calculations", calculationId, "viewsByUser", userId)
+    const userViewSnap = await getDoc(userViewRef)
+
+    if (!userViewSnap.exists()) {
+      // Usuário ainda não visualizou, registra e incrementa
+      await setDoc(userViewRef, { viewedAt: new Date() })
+
+      const calcRef = doc(db, "calculations", calculationId)
+      await updateDoc(calcRef, {
+        views: increment(1)
+      })
+    }
+  }
+
 
 
   useEffect(() => {
@@ -98,17 +119,17 @@ const CalculationList = ({
         // Buscar todas as categorias para encontrar o ID da categoria pelo nome
         const categoriesSnapshot = await getDocs(collection(db, "categories"))
         const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
-        
+
         if (!categoryDoc) {
           setCalculations([])
           return
         }
 
         const categoryId = categoryDoc.id
-        
+
         // Buscar cálculos que contêm o ID da categoria no array categories
         const q = query(
-          collection(db, "calculations"), 
+          collection(db, "calculations"),
           where("categories", "array-contains", categoryId)
         )
         const querySnapshot = await getDocs(q)
@@ -214,20 +235,19 @@ const CalculationList = ({
     try {
       setIsDeleting(true)
       setDeleteError(null)
-      
+
       // Adicionar um pequeno atraso para mostrar o estado de loading
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       await deleteDoc(doc(db, "calculations", calculationToDelete.id))
-      
+
       // Remover o cálculo da lista
       setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
-      
+
       // Mostrar mensagem de sucesso antes de fechar o modal
       setDeleteSuccess(true)
-      success(`Cálculo "${calculationToDelete.name || calculationToDelete.nome}" excluído com sucesso!`)
-      
+
       // Notificar o componente pai que um cálculo foi excluído
       if (onCalculationDeleted) {
         onCalculationDeleted()
@@ -502,8 +522,9 @@ const CalculationList = ({
 
               <button
                 className="details-button"
-                onClick={() => {
+                onClick={async () => {
                   setSelectedCalculation(calculation)
+                  await incrementViews(calculation.id, user?.uid) // Passe o user.uid aqui
                   setIsModalOpen(true)
                 }}
                 aria-label="Abrir cálculo"
@@ -548,7 +569,7 @@ const CalculationList = ({
                   <p className="delete-modal-warning">
                     Esta ação não pode ser desfeita.
                   </p>
-                  
+
                   {deleteError && (
                     <div className="delete-modal-error">
                       <AlertCircle size={16} />
@@ -557,16 +578,16 @@ const CalculationList = ({
                   )}
                 </div>
                 <div className="delete-modal-actions">
-                  <button 
-                    className="delete-modal-cancel" 
+                  <button
+                    className="delete-modal-cancel"
                     onClick={handleCancelDelete}
                     disabled={isDeleting}
                     aria-label="Cancelar exclusão"
                   >
                     Cancelar
                   </button>
-                  <button 
-                    className="delete-modal-confirm" 
+                  <button
+                    className="delete-modal-confirm"
                     onClick={handleConfirmDelete}
                     disabled={isDeleting}
                     aria-label="Confirmar exclusão"
@@ -594,17 +615,17 @@ const resolveCategoryNames = async (calculations) => {
   const categoryIds = [...new Set(
     calculations.flatMap(calc => calc.categories || [])
   )]
-  
+
   const categoryPromises = categoryIds.map(async (id) => {
     const categoryDoc = await getDoc(doc(db, "categories", id))
     return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
   })
-  
+
   const categoryMap = await Promise.all(categoryPromises)
   const categoryLookup = Object.fromEntries(
     categoryMap.map(cat => [cat.id, cat.name])
   )
-  
+
   return calculations.map(calc => ({
     ...calc,
     categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
