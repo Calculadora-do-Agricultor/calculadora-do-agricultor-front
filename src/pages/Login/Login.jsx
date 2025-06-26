@@ -97,19 +97,6 @@ const Login = () => {
         }
       }
 
-      // Proteção contra log duplicado por sessão
-      const sessionId = crypto.randomUUID();
-      localStorage.setItem("sessionId", sessionId);
-
-      await addDoc(collection(db, "Logs"), {
-        userId: user.uid,
-        email: user.email,
-        acao: "Login",
-        timestamp: serverTimestamp(),
-        userAgent: navigator.userAgent,
-        sessionId: sessionId,
-      });
-
       localStorage.setItem("authToken", "logado");
 
       if (values.rememberMe) {
