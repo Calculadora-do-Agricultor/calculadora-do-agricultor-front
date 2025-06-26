@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
 
@@ -8,19 +9,22 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
+  const { success, error: toastError, info } = useToast()
 
   const handleParamChange = (paramName, value) => {
     setParamValues(prev => ({ ...prev, [paramName]: value }))
   }
 
-  const copyToClipboard = (text, key) => {
+  const copyToClipboard = (text, key, resultName) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopied(prev => ({ ...prev, [key]: false }))
       }, 2000)
+      success(`Valor "${resultName || 'Resultado'}" copiado para a área de transferência!`)
     }).catch(err => {
       console.error("Copy error:", err)
+      toastError("Não foi possível copiar o resultado. Tente novamente.")
     })
   }
 
@@ -39,6 +43,14 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
+  
+  useEffect(() => {
+    if (error) {
+      toastError("Erro no cálculo: " + error)
+    } else if (allFieldsFilled && Object.keys(results).length > 0) {
+      info("Cálculo realizado com sucesso!")
+    }
+  }, [error, allFieldsFilled, results, toastError, info])
 
   if (!isOpen || !calculation) return null
 
@@ -120,6 +132,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
 
               {calculation.results && calculation.results.length > 0 ? (
                 Object.keys(results).map(key => (
+
                   <CalculationResult
                     key={key}
                     name={results[key]?.name}
@@ -153,6 +166,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       onCopy={() => copyToClipboard(results[result.key] || "0", result.key)}
                       disabled={!allFieldsFilled}
                     />
+
                   ))}
                 </>
               )}
