@@ -3,6 +3,9 @@ import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
+import { doc, updateDoc, increment, getDoc, setDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
+import { useAuth } from "../../context/useAuth"
 import CalculationResult from "../CalculationResult"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
@@ -10,7 +13,37 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
   const { success, error: toastError, info } = useToast()
+  const { user } = useAuth()
 
+  useEffect(() => {
+    if (!isOpen || !user?.uid || !calculation?.id) return
+
+    let cancelled = false
+
+    const registerView = async () => {
+      try {
+        const viewRef = doc(db, "calculations", calculation.id, "views", user.uid)
+        const viewSnap = await getDoc(viewRef)
+
+        if (!viewSnap.exists() && !cancelled) {
+          await setDoc(viewRef, { viewedAt: new Date() })
+
+          const calcRef = doc(db, "calculations", calculation.id)
+          await updateDoc(calcRef, {
+            views: increment(1)
+          })
+        }
+      } catch (err) {
+        console.error("Erro ao registrar visualização:", err)
+      }
+    }
+
+    registerView()
+
+    return () => {
+      cancelled = true // evita duplicação se o componente desmontar rapidamente
+    }
+  }, [isOpen, calculation?.id, user?.uid])
   const handleParamChange = (paramName, value) => {
     setParamValues(prev => ({ ...prev, [paramName]: value }))
   }
