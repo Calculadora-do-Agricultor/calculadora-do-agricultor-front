@@ -201,14 +201,9 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           numericValue = '';
         }
       }
-      // Aplica os limites min/max apenas se houver um valor numérico
+      // Aplica apenas o limite máximo se houver um valor numérico
       if (numericValue !== '') {
         const currentValue = parseFloat(numericValue);
-        if (param.min !== "" && currentValue < parseFloat(param.min)) {
-          const minValue = parseFloat(param.min);
-          const stepDecimals = param.step?.toString().split('.')[1]?.length || 2;
-          numericValue = Number(minValue.toFixed(stepDecimals)).toString();
-        }
         if (param.max !== "" && currentValue > parseFloat(param.max)) {
           const maxValue = parseFloat(param.max);
           const stepDecimals = param.step?.toString().split('.')[1]?.length || 2;
@@ -358,22 +353,17 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                               ? param.step
                               : undefined
                           }
-                          min={
-                            param.type === "number"
-                              ? param.min || undefined
-                              : undefined
-                          }
                           max={
                             param.type === "number"
                               ? param.max || undefined
                               : undefined
                           }
                         />
-                        {param.min !== "" && param.max !== "" && (
+                        {param.max !== "" && (
                           <div className="input-constraints">
                             <div className="constraint-range">
                               <span>
-                                Min: {param.min} | Max: {param.max}
+                                Max: {param.max}
                               </span>
                             </div>
                           </div>

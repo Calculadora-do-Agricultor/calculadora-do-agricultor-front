@@ -80,7 +80,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       description: "", 
       required: true, 
       options: [],
-      min: "",
       max: "",
       step: "0.01",
       mask: "#.##",
@@ -366,13 +365,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       updatedParameters[index] = {
         ...updatedParameters[index],
         [field]: value,
-        min: '',
         max: '',
         step: '0.01',
         mask: '',
         tooltip: 'Digite um valor numérico'
       }
-    } else if (field === 'min' || field === 'max' || field === 'step') {
+    } else if (field === 'max' || field === 'step') {
       // Validação para campos numéricos
       const numValue = value === '' ? '' : Number(value)
       if (!isNaN(numValue) || value === '') {
@@ -1161,84 +1159,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       </select>
                     </div>
 
-                    {param.type === "number" && (
-                      <div className="numeric-config">
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor={`param-${index}-min`} title="Valor mínimo permitido">
-                              Mínimo
-                            </label>
-                            <input
-                              type="number"
-                              id={`param-${index}-min`}
-                              value={param.min}
-                              onChange={(e) => updateParameter(index, "min", e.target.value)}
-                              placeholder="Valor mínimo"
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label htmlFor={`param-${index}-max`} title="Valor máximo permitido">
-                              Máximo
-                            </label>
-                            <input
-                              type="number"
-                              id={`param-${index}-max`}
-                              value={param.max}
-                              onChange={(e) => updateParameter(index, "max", e.target.value)}
-                              placeholder="Valor máximo"
-                            />
-                          </div>
-
-                          <div className="form-group">
-                            <label htmlFor={`param-${index}-step`} title="Incremento/decremento do valor">
-                              Incremento
-                            </label>
-                            <input
-                              type="number"
-                              id={`param-${index}-step`}
-                              value={param.step}
-                              onChange={(e) => updateParameter(index, "step", e.target.value)}
-                              min="0.01"
-                              step="0.01"
-                              placeholder="0.01"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor={`param-${index}-mask`} title="Use # para dígitos e . para decimal">
-                              Máscara
-                            </label>
-                            <input
-                              type="text"
-                              id={`param-${index}-mask`}
-                              value={param.mask}
-                              onChange={(e) => updateParameter(index, "mask", e.target.value)}
-                              placeholder="#.##"
-                            />
-                            {validationErrors.parameters[index]?.mask && (
-                              <div className="error-text">{validationErrors.parameters[index].mask}</div>
-                            )}
-                          </div>
-
-                          <div className="form-group">
-                            <label htmlFor={`param-${index}-tooltip`}>
-                              Tooltip
-                            </label>
-                            <input
-                              type="text"
-                              id={`param-${index}-tooltip`}
-                              value={param.tooltip}
-                              onChange={(e) => updateParameter(index, "tooltip", e.target.value)}
-                              placeholder="Mensagem de ajuda"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
                     <div className="form-group">
                       <label htmlFor={`param-unit-${index}`}>Unidade</label>
                       <input
@@ -1249,7 +1169,83 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                         onChange={(e) => updateParameter(index, "unit", e.target.value)}
                       />
                     </div>
+
+                    <div className="form-group form-checkbox">
+                      <input
+                        id={`param-required-${index}`}
+                        type="checkbox"
+                        checked={param.required}
+                        onChange={(e) => updateParameter(index, "required", e.target.checked)}
+                      />
+                      <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                    </div>
                   </div>
+
+                  {param.type === "number" && (
+                    <div className="numeric-config">
+                      <div className="form-row">
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-max`} title="Valor máximo permitido">
+                            Máximo
+                          </label>
+                          <input
+                            type="number"
+                            id={`param-${index}-max`}
+                            value={param.max}
+                            onChange={(e) => updateParameter(index, "max", e.target.value)}
+                            placeholder="Valor máximo"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-step`} title="Incremento/decremento do valor">
+                            Incremento
+                          </label>
+                          <input
+                            type="number"
+                            id={`param-${index}-step`}
+                            value={param.step}
+                            onChange={(e) => updateParameter(index, "step", e.target.value)}
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.01"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-mask`} title="Use # para dígitos e . para decimal">
+                            Máscara
+                          </label>
+                          <input
+                            type="text"
+                            id={`param-${index}-mask`}
+                            value={param.mask}
+                            onChange={(e) => updateParameter(index, "mask", e.target.value)}
+                            placeholder="#.##"
+                          />
+                          {validationErrors.parameters[index]?.mask && (
+                            <div className="error-text">{validationErrors.parameters[index].mask}</div>
+                          )}
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-tooltip`}>
+                            Tooltip
+                          </label>
+                          <input
+                            type="text"
+                            id={`param-${index}-tooltip`}
+                            value={param.tooltip}
+                            onChange={(e) => updateParameter(index, "tooltip", e.target.value)}
+                            placeholder="Mensagem de ajuda"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label htmlFor={`param-description-${index}`}>Descrição</label>
@@ -1260,16 +1256,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       onChange={(e) => updateParameter(index, "description", e.target.value)}
                       rows={2}
                     />
-                  </div>
-
-                  <div className="form-group form-checkbox">
-                    <input
-                      id={`param-required-${index}`}
-                      type="checkbox"
-                      checked={param.required}
-                      onChange={(e) => updateParameter(index, "required", e.target.checked)}
-                    />
-                    <label htmlFor={`param-required-${index}`}>Obrigatório</label>
                   </div>
 
                   {param.type === "select" && (

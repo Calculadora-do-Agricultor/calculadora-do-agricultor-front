@@ -78,7 +78,6 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       description: "", 
       required: true, 
       options: [],
-      min: "",
       max: "",
       step: "0.01",
       mask: "", // Máscara opcional
@@ -251,7 +250,6 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       description: "", 
       required: true, 
       options: [],
-      min: "",
       max: "",
       step: "0.01",
       mask: "", // Máscara opcional
@@ -278,13 +276,12 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       updatedParameters[index] = {
         ...updatedParameters[index],
         [field]: value,
-        min: '',
         max: '',
         step: '0.01',
         mask: '', // Máscara opcional
         tooltip: 'Digite um valor numérico'
       }
-    } else if (field === 'min' || field === 'max' || field === 'step') {
+    } else if (field === 'max' || field === 'step') {
       // Validação para campos numéricos
       const numValue = value === '' ? '' : Number(value)
       if (!isNaN(numValue) || value === '') {
@@ -1013,6 +1010,16 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                           onChange={(e) => updateParameter(index, "unit", e.target.value)}
                         />
                       </div>
+
+                      <div className="form-group form-checkbox">
+                        <input
+                          id={`param-required-${index}`}
+                          type="checkbox"
+                          checked={param.required}
+                          onChange={(e) => updateParameter(index, "required", e.target.checked)}
+                        />
+                        <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                      </div>
                     </div>
                   </div>
 
@@ -1027,33 +1034,10 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     />
                   </div>
 
-                  <div className="form-group form-checkbox">
-                    <input
-                      id={`param-required-${index}`}
-                      type="checkbox"
-                      checked={param.required}
-                      onChange={(e) => updateParameter(index, "required", e.target.checked)}
-                    />
-                    <label htmlFor={`param-required-${index}`}>Obrigatório</label>
-                  </div>
-
                   {param.type === "number" && (
                     <div className="numeric-config">
                       <div className="form-rows-container">
                         <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor={`param-min-${index}`}>Valor Mínimo</label>
-                            <input
-                              id={`param-min-${index}`}
-                              type="number"
-                              placeholder="Ex: 0"
-                              value={param.min}
-                              onChange={(e) => updateParameter(index, "min", e.target.value)}
-                              className={validationErrors.parameters[index]?.range ? "input-error" : ""}
-                              step="0.01"
-                            />
-                          </div>
-
                           <div className="form-group">
                             <label htmlFor={`param-max-${index}`}>Valor Máximo</label>
                             <input
