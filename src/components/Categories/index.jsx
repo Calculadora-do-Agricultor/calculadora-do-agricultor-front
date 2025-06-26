@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
-import { Search, Filter, Loader2, AlertTriangle, X } from "lucide-react"
+import { Search, Filter, Loader2, AlertTriangle, X, FolderPlus, SearchX } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
+import EmptyState from "../ui/EmptyState"
 
 const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
   // Add this style for hiding scrollbar in category names
@@ -21,7 +22,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
   const [filterOption, setFilterOption] = useState("all")
-  const { isAdmin, user } = useContext(AuthContext)
+  const { user, isAdmin } = useContext(AuthContext)
 
   // Estados para edição
   const [categoryToEdit, setCategoryToEdit] = useState(null)
@@ -97,9 +98,14 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg mx-2">
-        <p>Nenhuma categoria disponível.</p>
-      </div>
+      <EmptyState
+        type="category"
+        title="Nenhuma categoria cadastrada"
+        message="Clique no botão abaixo para adicionar uma nova categoria"
+        actionLabel="Adicionar Categoria"
+        onAction={() => window.location.href = '/categories/new'}
+        className="mx-2"
+      />
     )
   }
 
@@ -218,9 +224,17 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
               </div>
             ))
           ) : (
-            <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg">
-              <p>Nenhuma categoria encontrada.</p>
-            </div>
+            <EmptyState
+              icon={searchTerm ? SearchX : FolderPlus}
+              title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
+              message={searchTerm
+                ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
+                : isAdmin
+                  ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
+                  : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
+              actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
+              onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => setShowCreateCategory(true) : undefined}
+            />
           )}
         </div>
       </div>

@@ -11,7 +11,7 @@ import "./styles.css";
 
 const CalculationActions = ({ calculation, onEdit, onDelete }) => {
   const [showMenu, setShowMenu] = useState(false);
-  const { isAdmin, user } = useContext(AuthContext);
+  const { user, isAdmin } = useContext(AuthContext);
   const menuRef = useRef(null);
   
   // Verifica se o usuário atual é o criador do cálculo ou um administrador

@@ -1,5 +1,15 @@
 import { getAuthInstance, getDbInstance } from './firebaseOptimized';
 import { collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc, query } from 'firebase/firestore';
+import { 
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  reauthenticateWithCredential,
+  updateEmail,
+  updatePassword,
+  onAuthStateChanged,
+  EmailAuthProvider
+} from 'firebase/auth';
 
 // Sistema de notificação interno
 let toastInstance = null;
@@ -315,7 +325,7 @@ export const authWrapper = {
   async signInWithEmailAndPassword(email, password) {
     const auth = getAuthInstance();
     try {
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       return userCredential;
     } catch (error) {
       if (!isOnline) {
@@ -333,7 +343,7 @@ export const authWrapper = {
   async createUserWithEmailAndPassword(email, password) {
     const auth = getAuthInstance();
     try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       // Armazenar credenciais no cache local
       localStorage.setItem(`auth_${email}`, JSON.stringify(userCredential));
       return userCredential;
@@ -349,7 +359,7 @@ export const authWrapper = {
   async signOut() {
     const auth = getAuthInstance();
     try {
-      await auth.signOut();
+      await signOut(auth);
       // Limpar cache local de autenticação
       Object.keys(localStorage)
         .filter(key => key.startsWith('auth_'))
@@ -361,9 +371,12 @@ export const authWrapper = {
   },
 
   // Reautenticar usuário
-  async reauthenticateWithCredential(user, credential) {
+  async reauthenticate(password) {
+    const auth = getAuthInstance();
+    const user = auth.currentUser;
+    const credential = EmailAuthProvider.credential(user.email, password);
     try {
-      await user.reauthenticateWithCredential(credential);
+      await reauthenticateWithCredential(user, credential);
     } catch (error) {
       if (!isOnline) {
         throw new Error('Não é possível reautenticar offline');
@@ -373,9 +386,11 @@ export const authWrapper = {
   },
 
   // Atualizar email
-  async updateEmail(user, newEmail) {
+  async updateEmail(newEmail) {
+    const auth = getAuthInstance();
+    const user = auth.currentUser;
     try {
-      await user.verifyBeforeUpdateEmail(newEmail);
+      await updateEmail(user, newEmail);
     } catch (error) {
       if (!isOnline) {
         throw new Error('Não é possível atualizar o email offline');
@@ -385,9 +400,11 @@ export const authWrapper = {
   },
 
   // Atualizar senha
-  async updatePassword(user, newPassword) {
+  async updatePassword(newPassword) {
+    const auth = getAuthInstance();
+    const user = auth.currentUser;
     try {
-      await user.updatePassword(newPassword);
+      await updatePassword(user, newPassword);
     } catch (error) {
       if (!isOnline) {
         throw new Error('Não é possível atualizar a senha offline');

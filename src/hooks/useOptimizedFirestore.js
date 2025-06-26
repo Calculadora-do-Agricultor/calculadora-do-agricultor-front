@@ -148,21 +148,154 @@ export const useOptimizedFirestore = (collectionName, queryOptions = {}) => {
 
 /**
  * Hook específico para buscar categorias com cálculos otimizado
+ * Inclui verificação de integridade de dados
  */
 export const useOptimizedCategories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [integrityIssues, setIntegrityIssues] = useState([]);
+  const [integrityChecked, setIntegrityChecked] = useState(false);
+
+  // Esquema de validação para categorias
+  const categorySchema = {
+    required: ['name'],
+    optional: ['description', 'createdAt', 'updatedAt']
+  };
+
+  // Esquema de validação para cálculos
+  const calculationSchema = {
+    required: ['name', 'parameters', 'results'],
+    optional: ['description', 'createdAt', 'updatedAt', 'tags', 'categoryIds']
+  };
+
+  /**
+   * Verifica se um objeto atende aos requisitos do esquema
+   * @param {Object} data - Objeto a ser validado
+   * @param {Object} schema - Esquema de validação
+   * @returns {Object} - Resultado da validação {isValid, missingFields}
+   */
+  const validateAgainstSchema = useCallback((data, schema) => {
+    const missingFields = [];
+    
+    // Verifica campos obrigatórios
+    for (const field of schema.required) {
+      if (data[field] === undefined || data[field] === null || 
+          (typeof data[field] === 'string' && data[field].trim() === '')) {
+        missingFields.push(field);
+      }
+    }
+    
+    return {
+      isValid: missingFields.length === 0,
+      missingFields
+    };
+  }, []);
+
+  /**
+   * Verifica referências entre categorias e cálculos
+   * @param {Array} calculations - Lista de cálculos
+   * @param {Array} categories - Lista de categorias
+   * @returns {Array} - Lista de problemas de referência encontrados
+   */
+  const validateReferences = useCallback((calculations, categories) => {
+    const issues = [];
+    const categoryIds = new Set(categories.map(cat => cat.id));
+    
+    calculations.forEach(calc => {
+      // Verifica se as categorias referenciadas existem
+      if (calc.categoryIds && Array.isArray(calc.categoryIds)) {
+        calc.categoryIds.forEach(catId => {
+          if (!categoryIds.has(catId)) {
+            issues.push({
+              type: 'reference',
+              calculationId: calc.id,
+              calculationName: calc.name,
+              message: `Referência inválida: categoria com ID ${catId} não existe`,
+              field: 'categoryIds',
+              value: catId
+            });
+          }
+        });
+      }
+      
+      // Verifica se a categoriaId principal existe
+      if (calc.categoriaId && !categoryIds.has(calc.categoriaId)) {
+        issues.push({
+          type: 'reference',
+          calculationId: calc.id,
+          calculationName: calc.name,
+          message: `Referência inválida: categoria principal com ID ${calc.categoriaId} não existe`,
+          field: 'categoriaId',
+          value: calc.categoriaId
+        });
+      }
+    });
+    
+    return issues;
+  }, []);
+
+  /**
+   * Verifica a integridade dos dados carregados
+   * @param {Array} categoriesData - Lista de categorias
+   * @param {Array} calculationsData - Lista de cálculos
+   * @returns {Array} - Lista de problemas encontrados
+   */
+  const checkDataIntegrity = useCallback((categoriesData, calculationsData) => {
+    const issues = [];
+    
+    // Verifica integridade das categorias
+    categoriesData.forEach(category => {
+      const validation = validateAgainstSchema(category, categorySchema);
+      
+      if (!validation.isValid) {
+        validation.missingFields.forEach(field => {
+          issues.push({
+            type: 'missing_field',
+            categoryId: category.id,
+            categoryName: category.name || 'Categoria sem nome',
+            field,
+            message: `Campo obrigatório ausente: ${field}`
+          });
+        });
+      }
+    });
+    
+    // Verifica integridade dos cálculos
+    calculationsData.forEach(calculation => {
+      // Verifica campos obrigatórios do cálculo
+      const calcValidation = validateAgainstSchema(calculation, calculationSchema);
+      
+      if (!calcValidation.isValid) {
+        calcValidation.missingFields.forEach(field => {
+          issues.push({
+            type: 'missing_field',
+            calculationId: calculation.id,
+            calculationName: calculation.name || 'Cálculo sem nome',
+            field,
+            message: `Campo obrigatório ausente: ${field}`
+          });
+        });
+      }
+    });
+    
+    // Verifica referências entre documentos
+    const referenceIssues = validateReferences(calculationsData, categoriesData);
+    issues.push(...referenceIssues);
+    
+    return issues;
+  }, [validateAgainstSchema, validateReferences]);
 
   const fetchCategoriesWithCalculations = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setIntegrityIssues([]);
 
     try {
       // Buscar categorias e cálculos em paralelo
       const [categoriesSnapshot, calculationsSnapshot] = await Promise.all([
-        getDocs(collection(db, 'categorias')),
-        getDocs(collection(db, 'calculos'))
+        getDocs(collection(db, 'categories')),
+        getDocs(collection(db, 'calculations'))
       ]);
 
       const categoriesData = categoriesSnapshot.docs.map(doc => ({
@@ -176,13 +309,30 @@ export const useOptimizedCategories = () => {
         ...doc.data()
       }));
 
+      // Verificar integridade dos dados
+      const issues = checkDataIntegrity(categoriesData, calculationsData);
+      setIntegrityIssues(issues);
+      setIntegrityChecked(true);
+      
+      // Registrar problemas no console para depuração
+      if (issues.length > 0) {
+        console.warn(`Encontrados ${issues.length} problemas de integridade nos dados:`, issues);
+      }
+
       // Agrupar cálculos por categoria
       const categoriesMap = new Map(categoriesData.map(cat => [cat.id, cat]));
       
       calculationsData.forEach(calc => {
+        // Verificar se a categoria existe antes de adicionar o cálculo
         const category = categoriesMap.get(calc.categoriaId);
         if (category) {
           category.calculos.push(calc);
+        } else if (calc.categoryIds && Array.isArray(calc.categoryIds) && calc.categoryIds.length > 0) {
+          // Fallback: usar a primeira categoria da lista de categoryIds
+          const fallbackCategory = categoriesMap.get(calc.categoryIds[0]);
+          if (fallbackCategory) {
+            fallbackCategory.calculos.push(calc);
+          }
         }
       });
 
@@ -193,7 +343,7 @@ export const useOptimizedCategories = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [checkDataIntegrity]);
 
   useEffect(() => {
     fetchCategoriesWithCalculations();
@@ -203,6 +353,8 @@ export const useOptimizedCategories = () => {
     categories,
     loading,
     error,
+    integrityIssues,
+    integrityChecked,
     refetch: fetchCategoriesWithCalculations
   };
 };

@@ -1,8 +1,9 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
 import { AuthContext } from '../../context/AuthContext';
+import { AdminContext } from '../../context/AdminContext';
 import { 
   Users, 
   Calculator, 
@@ -32,7 +33,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [metrics, setMetrics] = useState({

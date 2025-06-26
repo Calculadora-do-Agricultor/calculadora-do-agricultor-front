@@ -7,7 +7,7 @@ import { AuthContext } from "../../context/AuthContext";
 import "./styles.css";
 
 const CategoryActions = ({ category, onEdit }) => {
-  const { isAdmin, user } = useContext(AuthContext);
+  const { user, isAdmin } = useContext(AuthContext);
   
   // Verifica se o usuário atual é o criador da categoria ou um administrador
   const canEdit = isAdmin || (user && category.createdBy === user.uid);

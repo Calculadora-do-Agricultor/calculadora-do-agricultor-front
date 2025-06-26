@@ -1,12 +1,13 @@
 import React, { createContext, useState, useEffect } from "react";
 import { authWrapper, firestoreWrapper } from "../services/firebaseWrapper";
-// Não precisa importar doc e updateDoc se usar firestoreWrapper.updateDocument
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const [preferences, setPreferences] = useState({
     theme: "light",
     hideFooter: false,
@@ -27,7 +28,6 @@ export const AuthProvider = ({ children }) => {
       profileVisibility: "private"
     }
   });
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const unsubscribe = authWrapper.onAuthStateChanged(async (firebaseUser) => {
@@ -48,6 +48,7 @@ export const AuthProvider = ({ children }) => {
               await authWrapper.signOut();
               setUser(null);
               setIsAdmin(false);
+
               setLoading(false);
 
               // Dispara um evento customizado para mostrar mensagem de conta desativada
@@ -58,9 +59,8 @@ export const AuthProvider = ({ children }) => {
             }
 
             setUser({ uid: firebaseUser.uid, ...userData });
+            setIsAdmin(userData.role === 'admin');
 
-            // Verificar se o usuário é administrador
-            setIsAdmin(userData.role === "admin");
 
             // Carregar as preferências do usuário, se existirem
             if (userData.preferences) {
@@ -98,20 +98,20 @@ export const AuthProvider = ({ children }) => {
               }
             }
           } else { // Caso userData seja null (usuário existe no auth, mas não no Firestore)
-             setUser(null); // Opcional: pode ser que você queira deslogar ou tratar diferente
+             setUser(null);
              setIsAdmin(false);
           }
         } catch (error) {
           console.error("Erro ao carregar dados do usuário Firestore:", error);
           // Trate erros de leitura do Firestore (ex: exibir mensagem, deslogar)
           setUser(null);
-          setIsAdmin(false);
         } finally { // Adicione um finally para garantir que loading seja false
            setLoading(false);
         }
       } else {
         // Se não estiver logado, resetar para valores padrão
         setUser(null);
+        setIsAdmin(false);
         setPreferences({
           theme: "light",
           hideFooter: false,
@@ -132,7 +132,6 @@ export const AuthProvider = ({ children }) => {
             profileVisibility: "private"
           }
         });
-        setIsAdmin(false);
         setLoading(false); // Garante que loading seja false mesmo sem usuário
       }
     });
@@ -166,11 +165,11 @@ export const AuthProvider = ({ children }) => {
     <AuthContext.Provider value={{
       user,
       loading,
+      isAdmin,
       preferences,
       updatePreferences,
       hideFooter: preferences.hideFooter,
-      toggleHideFooter,
-      isAdmin
+      toggleHideFooter
     }}>
       {children}
     </AuthContext.Provider>

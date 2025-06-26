@@ -20,6 +20,7 @@ const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
 
 // Componente de loading otimizado
@@ -48,12 +49,12 @@ function App() {
   return (
     <Router>
       <ToastProvider>
-        <ToastInitializer />
-        <div className="flex min-h-screen w-full flex-col">
-          <Navbar />
-          <main className="flex-grow pt-20">
-            <Suspense fallback={<PageLoader />}>
-            <Routes>
+          <ToastInitializer />
+          <div className="flex min-h-screen w-full flex-col">
+            <Navbar />
+            <main className="flex-grow pt-20">
+              <Suspense fallback={<PageLoader />}>
+              <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/glossario" element={<GlossarioPage />} />
               <Route
@@ -121,11 +122,19 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/data-integrity"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <DataIntegrityPage />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
-          </Suspense>
-          </main>
-          <Footer />
-        </div>
+            </Suspense>
+            </main>
+            <Footer />
+          </div>
       </ToastProvider>
     </Router>
     );
