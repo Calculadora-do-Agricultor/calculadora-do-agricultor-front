@@ -12,7 +12,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { Tooltip } from "../ui/Tooltip";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import DraggableList from "../DraggableList";
 import {
@@ -20,23 +20,63 @@ import {
   normalizeMathFunctions,
   validateExpression,
 } from "../../utils/mathEvaluator";
+import { useCalculationResult } from "../../hooks/useCalculationResult";
+import { useFormParameters } from "../../hooks/useFormParameters";
+import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/useAuth";
+import CalculationResult from "../CalculationResult";
 import "./styles.css";
 
-/**
- * Componente de Modal para exibição e interação com cálculos
- * @param {Object} props
- * @param {Object} props.calculation - Objeto contendo os dados do cálculo
- * @param {boolean} props.isOpen - Estado que controla se o modal está aberto
- * @param {Function} props.onClose - Função para fechar o modal
- */
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
+  // Estados da branch feat/validador-parametros-calculo
   const [paramValues, setParamValues] = useState({});
   const [results, setResults] = useState({});
   const [copied, setCopied] = useState({});
   const [allFieldsFilled, setAllFieldsFilled] = useState(false);
   const modalRef = useRef(null);
 
-  // Inicializa os valores dos parâmetros quando o cálculo muda
+  // Hooks da branch develop
+  const { success, error: toastError, info } = useToast();
+  const { user } = useAuth();
+
+  // useEffect para registrar visualização (da branch develop)
+  useEffect(() => {
+    if (!isOpen || !user?.uid || !calculation?.id) return;
+
+    let cancelled = false;
+
+    const registerView = async () => {
+      try {
+        const viewRef = doc(
+          db,
+          "calculations",
+          calculation.id,
+          "views",
+          user.uid,
+        );
+        const viewSnap = await getDoc(viewRef);
+
+        if (!viewSnap.exists() && !cancelled) {
+          await setDoc(viewRef, { viewedAt: new Date() });
+
+          const calcRef = doc(db, "calculations", calculation.id);
+          await updateDoc(calcRef, {
+            views: increment(1),
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao registrar visualização:", err);
+      }
+    };
+
+    registerView();
+
+    return () => {
+      cancelled = true; // evita duplicação se o componente desmontar rapidamente
+    };
+  }, [isOpen, calculation?.id, user?.uid]);
+
+  // useEffect para inicializar valores (da branch feat/validador-parametros-calculo)
   useEffect(() => {
     if (calculation && calculation.parameters) {
       const initialValues = {};
@@ -158,7 +198,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
         context[key] = Number.parseFloat(values[key]) || 0;
       });
 
-      // Valida a expressão antes de calcularAdd commentMore actions
+      // Valida a expressão antes de calcular
       const validation = validateExpression(expression, context);
       if (!validation.isValid) {
         console.error("Erro de validação:", validation.errorMessage);
@@ -176,12 +216,12 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
     }
   };
 
-  // Atualiza o valor de um parâmetro
+  // Atualiza o valor de um parâmetro (versão completa da branch feat/validador-parametros-calculo)
   const handleParamChange = (paramName, value, param) => {
-    if (param.type === "number") {
+    if (param && param.type === "number") {
       let numericValue = value;
       // Só processa o valor se não estiver vazio
-      if (value !== '') {
+      if (value !== "") {
         const numValue = parseFloat(numericValue);
         if (!isNaN(numValue)) {
           // Aplica a máscara (step) apenas se estiver definida no parâmetro
@@ -189,26 +229,30 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             const step = parseFloat(param.step);
             if (!isNaN(step)) {
               // Determina o número de casas decimais do step
-              const stepDecimals = param.step.toString().split('.')[1]?.length || 0;
+              const stepDecimals =
+                param.step.toString().split(".")[1]?.length || 0;
               // Arredonda o valor de acordo com o step e mantém as casas decimais
               const roundedValue = Math.round(numValue / step) * step;
               // Limita o número de casas decimais para evitar zeros extras
-              numericValue = Number(roundedValue.toFixed(stepDecimals)).toString();
+              numericValue = Number(
+                roundedValue.toFixed(stepDecimals),
+              ).toString();
             }
           } else {
             // Se não tiver step, limita a 2 casas decimais
             numericValue = Number(numValue.toFixed(2)).toString();
           }
         } else {
-          numericValue = '';
+          numericValue = "";
         }
       }
       // Aplica apenas o limite máximo se houver um valor numérico
-      if (numericValue !== '') {
+      if (numericValue !== "") {
         const currentValue = parseFloat(numericValue);
         if (param.max !== "" && currentValue > parseFloat(param.max)) {
           const maxValue = parseFloat(param.max);
-          const stepDecimals = param.step?.toString().split('.')[1]?.length || 2;
+          const stepDecimals =
+            param.step?.toString().split(".")[1]?.length || 2;
           numericValue = Number(maxValue.toFixed(stepDecimals)).toString();
         }
       }
@@ -224,28 +268,37 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
     }
   };
 
-  // Copia o resultado para a área de transferência
-  const copyToClipboard = (text, resultId) => {
+  // Copia o resultado para a área de transferência (combinando ambas as versões)
+  const copyToClipboard = (text, resultId, resultName) => {
     navigator.clipboard.writeText(text).then(
       () => {
         setCopied((prev) => ({
           ...prev,
           [resultId]: true,
-        })); // <-- Adicionado ponto e vírgula aqui
+        }));
         setTimeout(() => {
           setCopied((prev) => ({
             ...prev,
             [resultId]: false,
           }));
         }, 2000);
+        // Toast de sucesso da branch develop
+        if (success) {
+          success(
+            `Valor "${resultName || "Resultado"}" copiado para a área de transferência!`,
+          );
+        }
       },
       (err) => {
         console.error("Erro ao copiar texto: ", err);
+        if (toastError) {
+          toastError("Não foi possível copiar o resultado. Tente novamente.");
+        }
       },
     );
   };
 
-  // Fecha o modal ao pressionar ESC e controla o scroll do body
+  // useEffect para controle de ESC e scroll
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape") onClose();
@@ -259,13 +312,18 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       // Restaura o scroll do body quando o modal é fechado
       document.body.style.overflow = "unset";
     }
-
-    // Cleanup function para garantir que o scroll seja restaurado
     return () => {
       window.removeEventListener("keydown", handleEsc);
       document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose]);
+
+  // useEffect para toast de feedback (da branch develop)
+  useEffect(() => {
+    if (allFieldsFilled && Object.keys(results).length > 0 && info) {
+      info("Cálculo realizado com sucesso!");
+    }
+  }, [allFieldsFilled, results, info]);
 
   if (!isOpen || !calculation) return null;
 
@@ -278,8 +336,8 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
               <Calculator size={24} />
             </div>
             <div>
-              <h2>{calculation.name || "Cálculo"}</h2>
-              <p>{calculation.description || "Descrição do cálculo"}</p>
+              <h2>{calculation.name || "Calculation"}</h2>
+              <p>{calculation.description || "Calculation description"}</p>
             </div>
           </div>
           <button
@@ -298,13 +356,11 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
               <div className="section-badge">
                 {allFieldsFilled ? (
                   <span className="badge success">
-                    <Check size={14} />
-                    Completo
+                    <Check size={14} /> Completo
                   </span>
                 ) : (
                   <span className="badge warning">
-                    <Info size={14} />
-                    Preencha todos os campos
+                    <Info size={14} /> Preencha todos os campos
                   </span>
                 )}
               </div>
@@ -322,13 +378,13 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       )}
                       {param.tooltip && (
                         <Tooltip content={param.tooltip} position="top">
-                          <HelpCircle 
-                            size={16} 
+                          <HelpCircle
+                            size={16}
                             className="tooltip-icon"
                             style={{
-                              marginLeft: '6px',
-                              color: '#6b7280',
-                              cursor: 'help'
+                              marginLeft: "6px",
+                              color: "#6b7280",
+                              cursor: "help",
                             }}
                           />
                         </Tooltip>
@@ -364,9 +420,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                           }
                           title={param.tooltip || param.description}
                           step={
-                            param.type === "number"
-                              ? param.step
-                              : undefined
+                            param.type === "number" ? param.step : undefined
                           }
                           max={
                             param.type === "number"
@@ -374,18 +428,18 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                               : undefined
                           }
                         />
-                        {param.max && param.max !== "" && param.max !== null && param.max !== undefined && (
-                          <div className="input-constraints">
-                            <div className="constraint-range">
-                              <span>
-                                Max: {param.max}
-                              </span>
+                        {param.max &&
+                          param.max !== "" &&
+                          param.max !== null &&
+                          param.max !== undefined && (
+                            <div className="input-constraints">
+                              <div className="constraint-range">
+                                <span>Max: {param.max}</span>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     )}
-
                   </div>
                 ))}
             </div>
@@ -403,107 +457,60 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             >
               {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
               {calculation.results && calculation.results.length > 0 ? (
-                // Novo formato: múltiplos resultados
+                // Novo formato: múltiplos resultados - usando CalculationResult component
                 Object.keys(results).map((key) => (
-                  <div key={key} className="calculation-result">
-                    <div className="calculation-result-label">
-                      <span className="result-name">{results[key].name}</span>
-                      {results[key].unit && (
-                        <span className="unit">({results[key].unit})</span>
-                      )}
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results[key].value || "0"}</span>
-                      <button
-                        onClick={() =>
-                          copyToClipboard(
-                            results[key].value?.toString() || "0",
-                            key,
-                          )
-                        }
-                        className={`copy-button ${copied[key] ? "copied" : ""}`}
-                        aria-label="Copiar resultado"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied[key] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">
-                          {copied[key] ? "Copiado" : "Copiar"}
-                        </span>
-                      </button>
-                    </div>
-
-                  </div>
+                  <CalculationResult
+                    key={key}
+                    name={results[key]?.name}
+                    value={results[key]?.value}
+                    unit={results[key]?.unit}
+                    description={results[key]?.description}
+                    copied={copied[key]}
+                    onCopy={() =>
+                      copyToClipboard(
+                        results[key]?.value || "0",
+                        key,
+                        results[key]?.name,
+                      )
+                    }
+                    disabled={!allFieldsFilled}
+                  />
                 ))
               ) : (
-                // Formato antigo: resultado único
                 <>
-                  <div className="calculation-result primary">
-                    <div className="calculation-result-label">
-                      <span className="result-name">
-                        {calculation.resultName || "Resultado"}
-                      </span>
-                      <span className="unit">
-                        {calculation.resultUnit || ""}
-                      </span>
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results.value || "0"}</span>
-                      <button
-                        onClick={() =>
-                          copyToClipboard(
-                            results.value?.toString() || "0",
-                            "main",
-                          )
-                        }
-                        className={`copy-button ${copied["main"] ? "copied" : ""}`}
-                        aria-label="Copiar resultado"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied["main"] ? (
-                          <Check size={16} />
-                        ) : (
-                          <Copy size={16} />
-                        )}
-                        <span className="copy-text">
-                          {copied["main"] ? "Copiado" : "Copiar"}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
+                  <CalculationResult
+                    name={calculation.resultName || "Resultado"}
+                    value={results.value || "0"}
+                    unit={calculation.resultUnit || ""}
+                    copied={copied["main"]}
+                    onCopy={() =>
+                      copyToClipboard(
+                        results.value || "0",
+                        "main",
+                        calculation.resultName || "Resultado",
+                      )
+                    }
+                    disabled={!allFieldsFilled}
+                    primary
+                  />
 
-                  {/* Resultados adicionais (formato antigo) */}
-                  {calculation.additionalResults &&
-                    calculation.additionalResults.map((result, index) => (
-                      <div key={index} className="calculation-result secondary">
-                        <div className="calculation-result-label">
-                          <span className="result-name">{result.name}</span>
-                          <span className="unit">{result.unit}</span>
-                        </div>
-                        <div className="calculation-result-value">
-                          <span>{results[result.key] || "0"}</span>
-                          <button
-                            onClick={() =>
-                              copyToClipboard(
-                                results[result.key]?.toString() || "0",
-                                result.key,
-                              )
-                            }
-                            className={`copy-button ${copied[result.key] ? "copied" : ""}`}
-                            aria-label="Copiar resultado"
-                            disabled={!allFieldsFilled}
-                          >
-                            {copied[result.key] ? (
-                              <Check size={16} />
-                            ) : (
-                              <Copy size={16} />
-                            )}
-                            <span className="copy-text">
-                              {copied[result.key] ? "Copiado" : "Copiar"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                  {calculation.additionalResults?.map((result, index) => (
+                    <CalculationResult
+                      key={index}
+                      name={result.name}
+                      value={results[result.key] || "0"}
+                      unit={result.unit}
+                      copied={copied[result.key]}
+                      onCopy={() =>
+                        copyToClipboard(
+                          results[result.key] || "0",
+                          result.key,
+                          result.name,
+                        )
+                      }
+                      disabled={!allFieldsFilled}
+                    />
+                  ))}
                 </>
               )}
             </div>

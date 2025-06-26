@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, doc, getDoc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -35,6 +36,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
@@ -837,6 +841,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   
   // Função para atualizar o cálculo
   const handleUpdateCalculation = async () => {
+    // Valida o formulário
+    if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
+      return
+    }
+    
     try {
       setLoading(true);
       
@@ -868,10 +878,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         lastModified: new Date(),
       });
       setSuccess(true);
+      toastSuccess(`Cálculo "${calculationName}" atualizado com sucesso!`);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Erro ao atualizar cálculo:", error);
       setError("Erro ao atualizar cálculo. Tente novamente.");
+      toastError("Falha ao atualizar cálculo. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
