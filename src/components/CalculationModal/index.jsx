@@ -2,14 +2,48 @@ import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
 import { useToast } from "../../context/ToastContext"
+import { doc, updateDoc, increment, getDoc, setDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
+import { useAuth } from "../../context/useAuth"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
   const { success, error: toastError, info } = useToast()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (!isOpen || !user?.uid || !calculation?.id) return
+
+    let cancelled = false
+
+    const registerView = async () => {
+      try {
+        const viewRef = doc(db, "calculations", calculation.id, "views", user.uid)
+        const viewSnap = await getDoc(viewRef)
+
+        if (!viewSnap.exists() && !cancelled) {
+          await setDoc(viewRef, { viewedAt: new Date() })
+
+          const calcRef = doc(db, "calculations", calculation.id)
+          await updateDoc(calcRef, {
+            views: increment(1)
+          })
+        }
+      } catch (err) {
+        console.error("Erro ao registrar visualização:", err)
+      }
+    }
+
+    registerView()
+
+    return () => {
+      cancelled = true // evita duplicação se o componente desmontar rapidamente
+    }
+  }, [isOpen, calculation?.id, user?.uid])
 
   const handleParamChange = (paramName, value) => {
     setParamValues(prev => ({ ...prev, [paramName]: value }))
@@ -43,7 +77,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
-  
+
   useEffect(() => {
     if (error) {
       toastError("Erro no cálculo: " + error)
@@ -132,7 +166,6 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
 
               {calculation.results && calculation.results.length > 0 ? (
                 Object.keys(results).map(key => (
-
                   <CalculationResult
                     key={key}
                     name={results[key]?.name}
@@ -166,16 +199,14 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       onCopy={() => copyToClipboard(results[result.key] || "0", result.key)}
                       disabled={!allFieldsFilled}
                     />
-
                   ))}
                 </>
               )}
-
             </div>
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }
 
