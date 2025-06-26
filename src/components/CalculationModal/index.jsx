@@ -9,7 +9,9 @@ import {
   Calendar,
   User,
   Eye,
+  HelpCircle,
 } from "lucide-react";
+import { Tooltip } from "../ui/Tooltip";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import DraggableList from "../DraggableList";
@@ -318,6 +320,19 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                       {param.unit && (
                         <span className="unit">({param.unit})</span>
                       )}
+                      {param.tooltip && (
+                        <Tooltip content={param.tooltip} position="top">
+                          <HelpCircle 
+                            size={16} 
+                            className="tooltip-icon"
+                            style={{
+                              marginLeft: '6px',
+                              color: '#6b7280',
+                              cursor: 'help'
+                            }}
+                          />
+                        </Tooltip>
+                      )}
                     </label>
                     {param.type === "select" ? (
                       <select
@@ -359,7 +374,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                               : undefined
                           }
                         />
-                        {param.max !== "" && (
+                        {param.max && param.max !== "" && param.max !== null && param.max !== undefined && (
                           <div className="input-constraints">
                             <div className="constraint-range">
                               <span>
@@ -370,11 +385,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                         )}
                       </div>
                     )}
-                    {param.description && (
-                      <div className="parameter-description">
-                        {param.description}
-                      </div>
-                    )}
+
                   </div>
                 ))}
             </div>
@@ -420,11 +431,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                         </span>
                       </button>
                     </div>
-                    {results[key].description && (
-                      <div className="calculation-result-description">
-                        {results[key].description}
-                      </div>
-                    )}
+
                   </div>
                 ))
               ) : (
