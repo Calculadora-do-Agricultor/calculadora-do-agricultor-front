@@ -4,6 +4,7 @@ import { useState } from "react"
 import { collection, addDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import { X, Plus, AlertCircle, Loader2 } from "lucide-react"
+import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 
 const CreateCategory = ({ onCreate, onCancel }) => {
@@ -11,6 +12,7 @@ const CreateCategory = ({ onCreate, onCancel }) => {
   const [categoryDescription, setCategoryDescription] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { success, error: toastError } = useToast()
 
   const handleCreateCategory = async () => {
     // Validação
@@ -34,10 +36,12 @@ const CreateCategory = ({ onCreate, onCancel }) => {
       setCategoryName("")
       setCategoryDescription("")
 
+      success(`Categoria criada com sucesso!`)
       if (onCreate) onCreate()
     } catch (err) {
       console.error("Erro ao criar categoria:", err)
       setError("Ocorreu um erro ao criar a categoria. Por favor, tente novamente.")
+      toastError("Falha ao criar categoria. Tente novamente.")
     } finally {
       setIsSubmitting(false)
     }

@@ -68,6 +68,22 @@ const NavLinks = ({ user }) => {
                   role="menu"
                 >
                   <Link
+                    to="/admin/dashboard"
+                    className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/dashboard' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
+                    role="menuitem"
+                    onClick={() => setAdminMenuOpen(false)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <rect width="7" height="9" x="3" y="3" rx="1" />
+                        <rect width="7" height="5" x="14" y="3" rx="1" />
+                        <rect width="7" height="9" x="14" y="12" rx="1" />
+                        <rect width="7" height="5" x="3" y="16" rx="1" />
+                      </svg>
+                      <span>Dashboard</span>
+                    </div>
+                  </Link>
+                  <Link
                     to="/admin/logs"
                     className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/logs' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
                     role="menuitem"
