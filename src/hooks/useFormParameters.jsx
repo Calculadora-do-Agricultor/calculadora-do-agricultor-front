@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react"
 
 /**
- * Hook para gerenciar os parâmetros do formulário de cálculo.
- * @param {Object} calculation - Objeto de cálculo com a lista de parâmetros
+ * Hook to manage calculation form parameters.
+ * @param {Object} calculation - Calculation object with parameter list
  */
-export function useParametrosFormulario(calculation) {
+export function useFormParameters(calculation) {
   const [paramValues, setParamValues] = useState({})
   const [allFieldsFilled, setAllFieldsFilled] = useState(false)
 
-  // Inicializa os valores dos parâmetros ao carregar novo cálculo
+  // Initialize parameter values when loading new calculation
   useEffect(() => {
     if (calculation?.parameters) {
       const initialValues = {}
@@ -20,7 +20,7 @@ export function useParametrosFormulario(calculation) {
     }
   }, [calculation])
 
-  // Verifica se todos os campos estão preenchidos
+  // Check if all fields are filled
   useEffect(() => {
     if (calculation?.parameters) {
       const filled = calculation.parameters.every(
@@ -30,7 +30,7 @@ export function useParametrosFormulario(calculation) {
     }
   }, [paramValues, calculation])
 
-  // Atualiza valor de um parâmetro
+  // Update a parameter value
   const setParamValue = (name, value) => {
     setParamValues((prev) => ({
       ...prev,

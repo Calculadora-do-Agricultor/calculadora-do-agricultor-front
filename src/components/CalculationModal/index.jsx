@@ -2,10 +2,10 @@ import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
 import "./styles.css"
-  import { useParametrosFormulario } from "../../hooks/useFormParameters"
+import { useFormParameters } from "../../hooks/useFormParameters"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-const { paramValues, setParamValue, allFieldsFilled } = useParametrosFormulario(calculation)
+const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
 const { results, error } = useCalculationResult(calculation, paramValues, allFieldsFilled)
 
   const modalRef = useRef(null)
@@ -49,8 +49,8 @@ const handleParamChange = setParamValue
           <div className="calculation-modal-title">
             <div className="calculation-modal-icon"><Calculator size={24} /></div>
             <div>
-              <h2>{calculation.name || "Calculation"}</h2>
-              <p>{calculation.description || "Calculation description"}</p>
+              <h2>{calculation.name || "Cálculo"}</h2>
+              <p>{calculation.description || "Nenhuma descrição disponível"}</p>
             </div>
           </div>
           <button onClick={onClose} className="calculation-modal-close" aria-label="Close">
@@ -61,15 +61,15 @@ const handleParamChange = setParamValue
         <div className="calculation-modal-content">
           <div className="calculation-modal-section">
             <div className="section-header">
-              <h3>Parameters</h3>
+              <h3>Parâmetros</h3>
               <div className="section-badge">
                 {allFieldsFilled ? (
                   <span className="badge success">
-                    <Check size={14} /> Complete
+                    <Check size={14} /> Completo
                   </span>
                 ) : (
                   <span className="badge warning">
-                    <Info size={14} /> Fill all fields
+                    <Info size={14} /> Preencha todos os campos
                   </span>
                 )}
               </div>
@@ -87,7 +87,7 @@ const handleParamChange = setParamValue
                       value={paramValues[param.name] || ""}
                       onChange={e => handleParamChange(param.name, e.target.value)}
                     >
-                      <option value="">Select an option</option>
+                      <option value="">Selecione uma opção</option>
                       {param.options?.map((opt, idx) => (
                         <option key={idx} value={opt.value}>
                           {opt.label}
@@ -100,7 +100,7 @@ const handleParamChange = setParamValue
                       type="number"
                       value={paramValues[param.name] || ""}
                       onChange={e => handleParamChange(param.name, e.target.value)}
-                      placeholder={`Enter ${param.name.toLowerCase()}`}
+                      placeholder={`Digite ${param.name.toLowerCase()}`}
                     />
                   )}
                 </div>
@@ -112,41 +112,40 @@ const handleParamChange = setParamValue
 
           <div className="calculation-modal-section">
             <div className="section-header">
-              <h3>Results</h3>
+              <h3>Resultados</h3>
             </div>
 
             <div className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}>
-              {error && <p style={{ color: "red" }}>{error}</p>}
+              {error && <p className="error-message">{error}</p>}
 
-              {calculation.results && calculation.results.length > 0 ? (
-                Object.keys(results).map(key => (
-                  <div key={key} className="calculation-result">
-                    <div className="calculation-result-label">
-                      <span className="result-name">{results[key]?.name}</span>
-                      {results[key]?.unit && <span className="unit">({results[key]?.unit})</span>}
-                    </div>
-                    <div className="calculation-result-value">
-                      <span>{results[key]?.value || "0"}</span>
-                      <button
-                        onClick={() => copyToClipboard(results[key]?.value || "0", key)}
-                        className={`copy-button ${copied[key] ? "copied" : ""}`}
-                        aria-label="Copy result"
-                        disabled={!allFieldsFilled}
-                      >
-                        {copied[key] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied[key] ? "Copied" : "Copy"}</span>
-                      </button>
-                    </div>
-                    {results[key]?.description && (
-                      <div className="calculation-result-description">{results[key].description}</div>
-                    )}
+              {calculation.results && calculation.results.length > 0 && Object.keys(results).map(key => (
+                <div key={key} className="calculation-result">
+                  <div className="calculation-result-label">
+                    <span className="result-name">{results[key]?.name}</span>
+                    {results[key]?.unit && <span className="unit">({results[key]?.unit})</span>}
                   </div>
-                ))
-              ) : (
+                  <div className="calculation-result-value">
+                    <span>{results[key]?.value || "0"}</span>
+                    <button
+                      onClick={() => copyToClipboard(results[key]?.value || "0", key)}
+                      className={`copy-button ${copied[key] ? "copied" : ""}`}
+                      aria-label="Copy result"
+                      disabled={!allFieldsFilled}
+                    >
+                      {copied[key] ? <Check size={16} /> : <Copy size={16} />}
+                      <span className="copy-text">{copied[key] ? "Copiado" : "Copiar"}</span>
+                    </button>
+                  </div>
+                  {results[key]?.description && (
+                    <div className="calculation-result-description">{results[key].description}</div>
+                  )}
+                </div>
+              ))}
+              {(!calculation.results || calculation.results.length === 0) && (
                 <>
                   <div className="calculation-result primary">
                     <div className="calculation-result-label">
-                      <span className="result-name">{calculation.resultName || "Result"}</span>
+                      <span className="result-name">{calculation.resultName || "Resultado"}</span>
                       <span className="unit">{calculation.resultUnit || ""}</span>
                     </div>
                     <div className="calculation-result-value">
@@ -158,7 +157,7 @@ const handleParamChange = setParamValue
                         disabled={!allFieldsFilled}
                       >
                         {copied["main"] ? <Check size={16} /> : <Copy size={16} />}
-                        <span className="copy-text">{copied["main"] ? "Copied" : "Copy"}</span>
+                        <span className="copy-text">{copied["main"] ? "Copiado" : "Copiar"}</span>
                       </button>
                     </div>
                   </div>
@@ -178,7 +177,7 @@ const handleParamChange = setParamValue
                           disabled={!allFieldsFilled}
                         >
                           {copied[result.key] ? <Check size={16} /> : <Copy size={16} />}
-                          <span className="copy-text">{copied[result.key] ? "Copied" : "Copy"}</span>
+                          <span className="copy-text">{copied[result.key] ? "Copiado" : "Copiar"}</span>
                         </button>
                       </div>
                     </div>

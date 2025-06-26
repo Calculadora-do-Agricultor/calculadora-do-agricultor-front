@@ -19,10 +19,11 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react"
-import CalculationModal  from "../CalculationModal"
+import CalculationModal from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
 import CalculationActions from "../CalculationActions"
 import "./styles.css"
+import EmptyState from "../EmptyState/EmptyState"
 
 const CalculationList = ({
   category,
@@ -33,13 +34,13 @@ const CalculationList = ({
   complexityFilters = [],
   onEditCalculation,
   onCalculationDeleted,
-}) =>{
+}) => {
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
   const { isAdmin: contextIsAdmin } = useContext(AuthContext)
-  
+
   useEffect(() => {
     setIsAdmin(contextIsAdmin)
   }, [contextIsAdmin])
@@ -51,7 +52,7 @@ const CalculationList = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sortOption, setSortOption] = useState(initialSortOption)
   const [showSortOptions, setShowSortOptions] = useState(false)
-  
+
   // Estados para o modal de exclusão global
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [calculationToDelete, setCalculationToDelete] = useState(null)
@@ -70,13 +71,13 @@ const CalculationList = ({
       setDeleteError(null)
       setDeleteSuccess(false)
     }
-  
+
     return () => {
       document.body.classList.remove("modal-open")
       document.body.style.overflow = 'unset'
     }
   }, [showDeleteModal])
-  
+
 
 
   useEffect(() => {
@@ -96,17 +97,17 @@ const CalculationList = ({
         // Buscar todas as categorias para encontrar o ID da categoria pelo nome
         const categoriesSnapshot = await getDocs(collection(db, "categories"))
         const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
-        
+
         if (!categoryDoc) {
           setCalculations([])
           return
         }
 
         const categoryId = categoryDoc.id
-        
+
         // Buscar cálculos que contêm o ID da categoria no array categories
         const q = query(
-          collection(db, "calculations"), 
+          collection(db, "calculations"),
           where("categories", "array-contains", categoryId)
         )
         const querySnapshot = await getDocs(q)
@@ -212,19 +213,19 @@ const CalculationList = ({
     try {
       setIsDeleting(true)
       setDeleteError(null)
-      
+
       // Adicionar um pequeno atraso para mostrar o estado de loading
       await new Promise(resolve => setTimeout(resolve, 500))
-      
+
       await deleteDoc(doc(db, "calculations", calculationToDelete.id))
-      
+
       // Remover o cálculo da lista
       setFilteredCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
       setCalculations((prev) => prev.filter((calc) => calc.id !== calculationToDelete.id))
-      
+
       // Mostrar mensagem de sucesso antes de fechar o modal
       setDeleteSuccess(true)
-      
+
       // Notificar o componente pai que um cálculo foi excluído
       if (onCalculationDeleted) {
         onCalculationDeleted()
@@ -239,7 +240,7 @@ const CalculationList = ({
       console.error("Erro ao excluir cálculo:", error)
       setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
     } finally {
-      setIsDeleting(false)
+      setFIsDeleting(false)
     }
   }
 
@@ -289,40 +290,39 @@ const CalculationList = ({
 
   if (error) {
     return (
-      <div className="calculations-error">
-        <AlertCircle size={48} className="text-red-500 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">Erro ao carregar cálculos</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-red-100 hover:bg-red-200 text-red-700 font-medium py-2 px-4 rounded-lg transition-colors"
-        >
-          Tentar novamente
-        </button>
-      </div>
-    )
+      <EmptyState
+        icon={<AlertCircle size={48} className="text-red-500" />}
+        title="Erro ao carregar cálculos"
+        description="Ocorreu um erro ao tentar carregar os cálculos. Use o botão ⬅️ à esquerda para tentar novamente ou criar um novo cálculo."
+      />
+    );
   }
+
+  const handleRefreshCalculations = () => {
+    window.location.reload();
+  };
+
+  const handleAddCalculation = () => {
+    window.location.href = '/criar-calculo';
+  };
 
   if (filteredCalculations.length === 0) {
     return (
-      <div className="calculations-empty">
-        <Search size={48} className="text-gray-400 mb-4" />
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">
-          {searchTerm ? "Nenhum resultado encontrado" : "Nenhum cálculo disponível"}
-        </h3>
-        <p className="text-gray-600 mb-4">
-          {searchTerm
-            ? `Não encontramos nenhum cálculo para "${searchTerm}" nesta categoria.`
-            : "Não há cálculos disponíveis para esta categoria no momento."}
-        </p>
-        {searchTerm && (
-          <button onClick={() => window.location.reload()} className="text-blue-600 hover:text-blue-800 font-medium">
-            Limpar pesquisa
-          </button>
+      <EmptyState
+        icon={<Search size={48} className="text-gray-400" />}
+        message={isAdmin ? "Nenhum cálculo cadastrado ainda." : "Nenhum cálculo disponível."}
+        ctaLabel={isAdmin ? "Adicionar cálculo" : "Atualizar lista"}
+        onCtaClick={isAdmin ? handleAddCalculation : handleRefreshCalculations}
+      >
+        {isAdmin ? (
+          <p>Use o botão azul no canto inferior direito para adicionar um novo cálculo.</p>
+        ) : (
+          <p>Verifique sua conexão ou tente atualizar a lista.</p>
         )}
-      </div>
-    )
+      </EmptyState>
+    );
   }
+
 
   return (
     <div className="calculations-container">
@@ -546,7 +546,7 @@ const CalculationList = ({
                   <p className="delete-modal-warning">
                     Esta ação não pode ser desfeita.
                   </p>
-                  
+
                   {deleteError && (
                     <div className="delete-modal-error">
                       <AlertCircle size={16} />
@@ -555,16 +555,16 @@ const CalculationList = ({
                   )}
                 </div>
                 <div className="delete-modal-actions">
-                  <button 
-                    className="delete-modal-cancel" 
+                  <button
+                    className="delete-modal-cancel"
                     onClick={handleCancelDelete}
                     disabled={isDeleting}
                     aria-label="Cancelar exclusão"
                   >
                     Cancelar
                   </button>
-                  <button 
-                    className="delete-modal-confirm" 
+                  <button
+                    className="delete-modal-confirm"
                     onClick={handleConfirmDelete}
                     disabled={isDeleting}
                     aria-label="Confirmar exclusão"
@@ -592,17 +592,17 @@ const resolveCategoryNames = async (calculations) => {
   const categoryIds = [...new Set(
     calculations.flatMap(calc => calc.categories || [])
   )]
-  
+
   const categoryPromises = categoryIds.map(async (id) => {
     const categoryDoc = await getDoc(doc(db, "categories", id))
     return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
   })
-  
+
   const categoryMap = await Promise.all(categoryPromises)
   const categoryLookup = Object.fromEntries(
     categoryMap.map(cat => [cat.id, cat.name])
   )
-  
+
   return calculations.map(calc => ({
     ...calc,
     categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")

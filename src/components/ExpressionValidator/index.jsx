@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   validateExpression, 
   testExpression, 
@@ -7,18 +7,18 @@ import {
 } from '../../utils/mathEvaluator';
 import './styles.css';
 
-const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
+const ExpressionValidator = ({ expression, onChange, parameters = [], onValidationChange }) => {
   const [validationResult, setValidationResult] = useState(null);
   const [testResult, setTestResult] = useState(null);
   const [showDocs, setShowDocs] = useState(false);
   const [exampleValues, setExampleValues] = useState({});
+  const [autoValidate, setAutoValidate] = useState(false);
   const syntaxDocs = getExpressionSyntaxDocs();
 
   // Inicializa valores de exemplo para os parâmetros
   useEffect(() => {
     const initialValues = {};
     parameters.forEach(param => {
-      // Atribui um valor padrão baseado no tipo do parâmetro
       if (param.type === 'number') {
         initialValues[param.name] = 10;
       } else if (param.type === 'select' && param.options && param.options.length > 0) {
@@ -30,13 +30,13 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
     setExampleValues(initialValues);
   }, [parameters]);
 
-  // Valida a expressão sempre que ela mudar
-  useEffect(() => {
+  // Valida a expressão quando autoValidate está ativo ou quando o botão é clicado
+  const validateCurrentExpression = useCallback(() => {
     if (expression) {
       const result = validateExpression(expression, exampleValues);
       setValidationResult(result);
+      onValidationChange?.(result.isValid);
 
-      // Se a validação passar, testa a expressão com os valores de exemplo
       if (result.isValid) {
         const test = testExpression(expression, exampleValues);
         setTestResult(test);
@@ -46,8 +46,13 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
     } else {
       setValidationResult(null);
       setTestResult(null);
+      onValidationChange?.(false);
     }
-  }, [expression, exampleValues]);
+  }, [expression, exampleValues, onValidationChange]);
+
+  useEffect(() => {
+    validateCurrentExpression();
+  }, [expression, exampleValues, validateCurrentExpression]);
 
   // Atualiza o valor de exemplo de um parâmetro
   const handleExampleValueChange = (paramName, value) => {
@@ -71,7 +76,7 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
         ) : (
           <div className="invalid-message">
             <i className="fas fa-exclamation-triangle"></i>
-            <span>{validationResult.errorMessage}</span>
+            <span>{validationResult.errorMessage || "Expressão inválida! Corrija e tente novamente."}</span>
           </div>
         )}
       </div>
@@ -140,9 +145,9 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
 
         <div className="docs-section">
           <h4>Operadores</h4>
-          <div className="docs-grid">
-            {syntaxDocs.operators.map((op, index) => (
-              <div key={index} className="docs-item">
+ando          <div className="docs-grid">
+            {syntaxDocs.operators.map((op) => (
+              <div key={op.symbol} className="docs-item">
                 <div className="docs-format">{op.symbol}</div>
                 <div className="docs-description">{op.description}</div>
                 <div className="docs-example">Exemplo: {op.example}</div>
@@ -154,8 +159,8 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
         <div className="docs-section">
           <h4>Funções Matemáticas</h4>
           <div className="docs-grid">
-            {syntaxDocs.mathFunctions.map((func, index) => (
-              <div key={index} className="docs-item">
+            {syntaxDocs.mathFunctions.map((func) => (
+              <div key={func.name} className="docs-item">
                 <div className="docs-format">{func.name}</div>
                 <div className="docs-description">{func.description}</div>
                 <div className="docs-example">Exemplo: {func.example}</div>
@@ -166,9 +171,9 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
 
         <div className="docs-section">
           <h4>Constantes</h4>
-          <div className="docs-grid">
-            {syntaxDocs.constants.map((constant, index) => (
-              <div key={index} className="docs-item">
+          <div classNidame="docs-grid">
+            {syntaxDocs.constants.map((constant) => (
+              <div key={constant.name} className="docs-item">
                 <div className="docs-format">{constant.name}</div>
                 <div className="docs-description">{constant.description}</div>
                 <div className="docs-example">Exemplo: {constant.example}</div>
@@ -181,7 +186,7 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
           <h4>Exemplos de Expressões</h4>
           <div className="docs-grid">
             {syntaxDocs.examples.map((example, index) => (
-              <div key={index} className="docs-item">
+              <div key={`example-${index}`} className="docs-item">
                 <div className="docs-description">{example.description}</div>
                 <div className="docs-example">{example.expression}</div>
               </div>
@@ -205,12 +210,21 @@ const ExpressionValidator = ({ expression, onChange, parameters = [] }) => {
     <div className="expression-validator">
       <div className="validator-header">
         <h3>Validador de Expressões</h3>
-        <button 
-          className="toggle-docs-btn" 
-          onClick={() => setShowDocs(!showDocs)}
-        >
-          {showDocs ? 'Ocultar Documentação' : 'Mostrar Documentação'}
-        </button>
+        <div className="validator-actions">
+          <button 
+            className="validate-btn" 
+            onClick={validateCurrentExpression}
+            disabled={!expression}
+          >
+            Validar Expressão
+          </button>
+          <button 
+            className="toggle-docs-btn" 
+            onClick={() => setShowDocs(!showDocs)}
+          >
+            {showDocs ? 'Ocultar Documentação' : 'Mostrar Documentação'}
+          </button>
+        </div>
       </div>
 
       {renderSyntaxDocs()}

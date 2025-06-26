@@ -6,26 +6,69 @@ import {
 } from "../utils/mathEvaluator"
 
 /**
- * Hook para calcular os resultados com base nos parâmetros e expressões do cálculo.
+ * Hook to calculate results based on parameters and calculation expressions.
  *
- * @param {Object} calculation - Objeto do cálculo, contendo fórmulas e resultados
- * @param {Object} paramValues - Valores preenchidos dos parâmetros
- * @param {boolean} allFieldsFilled - Indica se todos os parâmetros foram preenchidos
+ * @param {Object} calculation - Calculation object containing formulas and results
+ * @param {Object} paramValues - Parameter values
+ * @param {boolean} allFieldsFilled - Indicates if all parameters are filled
  * @returns {Object} { results, error }
  */
 export function useCalculationResult(calculation, paramValues, allFieldsFilled) {
-  const [results, setResults] = useState({})
+  const [results, setResults] = useState(() => {
+    // Initialize results with default values
+    const defaultResults = {}
+    if (calculation?.results?.length > 0) {
+      calculation.results.forEach((result, index) => {
+        defaultResults[`result_${index}`] = {
+          name: result.name,
+          description: result.description,
+          value: "0",
+          unit: result.unit || "",
+        }
+      })
+    } else if (calculation) {
+      defaultResults.value = "0"
+      if (calculation.additionalResults?.length > 0) {
+        calculation.additionalResults.forEach((result) => {
+          defaultResults[result.key] = "0"
+        })
+      }
+    }
+    return defaultResults
+  })
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!calculation || !allFieldsFilled || Object.keys(paramValues).length === 0) return
+    if (!calculation || !allFieldsFilled || Object.keys(paramValues).length === 0) {
+      // Initialize with default values when conditions are not met
+      const defaultResults = {}
+      if (calculation?.results?.length > 0) {
+        calculation.results.forEach((result, index) => {
+          defaultResults[`result_${index}`] = {
+            name: result.name,
+            description: result.description,
+            value: "0",
+            unit: result.unit || "",
+          }
+        })
+      } else if (calculation) {
+        defaultResults.value = "0"
+        if (calculation.additionalResults?.length > 0) {
+          calculation.additionalResults.forEach((result) => {
+            defaultResults[result.key] = "0"
+          })
+        }
+      }
+      setResults(defaultResults)
+      return
+    }
 
     try {
       const newResults = {}
 
       if (calculation.results && calculation.results.length > 0) {
         calculation.results.forEach((result, index) => {
-          const val = calcularExpressao(result.expression, paramValues)
+          const val = calculateExpression(result.expression, paramValues)
           newResults[`result_${index}`] = {
             name: result.name,
             description: result.description,
@@ -34,7 +77,7 @@ export function useCalculationResult(calculation, paramValues, allFieldsFilled) 
           }
         })
       } else {
-        const val = calcularExpressao(calculation.expression, paramValues)
+        const val = calculateExpression(calculation.expression, paramValues)
         newResults.value = val.toFixed(2)
 
         if (calculation.additionalResults?.length > 0) {
@@ -49,13 +92,13 @@ export function useCalculationResult(calculation, paramValues, allFieldsFilled) 
       setResults(newResults)
       setError(null)
     } catch (e) {
-      console.error("Erro ao calcular resultado:", e)
-      setError("Erro no cálculo: " + e.message)
+      console.error("Erro no cálculo:", e)
+      setError(e.message.includes("Error in calculation:") ? e.message.replace("Error in calculation: ", "") : "Expressão inválida! Corrija e tente novamente")
     }
   }, [calculation, paramValues, allFieldsFilled])
 
-  // Função auxiliar para avaliação segura da expressão
-  const calcularExpressao = (expression, values) => {
+  // Helper function for safe expression evaluation
+  const calculateExpression = (expression, values) => {
     const context = {}
 
     Object.keys(values).forEach((key) => {
@@ -63,7 +106,7 @@ export function useCalculationResult(calculation, paramValues, allFieldsFilled) 
     })
 
     const validation = validateExpression(expression, context)
-    if (!validation.isValid) {
+    if (!validation.isValid && validation.errorType !== 'UNDEFINED_VARIABLE') {
       throw new Error(validation.errorMessage)
     }
 
