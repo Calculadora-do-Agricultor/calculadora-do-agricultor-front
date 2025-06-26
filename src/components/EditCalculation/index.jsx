@@ -270,7 +270,11 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           if (calculationData.parameters && calculationData.parameters.length > 0) {
             const parametersWithIds = calculationData.parameters.map((param, index) => ({
               ...param,
-              id: param.id || `param-${Date.now()}-${index}`
+              id: param.id || `param-${Date.now()}-${index}`,
+              step: param.step || "0.01",
+              max: param.max || "",
+              mask: param.mask || "",
+              tooltip: param.tooltip || ""
             }))
             setParameters(parametersWithIds)
           }
@@ -278,7 +282,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           if (calculationData.results && calculationData.results.length > 0) {
             const resultsWithIds = calculationData.results.map((result, index) => ({
               ...result,
-              id: result.id || `result-${Date.now()}-${index}`
+              id: result.id || `result-${Date.now()}-${index}`,
+              unit: result.unit || "",
+              description: result.description || ""
             }))
             setResults(resultsWithIds)
           }
