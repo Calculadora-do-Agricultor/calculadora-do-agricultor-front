@@ -4,7 +4,6 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "fireb
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
-import { AdminContext } from "../../context/AdminContext"
 import { useToast } from "../../context/ToastContext"
 import {
   ArrowRight,
@@ -40,16 +39,11 @@ const CalculationList = ({
   onCalculationDeleted,
 }) => {
   const [user] = useAuthState(auth)
-  const [isAdmin, setIsAdmin] = useState(false)
   const navigate = useNavigate()
   const { success, error: toastError } = useToast()
+  const { isAdmin } = useContext(AuthContext)
 
-  // Usar o isAdmin do AdminContext (nova funcionalidade)
-  const { isAdmin: contextIsAdmin } = useContext(AdminContext)
-  
-  useEffect(() => {
-    setIsAdmin(contextIsAdmin)
-  }, [contextIsAdmin])
+
   const [calculations, setCalculations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

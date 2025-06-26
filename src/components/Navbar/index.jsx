@@ -1,26 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logoClara from '../../assets/logoClara.svg';
-import { auth, db } from '../../services/firebaseConfig.js';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { authWrapper, firestoreWrapper } from '../../services/firebaseWrapper';
 
 import { NavLinks, ProfileMenu, MobileMenu } from './components';
 
 const Navbar = () => {
-  const [user] = useAuthState(auth);
   const [userName, setUserName] = useState('');
+  // user precisa ser um estado ou ser observado se authWrapper.getCurrentUser() não for síncrono.
+  // Se for assíncrono ou se mudar, considere usar um useEffect para setar 'user'.
+  // Por simplicidade, assumimos que getCurrentUser() retorna o user de forma síncrona ou null.
+  const user = authWrapper.getCurrentUser();
 
   useEffect(() => {
-    if (user) {
-      const userRef = doc(db, 'users', user.uid);
-      getDoc(userRef).then((docSnap) => {
-        if (docSnap.exists()) {
-          setUserName(docSnap.data().name);
+    const fetchUserName = async () => {
+      if (user) {
+        try {
+          const userData = await firestoreWrapper.getDocument('users', user.uid);
+          if (userData) {
+            setUserName(userData.name);
+          } else {
+            setUserName(''); // Limpar nome se o documento do usuário não for encontrado
+          }
+        } catch (error) {
+          console.error('Erro ao buscar nome do usuário:', error);
+          setUserName(''); // Limpar nome em caso de erro
         }
-      });
-    }
-  }, [user]);
+      } else {
+        setUserName(''); // Limpar nome se não houver usuário logado
+      }
+    };
+
+    fetchUserName();
+  }, [user]); // Dependência em 'user' para re-executar quando o estado de autenticação mudar
 
   return (
     <nav

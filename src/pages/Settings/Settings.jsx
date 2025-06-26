@@ -12,8 +12,6 @@ import {
   CogIcon,
   EyeIcon,
   EyeSlashIcon,
-  // ClipboardDocumentListIcon, // Não utilizado no código fornecido
-  // UsersIcon, // Não utilizado no código fornecido
 } from "@heroicons/react/24/outline";
 import {
   Dialog,
@@ -24,40 +22,24 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button"; // Corrigido o import, era 'Button' mas não tinha o path completo
-import {
-  signOut,
-  updateProfile,
-  updateEmail,
-  updatePassword,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  verifyBeforeUpdateEmail, // Adicionado aqui para clareza
-} from "firebase/auth";
-import { auth, db } from "../../services/firebaseConfig";
+import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAuthState } from "react-firebase-hooks/auth";
 import { useEffect, useState, useContext } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { AuthContext } from "../../context/AuthContext";
+import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper";
 import { toast } from "react-toastify";
-// import { verifyBeforeUpdateEmail } from "firebase/auth"; // Já importado acima
 import "react-toastify/dist/ReactToastify.css";
-// import { zodResolver } from "@hookform/resolvers/zod" // Não utilizado no código fornecido
-// import { updateUserSchema } from "@/schemas/userSchema" // Não utilizado no código fornecido
 
 const Settings = () => {
   const navigate = useNavigate();
-  const [user] = useAuthState(auth);
+  const { user, isAdmin } = useContext(AuthContext);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const { preferences, updatePreferences /* hideFooter, toggleHideFooter */ } =
-    useContext(AuthContext); // hideFooter e toggleHideFooter não são usados na seção de aparência do código fornecido
+  const { preferences, updatePreferences, hideFooter, toggleHideFooter } = useContext(AuthContext);
 
-  // ESTADOS PARA EDIÇÃO DE PERFIL
+  // Estados para edição de perfil
   const [editingName, setEditingName] = useState("");
   const [editingEmail, setEditingEmail] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
@@ -70,26 +52,23 @@ const Settings = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
         setLoading(true);
         try {
-          const userRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(userRef);
+          const userData = await firestoreWrapper.getDocument("users", user.uid);
 
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
+          if (userData) {
             setUserName(userData.name);
             setEditingName(userData.name);
             setEditingEmail(user.email);
 
             if (userData.role === "admin") {
               setUserRole("Administrador");
-              setIsAdmin(true);
             } else {
               setUserRole("Usuário");
-              setIsAdmin(false);
             }
           }
         } catch (error) {
@@ -106,13 +85,15 @@ const Settings = () => {
 
   const handleLogout = async () => {
     try {
-      // Mostrar alerta antes de redirecionar
-      const alertResult = window.confirm(`Um email de verificação foi enviado para ${editingEmail}. Você será redirecionado para a página de login para entrar novamente com seu novo email.`);
-      
-      await signOut(auth);
+      await authWrapper.signOut();
       navigate("/login");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
+      // Se estiver offline, forçar logout local
+      if (!authWrapper.isOnline()) {
+        localStorage.clear();
+        navigate("/login");
+      }
       toast.error("Erro ao fazer logout.");
     }
   };
@@ -127,14 +108,10 @@ const Settings = () => {
     }
 
     try {
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        currentPassword,
-      );
-      await reauthenticateWithCredential(user, credential);
+      await authWrapper.reauthenticate(currentPassword);
       return true;
     } catch (err) {
-      console.error("Erro de reautenticação:", err.code, err.message);
+      console.error("Erro de reautenticação:", err);
       if (err.code === "auth/wrong-password") {
         setError("Senha atual incorreta. Por favor, tente novamente.");
       } else if (err.code === "auth/user-not-found") {
@@ -167,10 +144,8 @@ const Settings = () => {
     setSuccess("");
 
     try {
-      await updateProfile(user, { displayName: editingName });
-
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { name: editingName });
+      await authWrapper.updateProfile({ displayName: editingName });
+      await firestoreWrapper.updateDocument("users", user.uid, { name: editingName });
 
       setUserName(editingName);
       setSuccess("Nome atualizado com sucesso!");
@@ -190,20 +165,17 @@ const Settings = () => {
       return;
     }
 
-    // Primeiro fazemos a reautenticação
     setIsSaving(true);
     setError("");
     setSuccess("");
 
     try {
-      // Reautenticar antes de qualquer validação
       const reauthenticated = await handleReauthenticate();
       if (!reauthenticated) {
         setIsSaving(false);
         return;
       }
 
-      // Depois validamos o e-mail
       if (!editingEmail.trim()) {
         setError("O e-mail não pode estar vazio.");
         setIsSaving(false);
@@ -223,17 +195,12 @@ const Settings = () => {
         return;
       }
 
-      // Por fim, atualizamos o e-mail
-      await verifyBeforeUpdateEmail(user, editingEmail);
+      await authWrapper.updateEmail(editingEmail);
+      await firestoreWrapper.updateDocument("users", user.uid, { email: editingEmail });
 
-      // Atualizamos também no Firestore
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { email: editingEmail });
-
-      // Mostrar alerta antes de redirecionar
       window.alert(`Um email de verificação foi enviado para ${editingEmail}\n\nVocê será redirecionado para a página de login para entrar novamente com seu novo email.`);
 
-      await signOut(auth);
+      await authWrapper.signOut();
       navigate("/login");
     } catch (err) {
       console.error("Erro ao atualizar e-mail:", err);
@@ -243,7 +210,7 @@ const Settings = () => {
         setError("Este e-mail já está em uso por outra conta.");
       } else if (err.code === "auth/requires-recent-login") {
         setError(
-          "Por favor, faça logout e login novamente antes de tentar alterar o e-mail.",
+          "Por favor, faça logout e login novamente antes de tentar alterar o e-mail."
         );
       } else {
         setError("Erro ao atualizar e-mail. Tente novamente mais tarde.");
@@ -253,7 +220,6 @@ const Settings = () => {
       setIsSaving(false);
     }
   };
-  // <-- Removido o '};' extra aqui que estava fechando a função handleSaveEmail prematuramente.
 
   const handleSavePassword = async () => {
     if (!user) {
@@ -288,7 +254,7 @@ const Settings = () => {
         return;
       }
 
-      await updatePassword(user, newPassword);
+      await authWrapper.updatePassword(newPassword);
       setSuccess("Senha atualizada com sucesso!");
       toast.success("Senha atualizada com sucesso!");
       setCurrentPassword("");
@@ -300,7 +266,7 @@ const Settings = () => {
         setError("A senha é muito fraca. Por favor, use uma senha mais forte.");
       } else if (err.code === "auth/requires-recent-login") {
         setError(
-          "Esta ação requer que você faça login novamente. Por favor, digite sua senha atual.",
+          "Esta ação requer que você faça login novamente. Por favor, digite sua senha atual."
         );
       } else {
         setError("Erro ao atualizar senha. Tente novamente mais tarde.");

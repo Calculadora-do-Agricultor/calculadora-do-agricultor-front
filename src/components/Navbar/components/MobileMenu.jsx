@@ -3,13 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
 import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
-import { AdminContext } from '../../../context/AdminContext';
 
 const MobileMenu = ({ user, userName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const location = useLocation();
-  const { isAdmin } = useContext(AdminContext);
+  const { isAdmin } = useContext(AuthContext);
 
   const linkStyle = (path) => {
     const isActive = location.pathname === path;

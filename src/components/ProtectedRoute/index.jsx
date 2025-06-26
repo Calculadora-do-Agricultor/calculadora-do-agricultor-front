@@ -1,11 +1,8 @@
 
 
-import { useContext } from "react"
-import { Navigate } from "react-router-dom"
-import { useAuthState } from "react-firebase-hooks/auth"
-import { auth } from "../../services/firebaseConfig"
-import { AuthContext } from "../../context/AuthContext"
-import { AdminContext } from "../../context/AdminContext"
+import { useContext } from "react";
+import { Navigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
 /**
  * Componente para proteger rotas que exigem permissões de administrador
@@ -15,31 +12,29 @@ import { AdminContext } from "../../context/AdminContext"
  * @param {string} props.redirectTo - Rota para redirecionamento caso o usuário não tenha permissão
  */
 const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
-  const [user] = useAuthState(auth)
-  const { loading } = useContext(AuthContext)
-  const { isAdmin, loading: adminLoading } = useContext(AdminContext)
+  const { user, loading, isAdmin } = useContext(AuthContext);
 
   // Aguarda a verificação de autenticação e permissões
-  if (loading || adminLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00418F]"></div>
       </div>
-    )
+    );
   }
 
   // Verifica se o usuário está autenticado
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   // Verifica se a rota é apenas para administradores
   if (adminOnly && !isAdmin) {
-    return <Navigate to={redirectTo} replace />
+    return <Navigate to={redirectTo} replace />;
   }
 
   // Se passou por todas as verificações, renderiza o conteúdo protegido
-  return children
-}
+  return children;
+};
 
-export default ProtectedRoute
+export default ProtectedRoute;
