@@ -353,6 +353,9 @@ export default function Calculator() {
                 {/* Descrição da categoria em largura total */}
                 {categoriaAtual?.description && showCategoryDescription && (
                   <div className="category-description-container">
+                    <div className="category-description-legend">
+                      <span>Descrição da categoria:</span>
+                    </div>
                     <div className="category-description">
                       {categoriaAtual.description}
                     </div>
