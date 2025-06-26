@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const MobileMenu = ({ user, userName }) => {
@@ -55,6 +55,15 @@ const MobileMenu = ({ user, userName }) => {
           >
             <HomeIcon className="w-5 h-5 mr-2" />
             Página Inicial
+          </Link>
+
+          <Link
+            to="/glossario"
+            className={`${linkStyle('/glossario')} border-b border-[#00418F]/80`}
+            onClick={() => setIsOpen(false)}
+          >
+            <BookOpenIcon className="w-5 h-5 mr-2" />
+            Glossário
           </Link>
 
           {user === null ? (
