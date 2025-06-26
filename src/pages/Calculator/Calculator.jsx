@@ -246,7 +246,7 @@ export default function Calculator() {
         </div>
 
         {/* Conteúdo principal com sidebar e lista de cálculos */}
-        <div className="content-container" id="calculations-list">
+        <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
             {loading ? (
