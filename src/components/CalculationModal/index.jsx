@@ -1,6 +1,7 @@
-import React, { useRef, useEffect } from "react"
+import React, { useRef, useEffect, useState } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useFormParameters } from "../../hooks/useFormParameters"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 import { doc, updateDoc, increment, getDoc, setDoc } from "firebase/firestore"
@@ -9,7 +10,8 @@ import { useAuth } from "../../context/useAuth"
 import CalculationResult from "../CalculationResult"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-  const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
+  const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
+  const { results, error } = useCalculationResult(calculation, paramValues, allFieldsFilled)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
   const { success, error: toastError, info } = useToast()
@@ -45,7 +47,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
     }
   }, [isOpen, calculation?.id, user?.uid])
   const handleParamChange = (paramName, value) => {
-    setParamValues(prev => ({ ...prev, [paramName]: value }))
+    setParamValue(paramName, value)
   }
 
   const copyToClipboard = (text, key, resultName) => {
