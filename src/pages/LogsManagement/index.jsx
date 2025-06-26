@@ -9,7 +9,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
-import { AdminContext } from "../../context/AdminContext";
 import { Navigate } from "react-router-dom";
 import {
   ClockIcon,
@@ -67,8 +66,7 @@ const LogsManagement = () => {
   const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
 
-  const { user } = useContext(AuthContext);
-  const { isAdmin } = useContext(AdminContext);
+  const { user, isAdmin } = useContext(AuthContext);
 
   // Título e descrição da página
   const pageTitle = "Histórico de Atividades";
