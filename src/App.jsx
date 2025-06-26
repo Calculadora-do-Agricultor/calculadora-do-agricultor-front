@@ -4,7 +4,8 @@ import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
 import { useIntelligentPreload } from "./utils/preloadRoutes";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
-import { ToastProvider } from "./context/ToastContext";
+import { ToastProvider, useToast } from "./context/ToastContext";
+import { setToastInstance } from "./services/firebaseWrapper";
 
 
 // Lazy loading das páginas para reduzir bundle inicial
@@ -29,6 +30,15 @@ const PageLoader = () => (
 );
 
 
+// Componente para inicializar o sistema de notificações
+const ToastInitializer = () => {
+  const toast = useToast();
+  React.useEffect(() => {
+    setToastInstance(toast);
+  }, [toast]);
+  return null;
+};
+
 function App() {
   const [user] = useAuthState(auth);
   
@@ -36,9 +46,10 @@ function App() {
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
   
   return (
-    <ToastProvider>
-      <div className="flex min-h-screen w-full flex-col">
-        <Router>
+    <Router>
+      <ToastProvider>
+        <ToastInitializer />
+        <div className="flex min-h-screen w-full flex-col">
           <Navbar />
           <main className="flex-grow pt-20">
             <Suspense fallback={<PageLoader />}>
@@ -114,10 +125,10 @@ function App() {
           </Suspense>
           </main>
           <Footer />
-        </Router>
-      </div>
-    </ToastProvider>
-  );
+        </div>
+      </ToastProvider>
+    </Router>
+    );
 }
 
 export default App;

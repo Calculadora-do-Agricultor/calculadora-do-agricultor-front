@@ -28,34 +28,29 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui"
-import { signOut } from "firebase/auth"
-import { auth, db } from "../../services/firebaseConfig"
 import { useNavigate } from "react-router-dom"
-import { useAuthState } from "react-firebase-hooks/auth"
 import { useEffect, useState, useContext } from "react"
-import { doc, getDoc } from "firebase/firestore"
 import { AuthContext } from "../../context/AuthContext"
+import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper"
 
 const Settings = () => {
   const navigate = useNavigate()
-  const [user] = useAuthState(auth)
   const [userName, setUserName] = useState("")
   const [userRole, setUserRole] = useState("")
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("profile")
   const [isAdmin, setIsAdmin] = useState(false)
   const { preferences, updatePreferences, hideFooter, toggleHideFooter } = useContext(AuthContext)
+  const user = authWrapper.getCurrentUser()
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (user) {
         setLoading(true)
         try {
-          const userRef = doc(db, "users", user.uid)
-          const docSnap = await getDoc(userRef)
+          const userData = await firestoreWrapper.getDocument("users", user.uid)
 
-          if (docSnap.exists()) {
-            const userData = docSnap.data()
+          if (userData) {
             setUserName(userData.name)
 
             // Determinar o cargo do usuário
@@ -80,10 +75,15 @@ const Settings = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth)
+      await authWrapper.signOut()
       navigate("/login")
     } catch (error) {
       console.error("Erro ao fazer logout:", error)
+      // Se estiver offline, forçar logout local
+      if (!authWrapper.isOnline()) {
+        localStorage.clear()
+        navigate("/login")
+      }
     }
   }
 

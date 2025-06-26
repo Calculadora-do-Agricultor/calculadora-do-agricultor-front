@@ -2,10 +2,7 @@
 
 import { useEffect, useState, useContext } from "react"
 import { Navigate } from "react-router-dom"
-import { doc, getDoc } from "firebase/firestore"
-import { useAuthState } from "react-firebase-hooks/auth"
-import { signOut } from "firebase/auth"
-import { auth, db } from "../../services/firebaseConfig"
+import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper"
 import { AuthContext } from "../../context/AuthContext"
 
 /**
@@ -16,11 +13,11 @@ import { AuthContext } from "../../context/AuthContext"
  * @param {string} props.redirectTo - Rota para redirecionamento caso o usuário não tenha permissão
  */
 const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
-  const [user] = useAuthState(auth)
   const { loading } = useContext(AuthContext)
   const [isAdmin, setIsAdmin] = useState(false)
   const [isActive, setIsActive] = useState(true)
   const [checkingPermissions, setCheckingPermissions] = useState(true)
+  const user = authWrapper.getCurrentUser()
 
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -30,18 +27,16 @@ const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
       }
 
       try {
-        const userRef = doc(db, "users", user.uid)
-        const docSnap = await getDoc(userRef)
+        const userData = await firestoreWrapper.getDocument("users", user.uid)
         
-        if (docSnap.exists()) {
-          const userData = docSnap.data()
+        if (userData) {
           setIsAdmin(userData.role === "admin")
           setIsActive(userData.active !== false)
           
           // Se a conta estiver desativada, desloga o usuário
           if (userData.active === false) {
             console.warn("Conta desativada detectada. Deslogando usuário.")
-            await signOut(auth)
+            await authWrapper.signOut()
             // Dispara evento para mostrar mensagem de conta desativada
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('accountDisabled'))

@@ -1,9 +1,7 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth, db } from "../../services/firebaseConfig";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper";
 import { useToast } from "../../context/ToastContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,46 +67,25 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
+      // Tentar autenticar mesmo offline
+      const userCredential = await authWrapper.signInWithEmailAndPassword(
         values.email,
-        values.password,
+        values.password
       );
       const user = userCredential.user;
 
-      // Removida verificação de e-mail para melhorar experiência do usuário
-
-
       // Verificar se a conta está ativa antes de prosseguir
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
+      const userData = await firestoreWrapper.getDocument("users", user.uid);
       
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        
-        if (userData.active === false) {
-          // Deslogar imediatamente e mostrar erro
-          await signOut(auth);
-          setError("Sua conta foi desativada por um administrador.");
-          toastError("Sua conta foi desativada por um administrador.");
-          setErrorCode("account-disabled");
-          setIsLoading(false);
-          return;
-        }
+      if (userData && userData.active === false) {
+        // Deslogar imediatamente e mostrar erro
+        await authWrapper.signOut();
+        setError("Sua conta foi desativada por um administrador.");
+        toastError("Sua conta foi desativada por um administrador.");
+        setErrorCode("account-disabled");
+        setIsLoading(false);
+        return;
       }
-
-      // Proteção contra log duplicado por sessão
-      const sessionId = crypto.randomUUID();
-      localStorage.setItem("sessionId", sessionId);
-
-      await addDoc(collection(db, "Logs"), {
-        userId: user.uid,
-        email: user.email,
-        acao: "Login",
-        timestamp: serverTimestamp(),
-        userAgent: navigator.userAgent,
-        sessionId: sessionId,
-      });
 
       localStorage.setItem("authToken", "logado");
 
