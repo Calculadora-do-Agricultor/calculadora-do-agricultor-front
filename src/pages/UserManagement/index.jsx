@@ -518,7 +518,7 @@ const UserManagement = () => {
                       disabled={currentPage === totalPages}
                       className={`rounded-md p-2 ${currentPage === totalPages ? "cursor-not-allowed text-[#00418F]/30" : "text-[#00418F] hover:bg-[#00418F]/10"}`}
                     >
-                      <ChevronRightIcon className="h-5 w-5" />
+                      <ChevronRightIcon className="h-5 w-7" />
                     </button>
                   </div>
                 </div>

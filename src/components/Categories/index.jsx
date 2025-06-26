@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useContext } from "react"
-import { Search, Filter, Loader2, AlertTriangle, X } from "lucide-react"
+import { Search, Filter, Loader2, AlertTriangle, X, FolderPlus, SearchX } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { AdminContext } from "../../context/AdminContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
+import EmptyState from "../ui/EmptyState"
 
 const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
   // Add this style for hiding scrollbar in category names
@@ -43,13 +44,30 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
       result = result.sort((a, b) => a.name.localeCompare(b.name))
     }
 
-    // Aplicar busca por texto
+    // Aplicar busca por texto em categorias e cálculos
     if (searchTerm.trim() !== "") {
-      result = result.filter((category) => category.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      const searchTermLower = searchTerm.toLowerCase()
+      result = result.filter((category) => {
+        // Busca no nome da categoria
+        const categoryMatch = category.name.toLowerCase().includes(searchTermLower)
+        
+        // Busca nos cálculos da categoria
+        const calculosMatch = category.calculos?.some(calculo => {
+          return (
+            (calculo.name || calculo.nome || "").toLowerCase().includes(searchTermLower) ||
+            (calculo.description || calculo.descricao || "").toLowerCase().includes(searchTermLower) ||
+            (calculo.tags || []).some(tag => tag.toLowerCase().includes(searchTermLower))
+          )
+        })
+
+        return categoryMatch || calculosMatch
+      })
     }
 
     setFilteredCategories(result)
-  }, [categories, searchTerm, filterOption])
+
+    // Removida a seleção automática da categoria
+  }, [categories, searchTerm, filterOption, onSelect])
 
   // Função para abrir o modal de edição
   const handleEditCategory = (category) => {
@@ -82,9 +100,14 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg mx-2">
-        <p>Nenhuma categoria disponível.</p>
-      </div>
+      <EmptyState
+        type="category"
+        title="Nenhuma categoria cadastrada"
+        message="Clique no botão abaixo para adicionar uma nova categoria"
+        actionLabel="Adicionar Categoria"
+        onAction={() => window.location.href = '/categories/new'}
+        className="mx-2"
+      />
     )
   }
 
@@ -101,7 +124,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           <input
             id={`${idPrefix}search-categories`}
             type="text"
-            placeholder="Buscar categorias..."
+            placeholder="Buscar categorias e cálculos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-900 bg-gray-50 transition-all duration-200 focus:outline-none focus:border-blue-600 focus:bg-white focus:shadow-lg focus:shadow-blue-100"
@@ -110,7 +133,10 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           {searchTerm && (
             <button
               className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
-              onClick={() => setSearchTerm("")}
+              onClick={() => {
+                setSearchTerm("")
+                onSelect(null)
+              }}
               aria-label="Limpar busca"
             >
               <X size={14} />
@@ -137,6 +163,12 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       </div>
 
+      {/* Search Result Legend */}
+      {searchTerm && (
+        <div className="mb-3 text-sm text-green-600 font-medium">
+          Categorias que contêm o cálculo pesquisado:
+        </div>
+      )}
       {/* Categories List */}
       <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
         <div className="space-y-2 pr-2">
@@ -194,9 +226,17 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
               </div>
             ))
           ) : (
-            <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg">
-              <p>Nenhuma categoria encontrada.</p>
-            </div>
+            <EmptyState
+              icon={searchTerm ? SearchX : FolderPlus}
+              title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
+              message={searchTerm
+                ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
+                : isAdmin
+                  ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
+                  : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
+              actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
+              onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => setShowCreateCategory(true) : undefined}
+            />
           )}
         </div>
       </div>
