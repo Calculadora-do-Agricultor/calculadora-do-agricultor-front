@@ -467,12 +467,10 @@ const CalculationList = ({
                   <Clock size={14} />
                   <span>{getTimeAgo(calculation.updatedAt.toDate())}</span>
                 </div>
-                {/* TODO: Uncomment this when view tracking is implemented
                 <div className="meta-item">
                   <Eye size={14} />
                   <span>{calculation.views || 0} visualizações</span>
                 </div>
-                */}
               </div>
             </div>
 
