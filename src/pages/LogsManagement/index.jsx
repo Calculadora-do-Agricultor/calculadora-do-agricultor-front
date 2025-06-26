@@ -830,7 +830,7 @@ const LogsManagement = () => {
                 {currentLogs.map((log) => (
                   <div
                     key={log.id}
-                    className="transform rounded-xl border border-[#00418F]/10 bg-white p-4 shadow-md transition-all duration-300 hover:shadow-lg hover:scale-[1.01]"
+                    className="transform rounded-xl border border-[#00418F]/10 bg-white p-4 transition-all duration-300 hover:border-[#00418F]/40"
                   >
                     <LogCard log={log} onLocationClick={openInMaps} formatDate={formatDate} />
                   </div>
@@ -843,21 +843,14 @@ const LogsManagement = () => {
                   <div className="text-sm text-[#00418F]/70">
                     Mostrando {indexOfFirstLog + 1} - {Math.min(indexOfLastLog, filteredLogs.length)} de {filteredLogs.length}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setCurrentPage(1)}
-                      disabled={currentPage === 1}
-                      className={`rounded-lg p-2 ${currentPage === 1 ? 'text-gray-400' : 'text-[#00418F] hover:bg-[#00418F]/10'}`}
-                    >
-                      <ChevronLeftIcon className="h-5 w-5" />
-                      <ChevronLeftIcon className="h-5 w-5 -ml-4" />
-                    </button>
+                  <div className="flex items-center gap-4">
                     <button
                       onClick={() => setCurrentPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={`rounded-lg p-2 ${currentPage === 1 ? 'text-gray-400' : 'text-[#00418F] hover:bg-[#00418F]/10'}`}
+                      className={`flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50`}
                     >
                       <ChevronLeftIcon className="h-5 w-5" />
+                      Anterior
                     </button>
                     <span className="text-sm font-medium text-[#00418F]">
                       Página {currentPage} de {totalPages}
@@ -865,17 +858,10 @@ const LogsManagement = () => {
                     <button
                       onClick={() => setCurrentPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className={`rounded-lg p-2 ${currentPage === totalPages ? 'text-gray-400' : 'text-[#00418F] hover:bg-[#00418F]/10'}`}
+                      className={`flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50`}
                     >
+                      Próxima
                       <ChevronRightIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className={`rounded-lg p-2 ${currentPage === totalPages ? 'text-gray-400' : 'text-[#00418F] hover:bg-[#00418F]/10'}`}
-                    >
-                      <ChevronRightIcon className="h-5 w-5" />
-                      <ChevronRightIcon className="h-5 w-5 -ml-4" />
                     </button>
                   </div>
                 </div>
@@ -950,54 +936,7 @@ const LogsManagement = () => {
             )}
           </div>
 
-          {/* Lista de logs em cards */}
-          <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {currentLogs.length > 0 ? (
-              currentLogs.map((log) => (
-                <LogCard
-                  key={log.id}
-                  log={log}
-                  formatDate={formatDate}
-                  onLocationClick={openInMaps}
-                />
-              ))
-            ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-10 text-gray-500">
-                <DocumentTextIcon className="mb-4 h-12 w-12" />
-                <p className="text-lg font-medium">Nenhum log encontrado.</p>
-                <p className="mt-2 text-sm">
-                  Ajuste seus filtros ou adicione novos registros.
-                </p>
-              </div>
-            )}
-          </div>
 
-          {/* Paginação */}
-          {filteredLogs.length > logsPerPage && (
-            <div className="mt-6 flex items-center justify-center gap-4">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronLeftIcon className="h-5 w-5" />
-                Anterior
-              </button>
-              <span className="text-sm font-medium text-[#00418F]">
-                Página {currentPage} de {totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Próxima
-                <ChevronRightIcon className="h-5 w-5" />
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
