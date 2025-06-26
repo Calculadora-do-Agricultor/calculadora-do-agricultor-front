@@ -4,7 +4,7 @@
  */
 
 // Importação do math.js
-import * as mathjs from 'mathjs';
+import { evaluate, parse, abs, add, subtract, multiply, divide, pow, sqrt, sin, cos, tan, derivative, simplify } from 'mathjs';
 
 // Lista de funções matemáticas permitidas
 const allowedMathFunctions = {
@@ -30,22 +30,22 @@ const allowedMathFunctions = {
 // Funções matemáticas seguras disponíveis para uso
 const safeMathFunctions = {
   // Funções matemáticas básicas
-  abs: mathjs.abs,
-  add: mathjs.add,
-  subtract: mathjs.subtract,
-  multiply: mathjs.multiply,
-  divide: mathjs.divide,
-  pow: mathjs.pow,
-  sqrt: mathjs.sqrt,
+  abs: abs,
+  add: add,
+  subtract: subtract,
+  multiply: multiply,
+  divide: divide,
+  pow: pow,
+  sqrt: sqrt,
   // Funções trigonométricas
-  sin: mathjs.sin,
-  cos: mathjs.cos,
-  tan: mathjs.tan,
+  sin: sin,
+  cos: cos,
+  tan: tan,
   // Funções de análise
-  derivative: mathjs.derivative,
-  simplify: mathjs.simplify,
+  derivative: derivative,
+  simplify: simplify,
   // Função de parsing para validação de sintaxe
-  parse: mathjs.parse
+  parse: parse
 }
 
 /**
@@ -135,13 +135,13 @@ export const evaluateExpression = (expression, variables = {}, throwOnError = fa
       .replace(/Math\.min\(/g, 'min(')
     
     // Avalia a expressão usando o mathjs diretamente
-    // Isso é mais seguro do que usar o sandbox personalizado para avaliação
+    // Isso garante segurança na avaliação de expressões matemáticas
     // Verifica se há chamadas para pow() sem argumentos suficientes
     if (processedExpression.includes('pow(') && !processedExpression.match(/pow\([^,]+,[^)]+\)/)) {
       throw new Error('A função pow() precisa de pelo menos dois argumentos (base, expoente)')
     }
     
-    const result = mathjs.evaluate(processedExpression)
+    const result = evaluate(processedExpression)
     
     // Verifica se o resultado é um número válido
     if (typeof result !== 'number' || !isFinite(result)) {
@@ -359,7 +359,7 @@ export const validateExpression = (expression, variables = {}) => {
         .replace(/Math\.min\(/g, 'min(')
       
       // Tenta analisar a expressão com math.js para verificar a sintaxe
-      mathjs.parse(testExpression)
+      parse(testExpression)
     } catch (error) {
       result.isValid = false
       result.errorType = ExpressionErrorType.SYNTAX_ERROR

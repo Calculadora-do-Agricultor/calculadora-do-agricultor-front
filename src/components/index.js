@@ -7,7 +7,6 @@ export { default as ProtectedRoute } from './ProtectedRoute';
 
 // Componentes de expressões matemáticas
 export { default as ExpressionValidator } from './ExpressionValidator';
-export { default as ExpressionSandbox } from './ExpressionSandbox';
 
 // Componentes específicos da calculadora - lazy load quando necessário
 export { default as CalculationList } from './CalculationList';
