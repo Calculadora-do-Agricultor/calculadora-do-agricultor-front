@@ -21,6 +21,7 @@ const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
+const CategoriaCardDemo = React.lazy(() => import("./pages/CategoriaCardDemo"));
 
 
 // Componente de loading otimizado
@@ -57,6 +58,7 @@ function App() {
               <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/glossario" element={<GlossarioPage />} />
+              <Route path="/demo/categoria-card" element={<CategoriaCardDemo />} />
               <Route
                 path="/login"
                 element={<PrivateRoute requiresAuth={false} />}
