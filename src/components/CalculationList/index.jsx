@@ -529,19 +529,19 @@ const CalculationList = ({
 
       {/* Modal de Exclusão Global */}
       {showDeleteModal && calculationToDelete && (
-        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+        <div className="delete-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-confirmation-modal-title">
           <div className="delete-modal">
             {deleteSuccess ? (
               <div className="delete-modal-success">
                 <CheckCircle className="delete-modal-success-icon" size={48} />
-                <h2 id="delete-success-modal-title">Cálculo excluído</h2>
+                <h2 id="delete-success-modal-title-message">Cálculo excluído</h2>
                 <p>O cálculo foi excluído com sucesso.</p>
               </div>
             ) : (
               <>
                 <div className="delete-modal-header">
                   <AlertTriangle className="delete-modal-icon" size={48} />
-                  <h2 id="delete-modal-title">Confirmar exclusão</h2>
+                  <h2 id="delete-confirmation-modal-title">Confirmar exclusão</h2>
                 </div>
                 <div className="delete-modal-content">
                   <p>

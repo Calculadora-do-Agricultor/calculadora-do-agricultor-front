@@ -97,8 +97,8 @@ export const isExpressionSafe = (expression) => {
     return false
   }
 
-  // Verifica caracteres permitidos
-  const safePattern = /^[0-9+\-*/().\ s@\[\]a-zA-Z_]+$/
+  // Verifica caracteres permitidos - Permitindo caracteres especiais
+  const safePattern = /^[0-9+\-*/().\ s@\[\]a-zA-Z_áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ!?#$%&=<>:;,^~{}]+$/
   if (!safePattern.test(expression)) {
     return false
   }
@@ -141,8 +141,8 @@ export const validateExpression = (expression, variables = {}) => {
     return result
   }
 
-  // Verifica caracteres inválidos
-  const safePattern = /^[0-9+\-*/().\ s@\[\]a-zA-Z_]+$/
+  // Verifica caracteres inválidos - Permitindo caracteres especiais
+  const safePattern = /^[0-9+\-*/().\ s@\[\]a-zA-Z_áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ!?#$%&=<>:;,^~{}]+$/
   if (!safePattern.test(expression)) {
     result.isValid = false
     result.errorType = ExpressionErrorType.INVALID_CHARACTERS

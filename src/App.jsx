@@ -18,6 +18,7 @@ const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
 // Componente de loading otimizado
 const PageLoader = () => (
@@ -104,6 +105,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly={true} redirectTo="/">
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/data-integrity"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <DataIntegrityPage />
                   </ProtectedRoute>
                 }
               />
