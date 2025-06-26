@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, memo } from "react"
+import { useNavigate } from "react-router-dom"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
@@ -23,8 +24,9 @@ import {
 import CalculationModal from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
 import CalculationActions from "../CalculationActions"
+import EmptyState from "../ui/EmptyState"
+import { SearchX, Calculator as CalculatorIcon } from "lucide-react"
 import "./styles.css"
-import EmptyState from "../EmptyState/EmptyState"
 
 const CalculationList = ({
   category,
@@ -38,6 +40,7 @@ const CalculationList = ({
 }) => {
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
+  const navigate = useNavigate()
   const { success, error: toastError } = useToast()
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
@@ -313,18 +316,23 @@ const CalculationList = ({
   if (filteredCalculations.length === 0) {
     return (
       <EmptyState
-        icon={<Search size={48} className="text-gray-400" />}
-        message={isAdmin ? "Nenhum cálculo cadastrado ainda." : "Nenhum cálculo disponível."}
-        ctaLabel={isAdmin ? "Adicionar cálculo" : "Atualizar lista"}
-        onCtaClick={isAdmin ? handleAddCalculation : handleRefreshCalculations}
-      >
-        {isAdmin ? (
-          <p>Use o botão azul no canto inferior direito para adicionar um novo cálculo.</p>
-        ) : (
-          <p>Verifique sua conexão ou tente atualizar a lista.</p>
-        )}
-      </EmptyState>
-    );
+        icon={searchTerm ? SearchX : CalculatorIcon}
+        title={searchTerm ? "Nenhum resultado encontrado" : "Nenhum cálculo disponível"}
+        message={searchTerm
+          ? `Não encontramos nenhum cálculo para "${searchTerm}" nesta categoria. Tente usar palavras-chave diferentes ou navegue por todas as categorias disponíveis.`
+          : isAdmin
+            ? "Esta categoria não tem cálculos cadastrados. Crie seu primeiro cálculo para esta categoria."
+            : "Esta categoria ainda não possui cálculos. Confira outras categorias disponíveis."}
+        actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Criar Cálculo" : undefined}
+        onAction={searchTerm
+          ? () => window.location.reload()
+          : isAdmin
+            ? () => navigate('/admin/criar-calculo')
+            : undefined}
+        secondaryActionLabel={searchTerm ? "Ver todas as categorias" : undefined}
+        secondaryOnAction={searchTerm ? () => navigate('/') : undefined}
+      />
+    )
   }
 
 

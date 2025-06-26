@@ -1,4 +1,5 @@
 export { Button } from "./button";
+export { default as EmptyState } from "./EmptyState";
 export { Tooltip } from "./Tooltip";
 export {
   Dialog,
