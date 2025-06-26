@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, doc, getDoc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -25,6 +26,9 @@ import {
   Redo2,
 } from "lucide-react"
 import DraggableList from "../DraggableList"
+import { MultiSelect } from "../ui"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import ExpressionValidator from "../ExpressionValidator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -32,12 +36,15 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
   const [originalName, setOriginalName] = useState("") // Para verificar se o nome foi alterado
   const [calculationDescription, setCalculationDescription] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
   const [lastModified, setLastModified] = useState(null)
@@ -155,7 +162,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estados para feedback ao usuário
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [initialLoading, setInitialLoading] = useState(true)
   const [success, setSuccess] = useState(false)
   const [validationErrors, setValidationErrors] = useState({
     basic: {},
@@ -167,7 +173,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   // Carregar categorias para o dropdown
   const [categories, setCategories] = useState([])
-  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [loadingCategories, setLoadingCategories] = useState(false)
 
   // Verificar se o nome do cálculo já existe
   const checkCalculationNameExists = useCallback(
@@ -186,13 +192,26 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     [originalName],
   )
 
-  // Carregar dados do cálculo existente
+  // Carregar dados do cálculo e categorias em paralelo
   useEffect(() => {
-    const fetchCalculation = async () => {
+    const fetchData = async () => {
       try {
-        setInitialLoading(true)
-        const calculationDoc = await getDoc(doc(db, "calculations", calculationId))
+        setLoadingCategories(true)
+        
+        // Carregar dados em paralelo para melhor performance
+        const [calculationDoc, categoriesSnapshot] = await Promise.all([
+          getDoc(doc(db, "calculations", calculationId)),
+          getDocs(collection(db, "categories"))
+        ])
 
+        // Processar categorias
+        const categoriesData = categoriesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setCategories(categoriesData)
+
+        // Processar dados do cálculo
         if (calculationDoc.exists()) {
           const calculationData = calculationDoc.data()
 
@@ -200,7 +219,18 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           setCalculationName(calculationData.name)
           setOriginalName(calculationData.name)
           setCalculationDescription(calculationData.description)
-          setSelectedCategory(calculationData.category)
+          
+          // Converter categoria antiga (string) para novo formato (array de IDs)
+          if (calculationData.categories && Array.isArray(calculationData.categories)) {
+            // Novo formato: array de IDs
+            setSelectedCategoryIds(calculationData.categories)
+          } else if (calculationData.category) {
+            // Formato antigo: string com nome da categoria - converter para ID
+            const categoryId = categoriesData.find(cat => cat.name === calculationData.category)?.id
+            setSelectedCategoryIds(categoryId ? [categoryId] : [])
+          } else {
+            setSelectedCategoryIds([])
+          }
           setTags(calculationData.tags || [])
 
           // Parâmetros e resultados
@@ -219,39 +249,18 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             }))
             setResults(resultsWithIds)
           }
-
-
-      
         } else {
           setError("Cálculo não encontrado.")
         }
       } catch (err) {
-        console.error("Erro ao carregar cálculo:", err)
-        setError("Erro ao carregar dados do cálculo. Verifique sua conexão e tente novamente.")
-      } finally {
-        setInitialLoading(false)
-      }
-    }
-
-    const fetchCategories = async () => {
-      try {
-        setLoadingCategories(true)
-        const querySnapshot = await getDocs(collection(db, "categories"))
-        const categoriesData = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))
-        setCategories(categoriesData)
-      } catch (err) {
-        console.error("Erro ao carregar categorias:", err)
-        setError("Não foi possível carregar as categorias. Tente novamente mais tarde.")
+        console.error("Erro ao carregar dados:", err)
+        setError("Erro ao carregar dados. Verifique sua conexão e tente novamente.")
       } finally {
         setLoadingCategories(false)
       }
     }
 
-    fetchCalculation()
-    fetchCategories()
+    fetchData()
   }, [calculationId])
 
 
@@ -533,8 +542,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         errors.basic.description = "A descrição do cálculo é obrigatória."
         isValid = false
       }
-      if (!selectedCategory) {
-        errors.basic.category = "Selecione uma categoria."
+      if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+        errors.basic.categories = "Selecione pelo menos uma categoria."
         isValid = false
       }
     } else if (currentStep === 2) {
@@ -575,7 +584,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         if (!result.expression.trim()) {
           if (!errors.results[index]) errors.results[index] = {}
           errors.results[index].expression = "A expressão de cálculo é obrigatória."
-          isValid = false
+          isValid = false 
+         } else {
+          // Valida a expressão matemática usando a função validateExpression
+          const paramValues = {}
+          parameters.forEach(param => {
+            if (param.name) {
+              paramValues[param.name] = param.type === "number" ? 10 : 0
+            }
+          })
+          
+          const validationResult = validateExpression(result.expression, paramValues)
+          
+          if (!validationResult.isValid) {
+            if (!errors.results[index]) errors.results[index] = {}
+            errors.results[index].expression = validationResult.errorMessage
+            isValid = false
+          }
         }
 
         if (result.isMainResult) {
@@ -622,36 +647,24 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
-      // Substitui os nomes dos parâmetros pelos valores
-      let expressionToEval = expression
+           // Primeiro valida a expressão
+      const validation = validateExpression(expression, values)
+      if (!validation.isValid) {
+        console.error("Erro de validação:", validation.errorMessage)
+        return "Erro: " + validation.errorMessage
+      }
+      
+      // Normaliza as funções matemáticas na expressão
+      const normalizedExpression = normalizeMathFunctions(expression)
 
-      // Substitui funções matemáticas comuns
-      expressionToEval = expressionToEval
-        .replace(/Math\.pow\(/g, "Math.pow(")
-        .replace(/Math\.sqrt\(/g, "Math.sqrt(")
-        .replace(/Math\.abs\(/g, "Math.abs(")
-        .replace(/Math\.round\(/g, "Math.round(")
-        .replace(/Math\.floor\(/g, "Math.floor(")
-        .replace(/Math\.ceil\(/g, "Math.ceil(")
-        .replace(/Math\.sin\(/g, "Math.sin(")
-        .replace(/Math\.cos\(/g, "Math.cos(")
-        .replace(/Math\.tan\(/g, "Math.tan(")
-        .replace(/Math\.log\(/g, "Math.log(")
-        .replace(/Math\.exp\(/g, "Math.exp(")
-        .replace(/Math\.PI/g, "Math.PI")
-
-      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
-      Object.keys(values).forEach((key) => {
-        const regex = new RegExp(`@\\[${key}\\]`, "g")
-        expressionToEval = expressionToEval.replace(regex, values[key])
-      })
-
-      // Avalia a expressão
-      // eslint-disable-next-line no-eval
-      return eval(expressionToEval)
+      // Avalia a expressão de forma segura
+      const result = evaluateExpression(normalizedExpression, values, true)
+      
+      // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
+      return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
-      return "Erro"
+      return "Erro: " + error.message
     }
   }
 
@@ -706,8 +719,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       errors.basic.name = "Nome do cálculo é obrigatório"
       isValid = false
     }
-    if (!selectedCategory) {
-      errors.basic.category = "Categoria é obrigatória"
+    if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+      errors.basic.categories = "Pelo menos uma categoria é obrigatória"
       isValid = false
     }
   
@@ -739,6 +752,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   
   // Função para atualizar o cálculo
   const handleUpdateCalculation = async () => {
+    // Valida o formulário
+    if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
+      return
+    }
+    
     try {
       setLoading(true);
       
@@ -763,17 +782,19 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       await updateDoc(calculationRef, {
         name: calculationName,
         description: calculationDescription,
-        category: selectedCategory,
+        categories: selectedCategoryIds, // Array de IDs em vez de string
         tags: tags,
         parameters: parametersWithOrder,
         results: resultsWithOrder,
         lastModified: new Date(),
       });
       setSuccess(true);
+      toastSuccess(`Cálculo "${calculationName}" atualizado com sucesso!`);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Erro ao atualizar cálculo:", error);
       setError("Erro ao atualizar cálculo. Tente novamente.");
+      toastError("Falha ao atualizar cálculo. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -809,12 +830,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
     </div>
   )
 
-  if (initialLoading) {
+  if (loadingCategories) {
     return (
       <div className="create-calculation-container">
         <div className="loading-indicator">
           <Loader2 size={36} className="animate-spin" />
-          <p>Carregando dados do cálculo...</p>
+          <p>Carregando dados...</p>
         </div>
       </div>
     )
@@ -925,23 +946,22 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
                 <div className="form-group">
                   <label htmlFor="edit-categorySelect">
-                    Categoria <span className="required">*</span>
+                    Categorias <span className="required">*</span>
                   </label>
-                  <select
-                    id="edit-categorySelect"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className={validationErrors.basic?.category ? "input-error" : ""}
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {validationErrors.basic?.category && (
-                    <div className="error-text">{validationErrors.basic.category}</div>
+                  <MultiSelect
+                    options={categories.map(category => ({
+                      value: category.id,
+                      label: category.name
+                    }))}
+                    value={selectedCategoryIds}
+                    onValueChange={setSelectedCategoryIds}
+                    placeholder="Selecione pelo menos uma categoria..."
+                    searchPlaceholder="Buscar categorias..."
+                    maxCount={2}
+                    className={validationErrors.basic?.categories ? "border-red-500" : ""}
+                  />
+                  {validationErrors.basic?.categories && (
+                    <div className="error-text">{validationErrors.basic.categories}</div>
                   )}
                 </div>
 
@@ -1379,6 +1399,15 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                     {validationErrors.results[resultIndex]?.expression && (
                       <div className="error-text">{validationErrors.results[resultIndex].expression}</div>
                     )}
+
+                    {/* Validador de expressão */}
+                    {result.expression && (
+                      <ExpressionValidator 
+                        expression={result.expression} 
+                        onChange={(e) => updateExpressionWithHistory(resultIndex, e)}
+                        parameters={parameters}
+                      />
+                    )}
                   </div>
 
                   <div className="parameters-list">
@@ -1435,8 +1464,13 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                 <span className="review-value">{calculationName}</span>
               </div>
               <div className="review-item">
-                <span className="review-label">Categoria:</span>
-                <span className="review-value">{selectedCategory}</span>
+                <span className="review-label">Categorias:</span>
+                <span className="review-value">
+                  {selectedCategoryIds.map((categoryId) => {
+                    const category = categories.find(cat => cat.id === categoryId)
+                    return category ? category.name : categoryId
+                  }).join(", ")}
+                </span>
               </div>
               <div className="review-item">
                 <span className="review-label">Descrição:</span>

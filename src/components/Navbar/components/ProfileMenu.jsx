@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
 import BrazilFlag from "../../BrazilFlag";
@@ -24,13 +24,13 @@ const ProfileMenu = ({ userName }) => {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${location.pathname === '/Settings' ? 'bg-[#FFEE00] text-[#00418F]' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F] focus:ring focus:ring-[#FFEE00]'}`}
+        className={`flex xl:flex-row flex-col xl:items-center items-center justify-center xl:space-x-2 space-x-0 px-4 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 text-base ${location.pathname === '/Settings' ? 'bg-[#FFEE00] text-[#00418F]' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F] focus:ring focus:ring-[#FFEE00]'}`}
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <UserCircleIcon className="w-5 h-5" />
-        <span className="font-medium">Olá {userName}!</span>
-        <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''}`} />
+        <UserCircleIcon className="w-5 h-5 xl:mr-0 xl:mb-0 mb-1" />
+        <span className="font-medium xl:text-base text-xs text-center">Olá {userName}!</span>
+        <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 xl:ml-2 ml-0 xl:mt-0 -mt-1 ${isOpen ? 'transform rotate-180' : ''}`} />
       </button>
 
       {isOpen && (

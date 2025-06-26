@@ -1,8 +1,9 @@
-import { useEffect, useState, useContext } from "react"
+import { useState, useEffect, useContext, memo } from "react"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
+import { useToast } from "../../context/ToastContext"
 import {
   ArrowRight,
   Search,
@@ -26,14 +27,17 @@ import "./styles.css"
 
 const CalculationList = ({
   category,
+  calculations: externalCalculations,
   searchTerm = "",
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
   complexityFilters = [],
   onEditCalculation,
+  onCalculationDeleted,
 }) =>{
   const [user] = useAuthState(auth)
   const [isAdmin, setIsAdmin] = useState(false)
+  const { success, error: toastError } = useToast()
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
   const { isAdmin: contextIsAdmin } = useContext(AuthContext)
@@ -78,12 +82,35 @@ const CalculationList = ({
 
 
   useEffect(() => {
+    // Se cálculos externos foram fornecidos, use-os diretamente
+    if (externalCalculations) {
+      setCalculations(externalCalculations)
+      setLoading(false)
+      return
+    }
+
+    // Caso contrário, busque do Firestore (fallback para compatibilidade)
     const fetchCalculations = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        const q = query(collection(db, "calculations"), where("category", "==", category))
+        // Buscar todas as categorias para encontrar o ID da categoria pelo nome
+        const categoriesSnapshot = await getDocs(collection(db, "categories"))
+        const categoryDoc = categoriesSnapshot.docs.find(doc => doc.data().name === category)
+        
+        if (!categoryDoc) {
+          setCalculations([])
+          return
+        }
+
+        const categoryId = categoryDoc.id
+        
+        // Buscar cálculos que contêm o ID da categoria no array categories
+        const q = query(
+          collection(db, "calculations"), 
+          where("categories", "array-contains", categoryId)
+        )
         const querySnapshot = await getDocs(q)
 
         const calculationsData = querySnapshot.docs.map((doc) => ({
@@ -105,10 +132,10 @@ const CalculationList = ({
       }
     }
 
-    if (category) {
+    if (category && !externalCalculations) {
       fetchCalculations()
     }
-  }, [category])
+  }, [category, externalCalculations])
 
 
 
@@ -199,7 +226,13 @@ const CalculationList = ({
       
       // Mostrar mensagem de sucesso antes de fechar o modal
       setDeleteSuccess(true)
+      success(`Cálculo "${calculationToDelete.name || calculationToDelete.nome}" excluído com sucesso!`)
       
+      // Notificar o componente pai que um cálculo foi excluído
+      if (onCalculationDeleted) {
+        onCalculationDeleted()
+      }
+
       // Fechar o modal após um breve delay para mostrar a mensagem de sucesso
       setTimeout(() => {
         setShowDeleteModal(false)
@@ -208,6 +241,7 @@ const CalculationList = ({
     } catch (error) {
       console.error("Erro ao excluir cálculo:", error)
       setDeleteError("Não foi possível excluir o cálculo. Tente novamente.")
+      toastError("Falha ao excluir cálculo. Tente novamente.")
     } finally {
       setIsDeleting(false)
     }
@@ -433,10 +467,12 @@ const CalculationList = ({
                   <Clock size={14} />
                   <span>{getTimeAgo(calculation.updatedAt.toDate())}</span>
                 </div>
+                {/* TODO: Uncomment this when view tracking is implemented
                 <div className="meta-item">
                   <Eye size={14} />
                   <span>{calculation.views || 0} visualizações</span>
                 </div>
+                */}
               </div>
             </div>
 
@@ -555,4 +591,25 @@ const CalculationList = ({
     </div>
   )
 }
-export default CalculationList;
+// Adicionar função para buscar nomes das categorias
+const resolveCategoryNames = async (calculations) => {
+  const categoryIds = [...new Set(
+    calculations.flatMap(calc => calc.categories || [])
+  )]
+  
+  const categoryPromises = categoryIds.map(async (id) => {
+    const categoryDoc = await getDoc(doc(db, "categories", id))
+    return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
+  })
+  
+  const categoryMap = await Promise.all(categoryPromises)
+  const categoryLookup = Object.fromEntries(
+    categoryMap.map(cat => [cat.id, cat.name])
+  )
+  
+  return calculations.map(calc => ({
+    ...calc,
+    categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
+  }))
+}
+export default memo(CalculationList);

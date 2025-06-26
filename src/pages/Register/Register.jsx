@@ -4,6 +4,7 @@ import { AuthContext } from "@/context/AuthContext";
 import { doc, setDoc } from "firebase/firestore";
 import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { auth, db } from "@/services/firebaseConfig";
+import { useToast } from "@/context/ToastContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from "@/schemas";
@@ -29,7 +30,7 @@ import {
   Button,
   AuthAlert,
 } from "../../components/ui";
-import { TermsOfUseModal } from "@/components";
+import TermsOfUseModal from "@/components/TermsOfUseModal";
 import useLocationLogger from "@/hooks/useLocationLogger";
 
 // Schema de validação com Zod
@@ -45,6 +46,9 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
+  
+  // Hook de Toast para notificações
+  const { success, error: toastError, info } = useToast();
 
   // Hook para gerenciar logs de localização
   const { locationPermission, logUserRegistration, isLogging } = useLocationLogger();
@@ -149,6 +153,7 @@ const Register = () => {
       }
 
       localStorage.setItem("authToken", "logado");
+      success("Cadastro realizado com sucesso! Bem-vindo à Calculadora do Agricultor.");
       navigate("/Calculator");
       console.log("Usuário registrado e salvo no Firestore.");
     } catch (error) {
@@ -163,6 +168,17 @@ const Register = () => {
       // Definir código de erro específico do Firebase Auth
       setErrorCode(error.code || 'default');
       setErrorMessage("Erro de cadastro");
+      
+      // Mensagens de erro mais específicas para o usuário
+      if (error.code === 'auth/email-already-in-use') {
+        toastError("Este email já está sendo usado por outra conta.");
+      } else if (error.code === 'auth/weak-password') {
+        toastError("A senha fornecida é muito fraca. Use uma senha mais forte.");
+      } else if (error.code === 'auth/invalid-email') {
+        toastError("O email fornecido é inválido.");
+      } else {
+        toastError("Erro ao criar conta. Tente novamente.");
+      }
       
       // Log adicional para erros críticos de segurança
       if (error.code === 'auth/email-already-in-use') {

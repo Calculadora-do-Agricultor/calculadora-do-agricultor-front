@@ -1,87 +1,122 @@
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
-import Home from "./pages/Home/Home";
-import Login from "./pages/Login/Login";
-import Register from "./pages/Register/Register";
-import Settings from "./pages/Settings/Settings";
-import Calculator from "./pages/Calculator/Calculator.jsx";
-import React from "react";
-import CreateCalculationPage from "./pages/CreateCalculationPage/CreateCalculationPage.jsx";
-import EditCalculationPage from "./pages/EditCalculationPage/EditCalculationPage.jsx";
-import LogsManagement from "./pages/LogsManagement";
-import UserManagement from "./pages/UserManagement";
+import { useIntelligentPreload } from "./utils/preloadRoutes";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "./services/firebaseConfig";
+import { ToastProvider } from "./context/ToastContext";
+
+
+// Lazy loading das páginas para reduzir bundle inicial
+const Home = React.lazy(() => import("./pages/Home/Home"));
+const Login = React.lazy(() => import("./pages/Login/Login"));
+const Register = React.lazy(() => import("./pages/Register/Register"));
+const Settings = React.lazy(() => import("./pages/Settings/Settings"));
+const Calculator = React.lazy(() => import("./pages/Calculator/Calculator.jsx"));
+const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculationPage/CreateCalculationPage.jsx"));
+const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
+const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
+const UserManagement = React.lazy(() => import("./pages/UserManagement"));
+const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+
+
+// Componente de loading otimizado
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 
 function App() {
+  const [user] = useAuthState(auth);
+  
+  // Hook para preload inteligente de rotas baseado no contexto do usuário
+  useIntelligentPreload(user, user?.email?.includes('admin') || false);
+  
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Router>
-        <Navbar />
-        <main className="flex-grow pt-20">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route
-              path="/login"
-              element={<PrivateRoute requiresAuth={false} />}
-            >
-              <Route index element={<Login />} />
-            </Route>
-            <Route
-              path="/Register"
-              element={<PrivateRoute requiresAuth={false} />}
-            >
-              <Route index element={<Register />} />
-            </Route>
+    <ToastProvider>
+      <div className="flex min-h-screen w-full flex-col">
+        <Router>
+          <Navbar />
+          <main className="flex-grow pt-20">
+            <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/glossario" element={<GlossarioPage />} />
+              <Route
+                path="/login"
+                element={<PrivateRoute requiresAuth={false} />}
+              >
+                <Route index element={<Login />} />
+              </Route>
+              <Route
+                path="/Register"
+                element={<PrivateRoute requiresAuth={false} />}
+              >
+                <Route index element={<Register />} />
+              </Route>
 
-            <Route
-              path="/settings"
-              element={<PrivateRoute requiresAuth={true} />}
-            >
-              <Route index element={<Settings />} />
-            </Route>
-            <Route
-              path="/calculator"
-              element={<PrivateRoute requiresAuth={true} />}
-            >
-              <Route index element={<Calculator />} />
-            </Route>
-            <Route
-              path="/admin/criar-calculo"
-              element={
-                <ProtectedRoute adminOnly={true} redirectTo="/calculator">
-                  <CreateCalculationPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/edit-calculation/:id"
-              element={
-                <ProtectedRoute adminOnly={true} redirectTo="/calculator">
-                  <EditCalculationPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/logs"
-              element={
-                <ProtectedRoute adminOnly={true} redirectTo="/">
-                  <LogsManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute adminOnly={true} redirectTo="/">
-                  <UserManagement />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </main>
-        <Footer />
-      </Router>
-    </div>
+              <Route
+                path="/settings"
+                element={<PrivateRoute requiresAuth={true} />}
+              >
+                <Route index element={<Settings />} />
+              </Route>
+              <Route
+                path="/calculator"
+                element={<PrivateRoute requiresAuth={true} />}
+              >
+                <Route index element={<Calculator />} />
+              </Route>
+              <Route
+                path="/admin/criar-calculo"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/calculator">
+                    <CreateCalculationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/edit-calculation/:id"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/calculator">
+                    <EditCalculationPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/logs"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <LogsManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Suspense>
+          </main>
+          <Footer />
+        </Router>
+      </div>
+    </ToastProvider>
   );
 }
 

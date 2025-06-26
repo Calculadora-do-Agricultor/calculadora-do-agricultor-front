@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, addDoc, getDocs, query, where, writeBatch, doc } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -24,6 +25,9 @@ import {
   Redo2,
 } from "lucide-react"
 import DraggableList from "../DraggableList"
+import { MultiSelect } from "../ui"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import ExpressionValidator from "../ExpressionValidator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -31,11 +35,14 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
   const [calculationDescription, setCalculationDescription] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([])
   const [tags, setTags] = useState([])
   const [currentTag, setCurrentTag] = useState("")
 
@@ -438,8 +445,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         errors.basic.description = "A descrição do cálculo é obrigatória."
         isValid = false
       }
-      if (!selectedCategory) {
-        errors.basic.category = "Selecione uma categoria."
+      if (!selectedCategoryIds || selectedCategoryIds.length === 0) {
+        errors.basic.categories = "Selecione pelo menos uma categoria."
         isValid = false
       }
     } else if (currentStep === 2) {
@@ -481,7 +488,24 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
           if (!errors.results[index]) errors.results[index] = {}
           errors.results[index].expression = "A expressão de cálculo é obrigatória."
           isValid = false
+          } else {
+          // Valida a expressão matemática usando a função validateExpression
+          const paramValues = {}
+          parameters.forEach(param => {
+            if (param.name) {
+              paramValues[param.name] = param.type === "number" ? 10 : 0
+            }
+          })
+          
+          const validationResult = validateExpression(result.expression, paramValues)
+          
+          if (!validationResult.isValid) {
+            if (!errors.results[index]) errors.results[index] = {}
+            errors.results[index].expression = validationResult.errorMessage
+            isValid = false
+          }
         }
+        
 
         if (result.isMainResult) {
           hasMainResult = true
@@ -523,40 +547,28 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     setStep(step - 1)
     window.scrollTo(0, 0)
   }
-
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
-      // Substitui os nomes dos parâmetros pelos valores
-      let expressionToEval = expression
+            // Primeiro valida a expressão
+      const validation = validateExpression(expression, values)
+      if (!validation.isValid) {
+        console.error("Erro de validação:", validation.errorMessage)
+        return "Erro: " + validation.errorMessage
+      }
+      
 
-      // Substitui funções matemáticas comuns
-      expressionToEval = expressionToEval
-        .replace(/Math\.pow\(/g, "Math.pow(")
-        .replace(/Math\.sqrt\(/g, "Math.sqrt(")
-        .replace(/Math\.abs\(/g, "Math.abs(")
-        .replace(/Math\.round\(/g, "Math.round(")
-        .replace(/Math\.floor\(/g, "Math.floor(")
-        .replace(/Math\.ceil\(/g, "Math.ceil(")
-        .replace(/Math\.sin\(/g, "Math.sin(")
-        .replace(/Math\.cos\(/g, "Math.cos(")
-        .replace(/Math\.tan\(/g, "Math.tan(")
-        .replace(/Math\.log\(/g, "Math.log(")
-        .replace(/Math\.exp\(/g, "Math.exp(")
-        .replace(/Math\.PI/g, "Math.PI")
+      // Normaliza as funções matemáticas na expressão
+      const normalizedExpression = normalizeMathFunctions(expression)
 
-      // Substitui os nomes dos parâmetros pelos valores usando o formato @[nome do campo]
-      Object.keys(values).forEach((key) => {
-        const regex = new RegExp(`@\\[${key}\\]`, "g")
-        expressionToEval = expressionToEval.replace(regex, values[key])
-      })
-
-      // Avalia a expressão
-      // eslint-disable-next-line no-eval
-      return eval(expressionToEval)
+      // Avalia a expressão de forma segura
+      const result = evaluateExpression(normalizedExpression, values, true)
+      
+      // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
+      return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
-      return "Erro"
+      return "Erro: " + error.message
     }
   }
 
@@ -604,6 +616,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
     // Valida o formulário
     if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
       return
     }
 
@@ -629,7 +642,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       await addDoc(collection(db, "calculations"), {
         name: calculationName,
         description: calculationDescription,
-        category: selectedCategory,
+        categories: selectedCategoryIds, // Array de IDs em vez de string
         parameters: parametersWithOrder,
         results: resultsWithOrder,
         tags,
@@ -639,6 +652,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
       setSuccess(true)
       setError("")
+      toastSuccess(`Cálculo "${calculationName}" criado com sucesso!`)
 
       // Aguarda um momento para mostrar a mensagem de sucesso antes de redirecionar
       setTimeout(() => {
@@ -647,6 +661,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     } catch (err) {
       console.error("Erro ao criar cálculo:", err)
       setError("Erro ao criar cálculo. Verifique sua conexão e tente novamente.")
+      toastError("Falha ao criar cálculo. Verifique sua conexão e tente novamente.")
       setSuccess(false)
     } finally {
       setLoading(false)
@@ -677,21 +692,26 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   )
 
   return (
-    <div className="create-calculation-container">
+    <div className="create-calculation-container edit-mode">
       <div className="create-calculation-header">
         <div className="flex items-center">
           <button onClick={onCancel} className="back-button mr-4" aria-label="Voltar">
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-bold text-primary">Etapas de criação</h1>
+          <h1 className="text-2xl font-bold text-primary">
+            <Calculator size={20} className="inline-block mr-2" />
+            Criar cálculo
+          </h1>
         </div>
 
-        <button
-          onClick={() => setPreviewMode(!previewMode)}
-          className={`preview-toggle-button ${previewMode ? "active" : ""}`}
-        >
-          {previewMode ? "Editar" : "Visualizar"}
-        </button>
+        <div className="header-actions">
+          <button
+            onClick={() => setPreviewMode(!previewMode)}
+            className={`preview-toggle-button ${previewMode ? "active" : ""}`}
+          >
+            {previewMode ? "Editar" : "Visualizar"}
+          </button>
+        </div>
       </div>
 
       {/* Mensagens de feedback */}
@@ -772,23 +792,22 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
                 <div className="form-group">
                   <label htmlFor="categorySelect">
-                    Categoria <span className="required">*</span>
+                    Categorias <span className="required">*</span>
                   </label>
-                  <select
-                    id="categorySelect"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className={validationErrors.basic?.category ? "input-error" : ""}
-                  >
-                    <option value="">Selecione uma categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.name}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  {validationErrors.basic?.category && (
-                    <div className="error-text">{validationErrors.basic.category}</div>
+                  <MultiSelect
+                    options={categories.map(category => ({
+                      value: category.id,
+                      label: category.name
+                    }))}
+                    value={selectedCategoryIds}
+                    onValueChange={setSelectedCategoryIds}
+                    placeholder="Selecione pelo menos uma categoria..."
+                    searchPlaceholder="Buscar categorias..."
+                    maxCount={2}
+                    className={validationErrors.basic?.categories ? "border-red-500" : ""}
+                  />
+                  {validationErrors.basic?.categories && (
+                    <div className="error-text">{validationErrors.basic.categories}</div>
                   )}
                 </div>
 
@@ -1215,7 +1234,16 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     {validationErrors.results[resultIndex]?.expression && (
                       <div className="error-text">{validationErrors.results[resultIndex].expression}</div>
                     )}
+                    {/* Validador de expressão */}
+                    {result.expression && (
+                      <ExpressionValidator 
+                        expression={result.expression} 
+                        onChange={(e) => updateExpressionWithHistory(resultIndex, e)}
+                        parameters={parameters}
+                      />
+                    )}
                   </div>
+                  
 
                   <div className="parameters-list">
                     <label>Inserir Parâmetros:</label>
@@ -1271,8 +1299,17 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                 <span className="review-value">{calculationName}</span>
               </div>
               <div className="review-item">
-                <span className="review-label">Categoria:</span>
-                <span className="review-value">{selectedCategory}</span>
+                <span className="review-label">Categorias:</span>
+                <div className="review-categories">
+                  {selectedCategoryIds.map((categoryId) => {
+                    const category = categories.find(cat => cat.id === categoryId)
+                    return category ? (
+                      <span key={categoryId} className="review-tag">
+                        {category.name}
+                      </span>
+                    ) : null
+                  })}
+                </div>
               </div>
               <div className="review-item">
                 <span className="review-label">Descrição:</span>

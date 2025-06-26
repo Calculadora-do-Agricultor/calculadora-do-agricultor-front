@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   getDocs,
@@ -30,9 +30,9 @@ import { auth, db } from "../../services/firebaseConfig";
 import {
   CalculationList,
   Categories,
-  CreateCategory,
-  EditCalculation,
 } from "@/components";
+import CreateCategory from "@/components/CreateCategory";
+import EditCalculation from "@/components/EditCalculation";
 import logoClara from "@/assets/logoClara.svg";
 import "./Calculator.css";
 
@@ -53,6 +53,7 @@ export default function Calculator() {
   const [showUserCount, setShowUserCount] = useState(false);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showEditCalculation, setShowEditCalculation] = useState(false);
   const [calculationToEdit, setCalculationToEdit] = useState(null);
@@ -62,44 +63,46 @@ export default function Calculator() {
   const [showCategoryDescription, setShowCategoryDescription] = useState(false);
   const [calculos, setCalculos] = useState([]);
 
-  const fetchCategorias = async () => {
+  const fetchCategorias = useCallback(async () => {
     try {
       setLoading(true);
-      const categoriasSnapshot = await getDocs(collection(db, "categories"));
+      
+      // Buscar todas as categorias e todos os cálculos em paralelo
+      const [categoriasSnapshot, calculosSnapshot] = await Promise.all([
+        getDocs(collection(db, "categories")),
+        getDocs(collection(db, "calculations"))
+      ]);
 
-      const categoriasComCalculos = await Promise.all(
-        categoriasSnapshot.docs.map(async (doc) => {
-          const categoria = { id: doc.id, ...doc.data() };
+      // Mapear categorias
+      const categoriasMap = new Map();
+      categoriasSnapshot.docs.forEach(doc => {
+        const categoria = { id: doc.id, ...doc.data(), calculos: [] };
+        categoriasMap.set(doc.id, categoria);
+      });
 
-          // Busca todos os cálculos que pertencem a esta categoria
-          const calculosSnapshot = await getDocs(
-            query(
-              collection(db, "calculations"),
-              where("category", "==", categoria.name),
-            ),
-          );
+      // Agrupar cálculos por categoria
+      calculosSnapshot.docs.forEach(doc => {
+        const calculo = { id: doc.id, ...doc.data() };
+        const categories = calculo.categories || [];
+        
+        categories.forEach(categoryId => {
+          const categoria = categoriasMap.get(categoryId);
+          if (categoria) {
+            categoria.calculos.push(calculo);
+          }
+        });
+      });
 
-          const calculos = calculosSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-          return { ...categoria, calculos };
-        }),
-      );
-
+      const categoriasComCalculos = Array.from(categoriasMap.values());
       setCategorias(categoriasComCalculos);
 
-      // Seleciona a primeira categoria por padrão se não houver nenhuma selecionada
-      if (categoriasComCalculos.length > 0 && !categoriaSelecionada) {
-        setCategoriaSelecionada(categoriasComCalculos[0].name);
-      }
+
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [categoriaSelecionada]);
 
   // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
@@ -111,8 +114,17 @@ export default function Calculator() {
   }, [isAdmin]);
 
   useEffect(() => {
-    fetchCategorias();
+    if (user) {
+      fetchCategorias();
+    }
+  }, [user, fetchCategorias]);
 
+  // Limpar categoria selecionada ao montar o componente
+  useEffect(() => {
+    setCategoriaSelecionada(null);
+  }, []);
+
+  useEffect(() => {
     // Escutar eventos de mudança de modo de visualização
     const handleViewModeChange = (event) => {
       setViewMode(event.detail);
@@ -123,7 +135,7 @@ export default function Calculator() {
     return () => {
       window.removeEventListener("changeViewMode", handleViewModeChange);
     };
-  }, [user]);
+  }, []);
 
   // Função para focar no campo de pesquisa quando pressionar Ctrl+K ou Command+K
   useEffect(() => {
@@ -144,18 +156,22 @@ export default function Calculator() {
     setShowEditCalculation(true);
   };
 
-  // Total de cálculos em todas as categorias
-  const totalCalculos = categorias.reduce(
-    (total, cat) => total + (cat.calculos?.length || 0),
-    0,
-  );
+  // Total de cálculos em todas as categorias (memoizado)
+  const totalCalculos = useMemo(() => {
+    return categorias.reduce(
+      (total, cat) => total + (cat.calculos?.length || 0),
+      0,
+    );
+  }, [categorias]);
 
-  // Encontrar a categoria selecionada
-  const categoriaAtual = categorias.find(
-    (cat) => cat.name === categoriaSelecionada,
-  );
+  // Encontrar a categoria selecionada (memoizado)
+  const categoriaAtual = useMemo(() => {
+    return categorias.find(
+      (cat) => cat.name === categoriaSelecionada,
+    );
+  }, [categorias, categoriaSelecionada]);
 
-  const fetchUserCount = async () => {
+  const fetchUserCount = useCallback(async () => {
     try {
       const usersSnapshot = await getDocs(collection(db, "users"));
       setUserCount(usersSnapshot.size);
@@ -163,7 +179,7 @@ export default function Calculator() {
       console.error("Erro ao buscar contagem de usuários:", error);
       setUserCount(0);
     }
-  };
+  }, []);
 
   return (
     <div className="calculator-page">
@@ -337,6 +353,9 @@ export default function Calculator() {
                 {/* Descrição da categoria em largura total */}
                 {categoriaAtual?.description && showCategoryDescription && (
                   <div className="category-description-container">
+                    <div className="category-description-legend">
+                      <span>Descrição da categoria:</span>
+                    </div>
                     <div className="category-description">
                       {categoriaAtual.description}
                     </div>
@@ -414,11 +433,13 @@ export default function Calculator() {
                 {/* Lista de cálculos */}
                 <CalculationList
                   category={categoriaSelecionada}
+                  calculations={categoriaAtual?.calculos || []}
                   searchTerm={searchTerm}
                   viewMode={viewMode}
                   sortOption={currentSortOption}
                   complexityFilters={selectedComplexities}
                   onEditCalculation={handleEditCalculation}
+                  onCalculationDeleted={fetchCategorias}
                 />
               </>
             )}

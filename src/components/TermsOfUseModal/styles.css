@@ -76,6 +76,11 @@ body.modal-open {
   font-weight: 600;
   color: #0052cc;
   margin: 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .close-button {
