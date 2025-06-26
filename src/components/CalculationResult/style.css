@@ -1,0 +1,96 @@
+.calculation-modal-results {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: opacity 0.3s ease;
+}
+
+.calculation-modal-results.inactive {
+  opacity: 0.5;
+}
+
+.calculation-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+  min-height: 100px;
+}
+
+.calculation-result:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.calculation-result.primary {
+  background-color: #f0f7ff;
+  border-color: #bfdbfe;
+}
+
+.calculation-result.secondary {
+  background-color: #f9fafb;
+}
+
+.calculation-result-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.calculation-result-value {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.calculation-result-value span {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00418f;
+}
+
+.copy-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #f3f4f6;
+  border: none;
+  border-radius: 6px;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-button:hover:not(:disabled) {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.copy-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.copy-button.copied {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.calculation-result-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}

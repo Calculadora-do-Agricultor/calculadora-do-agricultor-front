@@ -56,6 +56,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .close-button {

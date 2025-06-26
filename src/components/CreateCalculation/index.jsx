@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, addDoc, getDocs, query, where, writeBatch, doc } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -25,7 +26,8 @@ import {
 } from "lucide-react"
 import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
-import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import ExpressionValidator from "../ExpressionValidator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -33,6 +35,9 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
@@ -483,7 +488,24 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
           if (!errors.results[index]) errors.results[index] = {}
           errors.results[index].expression = "A expressão de cálculo é obrigatória."
           isValid = false
+          } else {
+          // Valida a expressão matemática usando a função validateExpression
+          const paramValues = {}
+          parameters.forEach(param => {
+            if (param.name) {
+              paramValues[param.name] = param.type === "number" ? 10 : 0
+            }
+          })
+          
+          const validationResult = validateExpression(result.expression, paramValues)
+          
+          if (!validationResult.isValid) {
+            if (!errors.results[index]) errors.results[index] = {}
+            errors.results[index].expression = validationResult.errorMessage
+            isValid = false
+          }
         }
+        
 
         if (result.isMainResult) {
           hasMainResult = true
@@ -525,21 +547,28 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     setStep(step - 1)
     window.scrollTo(0, 0)
   }
-
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
+            // Primeiro valida a expressão
+      const validation = validateExpression(expression, values)
+      if (!validation.isValid) {
+        console.error("Erro de validação:", validation.errorMessage)
+        return "Erro: " + validation.errorMessage
+      }
+      
+
       // Normaliza as funções matemáticas na expressão
       const normalizedExpression = normalizeMathFunctions(expression)
 
       // Avalia a expressão de forma segura
-      const result = evaluateExpression(normalizedExpression, values)
+      const result = evaluateExpression(normalizedExpression, values, true)
       
       // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
       return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
-      return "Erro"
+      return "Erro: " + error.message
     }
   }
 
@@ -587,6 +616,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
     // Valida o formulário
     if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
       return
     }
 
@@ -622,6 +652,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
       setSuccess(true)
       setError("")
+      toastSuccess(`Cálculo "${calculationName}" criado com sucesso!`)
 
       // Aguarda um momento para mostrar a mensagem de sucesso antes de redirecionar
       setTimeout(() => {
@@ -630,6 +661,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
     } catch (err) {
       console.error("Erro ao criar cálculo:", err)
       setError("Erro ao criar cálculo. Verifique sua conexão e tente novamente.")
+      toastError("Falha ao criar cálculo. Verifique sua conexão e tente novamente.")
       setSuccess(false)
     } finally {
       setLoading(false)
@@ -1202,7 +1234,16 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     {validationErrors.results[resultIndex]?.expression && (
                       <div className="error-text">{validationErrors.results[resultIndex].expression}</div>
                     )}
+                    {/* Validador de expressão */}
+                    {result.expression && (
+                      <ExpressionValidator 
+                        expression={result.expression} 
+                        onChange={(e) => updateExpressionWithHistory(resultIndex, e)}
+                        parameters={parameters}
+                      />
+                    )}
                   </div>
+                  
 
                   <div className="parameters-list">
                     <label>Inserir Parâmetros:</label>

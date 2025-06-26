@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   getDocs,
@@ -53,6 +53,7 @@ export default function Calculator() {
   const [showUserCount, setShowUserCount] = useState(false);
   const searchInputRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showEditCalculation, setShowEditCalculation] = useState(false);
   const [calculationToEdit, setCalculationToEdit] = useState(null);
@@ -95,10 +96,7 @@ export default function Calculator() {
       const categoriasComCalculos = Array.from(categoriasMap.values());
       setCategorias(categoriasComCalculos);
 
-      // Seleciona a primeira categoria por padrão se não houver nenhuma selecionada
-      if (categoriasComCalculos.length > 0 && !categoriaSelecionada) {
-        setCategoriaSelecionada(categoriasComCalculos[0].name);
-      }
+
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
     } finally {
@@ -120,6 +118,11 @@ export default function Calculator() {
       fetchCategorias();
     }
   }, [user, fetchCategorias]);
+
+  // Limpar categoria selecionada ao montar o componente
+  useEffect(() => {
+    setCategoriaSelecionada(null);
+  }, []);
 
   useEffect(() => {
     // Escutar eventos de mudança de modo de visualização
@@ -350,6 +353,9 @@ export default function Calculator() {
                 {/* Descrição da categoria em largura total */}
                 {categoriaAtual?.description && showCategoryDescription && (
                   <div className="category-description-container">
+                    <div className="category-description-legend">
+                      <span>Descrição da categoria:</span>
+                    </div>
                     <div className="category-description">
                       {categoriaAtual.description}
                     </div>
@@ -433,6 +439,7 @@ export default function Calculator() {
                   sortOption={currentSortOption}
                   complexityFilters={selectedComplexities}
                   onEditCalculation={handleEditCalculation}
+                  onCalculationDeleted={fetchCategorias}
                 />
               </>
             )}

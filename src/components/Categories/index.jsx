@@ -1,30 +1,37 @@
-import React, { useState, useEffect, useContext } from "react"
-import { Search, Filter, Loader2, AlertCircle, AlertTriangle } from "lucide-react"
+"use client"
+
+import { useState, useEffect, useContext } from "react"
+import { Search, Filter, Loader2, AlertTriangle, X } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
-import "./styles.css"
 
 const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
+  // Add this style for hiding scrollbar in category names
+  const scrollbarHideStyle = {
+    scrollbarWidth: "none",
+    msOverflowStyle: "none",
+    "&::-webkit-scrollbar": {
+      display: "none",
+    },
+  }
+
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
   const [filterOption, setFilterOption] = useState("all")
   const { isAdmin, user } = useContext(AuthContext)
-  
-  // Estados para edição e exclusão
+
+  // Estados para edição
   const [categoryToEdit, setCategoryToEdit] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [categoryToDelete, setCategoryToDelete] = useState(null)
-  const [isDeleting, setIsDeleting] = useState(false)
 
   useEffect(() => {
     if (!categories) return
-    
+
     let result = [...categories]
-    
+
     // Aplicar filtro por quantidade de cálculos
     if (filterOption === "most") {
       result = result.sort((a, b) => (b.calculos?.length || 0) - (a.calculos?.length || 0))
@@ -33,16 +40,31 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     } else if (filterOption === "alphabetical") {
       result = result.sort((a, b) => a.name.localeCompare(b.name))
     }
-    
-    // Aplicar busca por texto
+
+    // Aplicar busca por texto em categorias e cálculos
     if (searchTerm.trim() !== "") {
-      result = result.filter(category => 
-        category.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      const searchTermLower = searchTerm.toLowerCase()
+      result = result.filter((category) => {
+        // Busca no nome da categoria
+        const categoryMatch = category.name.toLowerCase().includes(searchTermLower)
+        
+        // Busca nos cálculos da categoria
+        const calculosMatch = category.calculos?.some(calculo => {
+          return (
+            (calculo.name || calculo.nome || "").toLowerCase().includes(searchTermLower) ||
+            (calculo.description || calculo.descricao || "").toLowerCase().includes(searchTermLower) ||
+            (calculo.tags || []).some(tag => tag.toLowerCase().includes(searchTermLower))
+          )
+        })
+
+        return categoryMatch || calculosMatch
+      })
     }
-    
+
     setFilteredCategories(result)
-  }, [categories, searchTerm, filterOption])
+
+    // Removida a seleção automática da categoria
+  }, [categories, searchTerm, filterOption, onSelect])
 
   // Função para abrir o modal de edição
   const handleEditCategory = (category) => {
@@ -66,52 +88,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     }
   }
 
-  // Função para abrir o modal de exclusão
-  const handleDeleteClick = (category) => {
-    setCategoryToDelete(category)
-    setShowDeleteModal(true)
-  }
 
-  // Função para confirmar a exclusão
-  const handleConfirmDelete = async () => {
-    if (!categoryToDelete) return
-
-    try {
-      setIsDeleting(true)
-      
-      // Verificar se a categoria tem cálculos associados
-      if (categoryToDelete.calculos && categoryToDelete.calculos.length > 0) {
-        alert("Esta categoria possui cálculos associados e não pode ser excluída. Remova os cálculos primeiro.")
-        setIsDeleting(false)
-        setShowDeleteModal(false)
-        setCategoryToDelete(null)
-        return
-      }
-      
-      // Excluir a categoria do Firestore
-      await deleteDoc(doc(db, "categories", categoryToDelete.id))
-      
-      // Fechar o modal
-      setShowDeleteModal(false)
-      setCategoryToDelete(null)
-      
-      // Notificar o componente pai para atualizar a lista de categorias
-      if (onCategoryUpdated) {
-        onCategoryUpdated()
-      }
-    } catch (error) {
-      console.error("Erro ao excluir categoria:", error)
-      alert("Erro ao excluir categoria. Tente novamente.")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
-  // Função para cancelar a exclusão
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false)
-    setCategoryToDelete(null)
-  }
 
   // Verificar se o usuário pode editar a categoria
   const canEditCategory = (category) => {
@@ -120,44 +97,53 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="categories-empty">
+      <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg mx-2">
         <p>Nenhuma categoria disponível.</p>
       </div>
     )
   }
 
   return (
-    <div className="categories-wrapper">
-      <div className="categories-search">
-        <div className="search-input-container">
-          <Search size={18} className="search-icon" />
+    <div className="flex flex-col w-full h-full bg-white rounded-b-xl p-4 sm:p-5 lg:p-6">
+      {/* Search and Filter Section */}
+      <div className="mb-4 space-y-3 sm:space-y-4">
+        {/* Search Input */}
+        <div className="relative">
+          <Search
+            size={18}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 transition-colors duration-200"
+          />
           <input
             id={`${idPrefix}search-categories`}
             type="text"
-            placeholder="Buscar categorias..."
+            placeholder="Buscar categorias e cálculos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
+            className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-lg text-sm font-medium text-gray-900 bg-gray-50 transition-all duration-200 focus:outline-none focus:border-blue-600 focus:bg-white focus:shadow-lg focus:shadow-blue-100"
             aria-label="Buscar categorias"
           />
           {searchTerm && (
-            <button 
-              className="search-clear-button"
-              onClick={() => setSearchTerm("")}
+            <button
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
+              onClick={() => {
+                setSearchTerm("")
+                onSelect(null)
+              }}
               aria-label="Limpar busca"
             >
-              &times;
+              <X size={14} />
             </button>
           )}
         </div>
-        
-        <div className="filter-container">
-          <div className="filter-label">
+
+        {/* Filter Section */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
             <Filter size={14} />
-            <span>Filtrar por:</span>
+            
           </div>
-          <select 
-            className="filter-select"
+          <select
+            className="flex-1 sm:flex-none sm:min-w-[140px] px-3 py-2 border border-gray-300 rounded-md text-sm font-medium bg-white text-gray-900 cursor-pointer transition-all duration-200 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-200"
             value={filterOption}
             onChange={(e) => setFilterOption(e.target.value)}
           >
@@ -168,39 +154,71 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           </select>
         </div>
       </div>
-      
-      <div className="categories-scroll-container">
-        <div className="categories-container">
+
+      {/* Search Result Legend */}
+      {searchTerm && (
+        <div className="mb-3 text-sm text-green-600 font-medium">
+          Categorias que contêm o cálculo pesquisado:
+        </div>
+      )}
+      {/* Categories List */}
+      <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
+        <div className="space-y-2 pr-2">
           {filteredCategories.length > 0 ? (
             filteredCategories.map((category, index) => (
-              <div
-                key={index}
-                className={`category-item-container ${selectedCategory === category.name ? "selected" : ""}`}
-              >
-                <div 
-                  className="category-item"
+              <div key={index} className="relative">
+                <div
+                  className={`flex items-center w-full p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-gray-300 ${
+                    selectedCategory === category.name
+                      ? "bg-blue-50 border-blue-500"
+                      : "bg-white border-gray-200 hover:bg-gray-50"
+                  }`}
                   onClick={() => onSelect(category.name)}
                 >
-                  <div className="category-info-wrapper">
-                    <span className="category-name">{category.name}</span>
-                    <span className="category-count-badge">{category.calculos?.length || 0}</span>
-                  </div>
-                  {selectedCategory === category.name && (
-                    <span className="selected-indicator"></span>
-                  )}
+                  {/* Category Info */}
+                  <div className="flex-1 min-w-0 flex items-center justify-between ">
+                     <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
+                       <span 
+                         className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${ 
+                           selectedCategory === category.name
+                             ? "text-blue-700"
+                             : "text-gray-800 group-hover:text-blue-600"
+                         }`}
+                         style={{
+                           scrollbarWidth: "none",
+                           msOverflowStyle: "none",
+                         }}
+                       >
+                         {category.name}
+                       </span>
+                     </div>
+ 
+                     <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
+                       {/* Count Badge */}
+                       <span
+                         className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${ 
+                           selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                         }`}
+                       >
+                         {category.calculos?.length || 0}
+                       </span>
+
+                       {/* Actions */}
+                       {canEditCategory(category) && (
+                         <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                           <CategoryActions 
+                            category={category} 
+                            onEdit={() => handleEditCategory(category)} 
+                           />
+                         </div>
+                       )}
+                     </div>
+                   </div>
                 </div>
-                {canEditCategory(category) && (
-                  <div className="category-actions-wrapper" onClick={(e) => e.stopPropagation()}>
-                    <CategoryActions
-                      category={category}
-                      onEdit={() => handleEditCategory(category)}
-                    />
-                  </div>
-                )}
               </div>
             ))
           ) : (
-            <div className="categories-empty">
+            <div className="flex items-center justify-center p-6 sm:p-8 text-gray-500 text-sm font-medium text-center bg-white border border-dashed border-gray-300 rounded-lg">
               <p>Nenhuma categoria encontrada.</p>
             </div>
           )}
@@ -213,50 +231,10 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
           category={categoryToEdit}
           onUpdate={handleUpdateCategory}
           onCancel={handleCloseEditModal}
-          onDelete={handleDeleteClick}
         />
       )}
 
-      {/* Modal de confirmação de exclusão */}
-      {showDeleteModal && categoryToDelete && (
-        <div className="delete-modal-overlay">
-          <div className="delete-modal">
-            <div className="delete-modal-header">
-              <div className="delete-modal-icon">
-                <AlertTriangle size={24} />
-              </div>
-              <h3>Confirmar Exclusão</h3>
-            </div>
-            <div className="delete-modal-body">
-              <p>Tem certeza que deseja excluir a categoria <strong>{categoryToDelete.name}</strong>?</p>
-              <p className="delete-warning">Esta ação não pode ser desfeita.</p>
-            </div>
-            <div className="delete-modal-footer">
-              <button 
-                className="cancel-button" 
-                onClick={handleCancelDelete}
-                disabled={isDeleting}
-              >
-                Cancelar
-              </button>
-              <button 
-                className="delete-button" 
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Excluindo...</span>
-                  </>
-                ) : (
-                  <span>Excluir</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   )
 }
