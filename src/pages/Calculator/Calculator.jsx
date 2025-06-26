@@ -10,6 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 import { AuthContext } from "../../context/AuthContext";
+import { AdminContext } from "../../context/AdminContext";
 import {
   PlusCircle,
   X,
@@ -40,7 +41,7 @@ export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [user] = useAuthState(auth);
-  const { isAdmin } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
   const [showOptions, setShowOptions] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [loading, setLoading] = useState(true);

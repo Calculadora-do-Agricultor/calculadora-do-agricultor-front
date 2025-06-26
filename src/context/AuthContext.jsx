@@ -28,8 +28,6 @@ export const AuthProvider = ({ children }) => {
       profileVisibility: "private"
     }
   });
-  const [isAdmin, setIsAdmin] = useState(false);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -50,7 +48,6 @@ export const AuthProvider = ({ children }) => {
             // Deslogar o usuário imediatamente
             await signOut(auth);
             setUser(null);
-            setIsAdmin(false);
             setLoading(false);
             
             // Dispara um evento customizado para mostrar mensagem de conta desativada
@@ -62,9 +59,6 @@ export const AuthProvider = ({ children }) => {
           }
           
           setUser({ uid: firebaseUser.uid, ...userData });
-          
-          // Verificar se o usuário é administrador
-          setIsAdmin(userData.role === "admin");
           
           // Carregar as preferências do usuário, se existirem
           if (userData.preferences) {
@@ -124,7 +118,7 @@ export const AuthProvider = ({ children }) => {
             profileVisibility: "private"
           }
         });
-        setIsAdmin(false);
+
       }
       setLoading(false);
     });
@@ -161,8 +155,7 @@ export const AuthProvider = ({ children }) => {
       preferences, 
       updatePreferences,
       hideFooter: preferences.hideFooter, 
-      toggleHideFooter, 
-      isAdmin 
+      toggleHideFooter
     }}>
       {children}
     </AuthContext.Provider>

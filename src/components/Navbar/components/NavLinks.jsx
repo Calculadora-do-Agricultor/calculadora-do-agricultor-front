@@ -2,10 +2,11 @@ import React, { useState, useContext, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { HomeIcon, CalculatorIcon, CogIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
+import { AdminContext } from '../../../context/AdminContext';
 
 const NavLinks = ({ user }) => {
   const location = useLocation();
-  const { isAdmin } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef(null);
 

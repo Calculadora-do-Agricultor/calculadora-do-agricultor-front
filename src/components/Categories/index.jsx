@@ -3,6 +3,7 @@
 import { useState, useEffect, useContext } from "react"
 import { Search, Filter, Loader2, AlertTriangle, X } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
+import { AdminContext } from "../../context/AdminContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import CategoryActions from "../CategoryActions"
@@ -21,7 +22,8 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   const [searchTerm, setSearchTerm] = useState("")
   const [filteredCategories, setFilteredCategories] = useState(categories || [])
   const [filterOption, setFilterOption] = useState("all")
-  const { isAdmin, user } = useContext(AuthContext)
+  const { user } = useContext(AuthContext)
+  const { isAdmin } = useContext(AdminContext)
 
   // Estados para edição
   const [categoryToEdit, setCategoryToEdit] = useState(null)

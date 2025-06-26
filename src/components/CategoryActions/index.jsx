@@ -4,10 +4,12 @@ import {
   Lock,
 } from "lucide-react";
 import { AuthContext } from "../../context/AuthContext";
+import { AdminContext } from "../../context/AdminContext";
 import "./styles.css";
 
 const CategoryActions = ({ category, onEdit }) => {
-  const { isAdmin, user } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
+  const { isAdmin } = useContext(AdminContext);
   
   // Verifica se o usuário atual é o criador da categoria ou um administrador
   const canEdit = isAdmin || (user && category.createdBy === user.uid);

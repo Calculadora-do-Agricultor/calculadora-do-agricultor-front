@@ -1,26 +1,64 @@
 import React, { useRef, useEffect } from "react"
 import { X, Copy, Calculator, Check, Info } from "lucide-react"
 import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useToast } from "../../context/ToastContext"
+import { doc, updateDoc, increment, getDoc, setDoc } from "firebase/firestore"
+import { db } from "../../services/firebaseConfig"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
+import { useAuth } from "../../context/useAuth"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
   const modalRef = useRef(null)
   const [copied, setCopied] = React.useState({})
+  const { showToast } = useToast()
+  const { user } = useAuth()
+
+  useEffect(() => {
+    if (!isOpen || !user?.uid || !calculation?.id) return
+
+    let cancelled = false
+
+    const registerView = async () => {
+      try {
+        const viewRef = doc(db, "calculations", calculation.id, "views", user.uid)
+        const viewSnap = await getDoc(viewRef)
+
+        if (!viewSnap.exists() && !cancelled) {
+          await setDoc(viewRef, { viewedAt: new Date() })
+
+          const calcRef = doc(db, "calculations", calculation.id)
+          await updateDoc(calcRef, {
+            views: increment(1)
+          })
+        }
+      } catch (err) {
+        console.error("Erro ao registrar visualização:", err)
+      }
+    }
+
+    registerView()
+
+    return () => {
+      cancelled = true // evita duplicação se o componente desmontar rapidamente
+    }
+  }, [isOpen, calculation?.id, user?.uid])
 
   const handleParamChange = (paramName, value) => {
     setParamValues(prev => ({ ...prev, [paramName]: value }))
   }
 
-  const copyToClipboard = (text, key) => {
+  const copyToClipboard = (text, key, resultName) => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(prev => ({ ...prev, [key]: true }))
       setTimeout(() => {
         setCopied(prev => ({ ...prev, [key]: false }))
       }, 2000)
+      showToast(`Valor "${resultName || 'Resultado'}" copiado para a área de transferência!`, 'success')
     }).catch(err => {
       console.error("Copy error:", err)
+      showToast("Não foi possível copiar o resultado. Tente novamente.", 'error')
     })
   }
 
@@ -39,6 +77,14 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
+
+  useEffect(() => {
+    if (error) {
+      showToast("Erro no cálculo: " + error, 'error')
+    } else if (allFieldsFilled && Object.keys(results).length > 0) {
+      showToast("Cálculo realizado com sucesso!", 'info')
+    }
+  }, [error, allFieldsFilled, results, showToast])
 
   if (!isOpen || !calculation) return null
 
@@ -156,12 +202,11 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
                   ))}
                 </>
               )}
-
             </div>
           </div>
         </div>
       </div>
-    </div >
+    </div>
   )
 }
 

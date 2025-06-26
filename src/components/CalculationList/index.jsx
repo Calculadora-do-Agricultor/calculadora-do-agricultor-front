@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "fireb
 import { db, auth } from "../../services/firebaseConfig"
 import { useAuthState } from "react-firebase-hooks/auth"
 import { AuthContext } from "../../context/AuthContext"
+import { AdminContext } from "../../context/AdminContext"
 import {
   ArrowRight,
   Search,
@@ -38,7 +39,7 @@ const CalculationList = ({
   const [isAdmin, setIsAdmin] = useState(false)
 
   // Usar o isAdmin do AuthContext em vez de verificar localmente
-  const { isAdmin: contextIsAdmin } = useContext(AuthContext)
+  const { isAdmin: contextIsAdmin } = useContext(AdminContext)
   
   useEffect(() => {
     setIsAdmin(contextIsAdmin)
@@ -538,7 +539,7 @@ const CalculationList = ({
                 <div className="delete-modal-header">
                   <AlertTriangle className="delete-modal-icon" size={48} />
                   <h2 id="delete-modal-title">Confirmar exclusão</h2>
-                </div>
+                </div>ent 
                 <div className="delete-modal-content">
                   <p>
                     Tem certeza que deseja excluir o cálculo <strong>"{calculationToDelete.name || calculationToDelete.nome}"</strong>?
