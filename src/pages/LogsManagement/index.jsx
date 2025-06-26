@@ -35,6 +35,7 @@ import {
 import MetricCard from "@/components/MetricCard";
 import LogCard from "@/components/LogCard";
 import MetricsToggle from "@/components/MetricsToggle";
+import EmptyState from "@/components/ui/EmptyState";
 import "./LogsManagement.css";
 
 const LogsManagement = () => {
@@ -684,13 +685,27 @@ const LogsManagement = () => {
               <span className="text-lg font-medium">{error}</span>
             </div>
           ) : currentLogs.length === 0 ? (
-            <div className="empty-state m-4 flex flex-col items-center justify-center rounded-xl bg-[#00418F]/5 p-16 text-[#00418F]/70">
-              <DocumentTextIcon className="icon-animated mb-4 h-20 w-20" />
-              <p className="text-xl font-medium">Nenhum log encontrado</p>
-              <p className="mt-2 text-sm opacity-80">
-                Não há logs que correspondam aos critérios de pesquisa.
-              </p>
-            </div>
+            <EmptyState
+              icon={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? SearchX : History}
+              title={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? "Nenhum log encontrado" : "Histórico de atividades"}
+              message={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter
+                ? "Não há logs que correspondam aos critérios de pesquisa"
+                : isAdmin
+                  ? "Monitore as atividades dos usuários. Os registros aparecerão aqui conforme os usuários interagem com o sistema."
+                  : "Seu histórico de atividades será exibido aqui conforme você utiliza a calculadora."}
+              actionLabel={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? "Limpar filtros" : undefined}
+              onAction={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter
+                ? () => {
+                    setFilterType("all");
+                    setDateFilter("all");
+                    setUserFilter("");
+                    setStartDate("");
+                    setEndDate("");
+                    setSearchQuery("");
+                  }
+                : undefined}
+              className="m-4"
+            />
           ) : (
             <div className="grid gap-4 p-4">
               {currentLogs.map((log) => (
