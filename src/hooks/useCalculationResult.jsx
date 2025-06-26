@@ -5,18 +5,11 @@ import { evaluateExpression, normalizeMathFunctions, validateExpression } from "
  * Hook to calculate results based on parameters and calculation expressions.
  *
  * @param {Object} calculation - Calculation object containing formulas and results
- * @returns {Object} { paramValues, setParamValues, results, allFieldsFilled, error }
+ * @param {Object} paramValues - Parameter values from form
+ * @param {boolean} allFieldsFilled - Indicates if all parameters are filled
+ * @returns {Object} { results, error }
  */
-export function useCalculationResult(calculation) {
-  const [paramValues, setParamValues] = useState({})
-  
-  // Check if all required fields are filled
-  const allFieldsFilled = calculation?.parameters ? 
-    calculation.parameters.every(param => 
-      paramValues[param.name] !== undefined && 
-      paramValues[param.name] !== null && 
-      paramValues[param.name] !== ""
-    ) : false
+export function useCalculationResult(calculation, paramValues, allFieldsFilled) {
   const [results, setResults] = useState(() => {
     // Initialize results with default values
     const defaultResults = {}
@@ -117,5 +110,5 @@ export function useCalculationResult(calculation) {
     return evaluateExpression(normalized, context, true)
   }
 
-  return { paramValues, setParamValues, results, allFieldsFilled, error }
+  return { results, error }
 }
