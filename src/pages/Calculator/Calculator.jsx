@@ -27,10 +27,8 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { auth, db } from "../../services/firebaseConfig";
-import {
-  CalculationList,
-  Categories,
-} from "@/components";
+import CalculationList from "@/components/CalculationList";
+import { Categories } from "@/components";
 import CreateCategory from "@/components/CreateCategory";
 import EditCalculation from "@/components/EditCalculation";
 import logoClara from "@/assets/logoClara.svg";
@@ -246,7 +244,7 @@ export default function Calculator() {
         </div>
 
         {/* Conteúdo principal com sidebar e lista de cálculos */}
-        <div className="content-container" id="calculations-list">
+        <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
             {loading ? (

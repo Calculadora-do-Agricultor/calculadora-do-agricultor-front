@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import {
   collection,
   getDocs,
@@ -33,9 +33,9 @@ import {
   FunnelIcon,
   InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import MetricCard from "@/components/MetricCard";
-import LogCard from "@/components/LogCard";
-import MetricsToggle from "@/components/MetricsToggle";
+import MetricCard from "../../components/MetricCard";
+import LogCard from "../../components/LogCard";
+import EmptyState from "../../components/ui/EmptyState";
 import "./LogsManagement.css";
 
 // Constantes para tooltips das métricas
@@ -66,12 +66,12 @@ const LogsManagement = () => {
   const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
 
+  const { user, isAdmin } = useContext(AuthContext);
+
   // Título e descrição da página
   const pageTitle = "Histórico de Atividades";
   const pageDescription =
     "Visualize e analise todas as atividades realizadas no sistema, com informações detalhadas sobre cada ação.";
-
-  const { user, isAdmin } = useContext(AuthContext);
 
   // Função para formatar a data
   const formatDate = (timestamp) => {
@@ -151,20 +151,9 @@ const LogsManagement = () => {
     }
   }, [user, isAdmin]);
 
-  // Atualizar paginação quando os logs mudarem
-  useEffect(() => {
-    if (logs.length > 0) {
-      updatePagination(logs);
-    }
-  }, [logs]);
-
-  // Retornar apenas os logs regulares
-  const combinedLogs = () => {
-    return logs;
-  };
-
-  // Filtrar logs com base nos filtros aplicados
-  const filteredLogs = combinedLogs().filter((log) => {
+  // Filtrar logs com base nos filtros aplicados usando useMemo
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
     // Filtro de localização
     let matchesLocation = true;
     if (filterType === "with-location") {
@@ -290,7 +279,15 @@ const LogsManagement = () => {
       matchesDate &&
       matchesSearch
     );
-  });
+    });
+  }, [logs, filterType, dateFilter, startDate, endDate, userFilter, ipFilter, locationFilter, searchQuery]);
+
+  // Atualizar paginação quando os logs filtrados mudarem
+  useEffect(() => {
+    const totalItems = filteredLogs.length;
+    setTotalPages(Math.ceil(totalItems / logsPerPage));
+    setCurrentPage(1);
+  }, [filteredLogs, logsPerPage]);
 
   // Calcular métricas para os cards
   const calculateMetrics = (logsToAnalyze) => {
@@ -814,19 +811,33 @@ const LogsManagement = () => {
               </div>
             )}
 
-            {/* Lista de Logs */}
-            <div className="mt-8">
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-[#00418F]">
-                  Registros de Atividade
-                </h3>
-                <div className="text-sm text-[#00418F]/70">
-                  {filteredLogs.length} {filteredLogs.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+            {/* Conteúdo principal - Cards de logs */}
+            <div className="overflow-x-auto bg-white/70 backdrop-blur-sm mt-8">
+              {loading ? (
+                <div className="loading-state flex flex-col items-center justify-center space-y-4 p-16">
+                  <div className="spinner"></div>
+                  <p className="font-medium text-[#00418F]/70">
+                    Carregando logs...
+                  </p>
                 </div>
-              </div>
+              ) : error ? (
+                <div className="error-state m-4 flex items-center justify-center rounded-xl border border-red-100 bg-red-50/50 p-12 text-red-600 backdrop-blur-sm">
+                  <ExclamationCircleIcon className="icon-animated mr-3 h-8 w-8" />
+                  <span className="text-lg font-medium">{error}</span>
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-[#00418F]">
+                      Registros de Atividade
+                    </h3>
+                    <div className="text-sm text-[#00418F]/70">
+                      {filteredLogs.length} {filteredLogs.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+                    </div>
+                  </div>
 
-              {/* Grid de Logs */}
-              <div className="space-y-4">
+                  {/* Grid de Logs */}
+                  <div className="space-y-4">
                 {currentLogs.map((log) => (
                   <div
                     key={log.id}
@@ -867,16 +878,18 @@ const LogsManagement = () => {
                 </div>
               )}
 
-              {/* Estado vazio */}
-              {filteredLogs.length === 0 && (
-                <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-[#00418F]/10 bg-white/50 p-8 text-center">
-                  <ExclamationCircleIcon className="h-12 w-12 text-[#00418F]/30" />
-                  <h3 className="mt-4 text-lg font-medium text-[#00418F]">
-                    Nenhum registro encontrado
-                  </h3>
-                  <p className="mt-2 text-sm text-[#00418F]/70">
-                    Tente ajustar os filtros para encontrar o que procura
-                  </p>
+                  {/* Estado vazio */}
+                  {filteredLogs.length === 0 && (
+                    <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-[#00418F]/10 bg-white/50 p-8 text-center">
+                      <ExclamationCircleIcon className="h-12 w-12 text-[#00418F]/30" />
+                      <h3 className="mt-4 text-lg font-medium text-[#00418F]">
+                        Nenhum registro encontrado
+                      </h3>
+                      <p className="mt-2 text-sm text-[#00418F]/70">
+                        Tente ajustar os filtros para encontrar o que procura
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

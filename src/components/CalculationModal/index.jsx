@@ -1,56 +1,74 @@
-import React, { useRef, useEffect } from "react"
-import { X, Copy, Calculator, Check, Info } from "lucide-react"
-import { useCalculationResult } from "../../hooks/useCalculationResult"
+import { useRef, useEffect, useState } from "react"
+import { X, Copy, Calculator, Check, Info, HelpCircle } from "lucide-react"
+import useCalculationResult from "../../hooks/useCalculationResult"
+import { useFormParameters } from "../../hooks/useFormParameters"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
+import { Tooltip } from "../ui/Tooltip"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-  const { paramValues, setParamValues, results, allFieldsFilled, error } = useCalculationResult(calculation)
+  const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
+  const { results, error } = useCalculationResult(calculation, paramValues, allFieldsFilled)
+  const { success, error: toastError } = useToast()
   const modalRef = useRef(null)
-  const [copied, setCopied] = React.useState({})
-  const { success, error: toastError, info } = useToast()
+  const [copied, setCopied] = useState({})
 
-  const handleParamChange = (paramName, value) => {
-    setParamValues(prev => ({ ...prev, [paramName]: value }))
-  }
 
-  const copyToClipboard = (text, key, resultName) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(prev => ({ ...prev, [key]: true }))
-      setTimeout(() => {
-        setCopied(prev => ({ ...prev, [key]: false }))
-      }, 2000)
-      success(`Valor "${resultName || 'Resultado'}" copiado para a área de transferência!`)
-    }).catch(err => {
-      console.error("Copy error:", err)
-      toastError("Não foi possível copiar o resultado. Tente novamente.")
-    })
-  }
 
+  const handleParamChange = (paramName, value, param) => {
+    setParamValue(paramName, value);
+  };
+
+  // Copia o resultado para a área de transferência (combinando ambas as versões)
+  const copyToClipboard = (text, resultId, resultName) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopied((prev) => ({
+          ...prev,
+          [resultId]: true,
+        }));
+        setTimeout(() => {
+          setCopied((prev) => ({
+            ...prev,
+            [resultId]: false,
+          }));
+        }, 2000);
+        // Toast de sucesso da branch develop
+        if (success) {
+          success(
+            `Valor "${resultName || "Resultado"}" copiado para a área de transferência!`,
+          );
+        }
+      },
+      (err) => {
+        console.error("Erro ao copiar texto: ", err);
+        if (toastError) {
+          toastError("Não foi possível copiar o resultado. Tente novamente.");
+        }
+      },
+    );
+  };
+
+  // useEffect para controle de ESC e scroll
   useEffect(() => {
-    const handleEsc = e => {
-      if (e.key === "Escape") onClose()
-    }
+    const handleEsc = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
     if (isOpen) {
-      window.addEventListener("keydown", handleEsc)
-      document.body.style.overflow = "hidden"
+      window.addEventListener("keydown", handleEsc);
+      // Bloqueia o scroll do body quando o modal está aberto
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = "unset"
+      // Restaura o scroll do body quando o modal é fechado
+      document.body.style.overflow = "unset";
     }
     return () => {
       window.removeEventListener("keydown", handleEsc)
       document.body.style.overflow = "unset"
     }
   }, [isOpen, onClose])
-  
-  useEffect(() => {
-    if (error) {
-      toastError("Erro no cálculo: " + error)
-    } else if (allFieldsFilled && Object.keys(results).length > 0) {
-      info("Cálculo realizado com sucesso!")
-    }
-  }, [error, allFieldsFilled, results, toastError, info])
 
   if (!isOpen || !calculation) return null
 
@@ -59,13 +77,19 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       <div className="calculation-modal" ref={modalRef}>
         <div className="calculation-modal-header">
           <div className="calculation-modal-title">
-            <div className="calculation-modal-icon"><Calculator size={24} /></div>
+            <div className="calculation-modal-icon">
+              <Calculator size={24} />
+            </div>
             <div>
               <h2>{calculation.name || "Calculation"}</h2>
               <p>{calculation.description || "Calculation description"}</p>
             </div>
           </div>
-          <button onClick={onClose} className="calculation-modal-close" aria-label="Close">
+          <button
+            onClick={onClose}
+            className="calculation-modal-close"
+            aria-label="Fechar"
+          >
             <X size={20} />
           </button>
         </div>
@@ -88,35 +112,81 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             </div>
 
             <div className="calculation-modal-parameters">
-              {calculation.parameters?.map((param, i) => (
-                <div key={i} className="calculation-modal-parameter">
-                  <label htmlFor={`param-${i}`}>
-                    {param.name} {param.unit && <span className="unit">({param.unit})</span>}
-                  </label>
-                  {param.type === "select" ? (
-                    <select
-                      id={`param-${i}`}
-                      value={paramValues[param.name] || ""}
-                      onChange={e => handleParamChange(param.name, e.target.value)}
-                    >
-                      <option value="">Selecione uma opção</option>
-                      {param.options?.map((opt, idx) => (
-                        <option key={idx} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      id={`param-${i}`}
-                      type="number"
-                      value={paramValues[param.name] || ""}
-                      onChange={e => handleParamChange(param.name, e.target.value)}
-                      placeholder={`Digite ${param.name.toLowerCase()}`}
-                    />
-                  )}
-                </div>
-              ))}
+              {calculation.parameters && paramValues &&
+                calculation.parameters.map((param, index) => (
+                  <div key={param.name} className="calculation-modal-parameter">
+                    <label htmlFor={param.name}>
+                      {param.name}
+                      {param.required && <span className="required">*</span>}
+                      {param.unit && (
+                        <span className="unit">({param.unit})</span>
+                      )}
+                      {param.tooltip && (
+                        <Tooltip content={param.tooltip} position="top">
+                          <HelpCircle
+                            size={16}
+                            className="tooltip-icon"
+                            style={{
+                              marginLeft: "6px",
+                              color: "#6b7280",
+                              cursor: "help",
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </label>
+                    {param.type === "select" ? (
+                      <select
+                        id={param.name}
+                        value={paramValues[param.name] || ""}
+                        onChange={(e) =>
+                          handleParamChange(param.name, e.target.value, param)
+                        }
+                      >
+                        <option value="">Selecione...</option>
+                        {param.options.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="input-wrapper">
+                        <input
+                          type={param.type === "number" ? "number" : "text"}
+                          id={param.name}
+                          value={paramValues[param.name] || ""}
+                          onChange={(e) =>
+                            handleParamChange(param.name, e.target.value, param)
+                          }
+                          placeholder={
+                            param.description ||
+                            `Digite o valor para ${param.name}`
+                          }
+                          title={param.tooltip || param.description}
+                          step={
+                            param.type === "number" ? param.step : undefined
+                          }
+                          max={
+                            param.type === "number"
+                              ? param.max || undefined
+                              : undefined
+                          }
+                        />
+                        {param.max &&
+                          param.max !== "" &&
+                          param.max !== null &&
+                          param.max !== undefined && (
+                            <div className="input-constraints">
+                              <div className="constraint-range">
+                                <span>Max: {param.max}</span>
+                              </div>
+                            </div>
+                          )}
+                      </div>
+                    )}
+                  </div>
+                ))}
             </div>
           </div>
 
@@ -127,56 +197,86 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
               <h3>Resultados</h3>
             </div>
 
-            <div className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}>
-              {error && <p style={{ color: "red" }}>{error}</p>}
-
+            <div
+              className={`calculation-modal-results ${!allFieldsFilled ? "inactive" : ""}`}
+            >
+              {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
               {calculation.results && calculation.results.length > 0 ? (
-                Object.keys(results).map(key => (
+                // Novo formato: múltiplos resultados - usando CalculationResult component
+                Object.entries(results).map(([key, result]) => {
+                  // Verifica se o resultado está no formato novo (objeto com name, value, etc)
+                  // ou no formato antigo (apenas o valor)
+                  const isObject = typeof result === 'object' && result !== null;
+                  const resultIndex = parseInt(key.split('_')[1], 10);
+                  const resultTemplate = calculation.results?.[resultIndex];
 
-                  <CalculationResult
-                    key={key}
-                    name={results[key]?.name}
-                    value={results[key]?.value}
-                    unit={results[key]?.unit}
-                    description={results[key]?.description}
-                    copied={copied[key]}
-                    onCopy={() => copyToClipboard(results[key]?.value || "0", key)}
-                    disabled={!allFieldsFilled}
-                  />
-                ))
+                  const name = isObject ? result.name : resultTemplate?.name;
+                  const value = isObject ? result.value : result;
+                  const unit = isObject ? result.unit : resultTemplate?.unit;
+                  const description = isObject ? result.description : resultTemplate?.description;
+
+                  return (
+                    <CalculationResult
+                      key={key}
+                      name={name}
+                      value={value}
+                      unit={unit}
+                      description={description}
+                      copied={copied[key]}
+                      disabled={!allFieldsFilled}
+                      onCopy={() =>
+                        copyToClipboard(
+                          value || "0",
+                          key,
+                          name
+                        )
+                      }
+                    />
+                  )
+                })
               ) : (
                 <>
                   <CalculationResult
-                    name={calculation.resultName || "Result"}
+                    name={calculation.resultName || "Resultado"}
                     value={results.value || "0"}
                     unit={calculation.resultUnit || ""}
                     copied={copied["main"]}
-                    onCopy={() => copyToClipboard(results.value || "0", "main")}
+                    onCopy={() =>
+                      copyToClipboard(
+                        results.value || "0",
+                        "main",
+                        calculation.resultName || "Resultado",
+                      )
+                    }
                     disabled={!allFieldsFilled}
                     primary
                   />
 
-                  {calculation.additionalResults?.map((result, i) => (
+                  {calculation.additionalResults?.map((result, index) => (
                     <CalculationResult
-                      key={i}
+                      key={index}
                       name={result.name}
                       value={results[result.key] || "0"}
                       unit={result.unit}
                       copied={copied[result.key]}
-                      onCopy={() => copyToClipboard(results[result.key] || "0", result.key)}
+                      onCopy={() =>
+                        copyToClipboard(
+                          results[result.key] || "0",
+                          result.key,
+                          result.name,
+                        )
+                      }
                       disabled={!allFieldsFilled}
                     />
-
                   ))}
                 </>
               )}
-
             </div>
           </div>
         </div>
       </div>
-    </div >
-  )
-}
+    </div>
+  );
+};
 
-export default CalculationModal
+export default CalculationModal;

@@ -1,31 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../../services/firebaseConfig.js';
+import { authWrapper, firestoreWrapper } from '../../services/firebaseWrapper';
 
 const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
-  const [user, loading, error] = useAuthState(auth);
   const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const location = useLocation();
+  const user = authWrapper.getCurrentUser();
 
   useEffect(() => {
     const getUserRole = async () => {
       if (user) {
         try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
+          setLoading(true);
+          const userData = await firestoreWrapper.getDocument('users', user.uid);
 
-          if (docSnap.exists()) {
-            setRole(docSnap.data().role);
+          if (userData) {
+            setRole(userData.role);
           } else {
             console.log('No such document!');
             setRole(null);
           }
         } catch (err) {
           console.error('Erro ao buscar dados do usuário:', err);
-          setRole(null); 
+          setRole(null);
+          setError(err);
+        } finally {
+          setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
     };
 
