@@ -17,11 +17,9 @@ const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculation
 const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
-<<<<<<< feat/implementar-sistema-completo-de-glossário-com-favoritos-e-busca
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
-=======
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
->>>>>>> develop
+
 
 // Componente de loading otimizado
 const PageLoader = () => (
