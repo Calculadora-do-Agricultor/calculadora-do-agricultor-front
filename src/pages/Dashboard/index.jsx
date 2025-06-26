@@ -407,19 +407,19 @@ const Dashboard = () => {
         <MetricCard 
           title="Usuários" 
           value={metrics.totalUsers} 
-          icon={<Users size={24} />} 
+          icon={Users} 
           description="Total de usuários registrados" 
         />
         <MetricCard 
           title="Cálculos" 
           value={metrics.totalCalculations} 
-          icon={<Calculator size={24} />} 
+          icon={Calculator} 
           description="Total de cálculos disponíveis" 
         />
         <MetricCard 
           title="Categorias" 
           value={metrics.totalCategories} 
-          icon={<FileSpreadsheet size={24} />} 
+          icon={FileSpreadsheet} 
           description="Total de categorias de cálculos" 
         />
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const MobileMenu = ({ user, userName }) => {
@@ -55,6 +55,15 @@ const MobileMenu = ({ user, userName }) => {
           >
             <HomeIcon className="w-5 h-5 mr-2" />
             Página Inicial
+          </Link>
+
+          <Link
+            to="/glossario"
+            className={`${linkStyle('/glossario')} border-b border-[#00418F]/80`}
+            onClick={() => setIsOpen(false)}
+          >
+            <BookOpenIcon className="w-5 h-5 mr-2" />
+            Glossário
           </Link>
 
           {user === null ? (
@@ -138,7 +147,20 @@ const MobileMenu = ({ user, userName }) => {
                         <UsersIcon className="w-5 h-5 mr-2" />
                         Gerenciar Usuários
                       </Link>
-
+                      <Link
+                        to="/admin/data-integrity"
+                        className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/data-integrity' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 mr-2">
+                          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                          <path d="m9 12 2 2 4-4" />
+                        </svg>
+                        Integridade de Dados
+                      </Link>
                     </div>
                   )}
                 </div>
