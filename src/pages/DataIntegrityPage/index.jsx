@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Database, Loader2, FileWarning } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../services/firebaseConfig';
 import DataIntegrityReport from '../../components/DataIntegrityReport';
 import { useOptimizedCategories } from '../../hooks/useOptimizedFirestore';
 import { useDataIntegrityCheck } from '../../hooks/useDataIntegrityCheck';
@@ -12,11 +14,33 @@ import { useToast } from '../../context/ToastContext';
  */
 const DataIntegrityPage = () => {
   const [showReport, setShowReport] = useState(false);
+  const [calculationsCount, setCalculationsCount] = useState(0);
+  const [calculationsLoading, setCalculationsLoading] = useState(true);
   const { categories, loading: categoriesLoading, error: categoriesError, integrityIssues: dataIssues, integrityChecked } = useOptimizedCategories();
   const { duplicateFormIds, loading: formCheckLoading, error: formCheckError, checkDuplicateFormIds } = useDataIntegrityCheck();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { info, warning } = useToast();
+
+  // Função para contar cálculos diretamente da coleção 'calculations'
+  const fetchCalculationsCount = async () => {
+    try {
+      setCalculationsLoading(true);
+      const calculationsRef = collection(db, 'calculations');
+      const snapshot = await getDocs(calculationsRef);
+      setCalculationsCount(snapshot.size);
+    } catch (err) {
+      console.error('Erro ao buscar contagem de cálculos:', err);
+      setCalculationsCount(0);
+    } finally {
+      setCalculationsLoading(false);
+    }
+  };
+
+  // Buscar contagem de cálculos ao carregar a página
+  useEffect(() => {
+    fetchCalculationsCount();
+  }, []);
   
   // Verificar IDs duplicados em formulários ao carregar a página
   useEffect(() => {
@@ -78,11 +102,9 @@ const DataIntegrityPage = () => {
           </div>
 
           <div className="rounded-lg bg-blue-50 p-4">
-            <p className="mb-2 text-sm font-medium text-gray-600">Cálculos Carregados</p>
+            <p className="mb-2 text-sm font-medium text-gray-600">Cálculos Existentes</p>
             <p className="text-2xl font-bold text-blue-700">
-              {loading
-                ? '...'
-                : categories.reduce((total, category) => total + (category.calculos?.length || 0), 0)}
+              {calculationsLoading ? '...' : calculationsCount}
             </p>
           </div>
 
