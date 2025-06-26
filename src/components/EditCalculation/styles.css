@@ -191,13 +191,19 @@
 
 /* Formulários */
 .form-group {
-  margin-bottom: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 85px;
 }
 
 .form-group label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 500;
-  margin-bottom: 6px;
+  margin-bottom: 0;
   color: #374151;
 }
 
@@ -210,6 +216,7 @@
   border-radius: 6px;
   font-size: 14px;
   transition: all 0.2s;
+  margin: 0;
 }
 
 .form-group select {
@@ -238,7 +245,9 @@
 .form-group .error-text {
   color: #ef4444;
   font-size: 12px;
-  margin-top: 4px;
+  margin: 0;
+  position: absolute;
+  bottom: 0;
 }
 
 .form-row {

@@ -4,6 +4,8 @@ import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
 import { useIntelligentPreload } from "./utils/preloadRoutes";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
+import { ToastProvider } from "./context/ToastContext";
+
 
 // Lazy loading das páginas para reduzir bundle inicial
 const Home = React.lazy(() => import("./pages/Home/Home"));
@@ -15,6 +17,10 @@ const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculation
 const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
+const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
+
 
 // Componente de loading otimizado
 const PageLoader = () => (
@@ -31,13 +37,15 @@ function App() {
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
   
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Router>
-        <Navbar />
-        <main className="flex-grow pt-20">
-          <Suspense fallback={<PageLoader />}>
+    <ToastProvider>
+      <div className="flex min-h-screen w-full flex-col">
+        <Router>
+          <Navbar />
+          <main className="flex-grow pt-20">
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/glossario" element={<GlossarioPage />} />
               <Route
                 path="/login"
                 element={<PrivateRoute requiresAuth={false} />}
@@ -95,12 +103,29 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/data-integrity"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <DataIntegrityPage />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Suspense>
-        </main>
-        <Footer />
-      </Router>
-    </div>
+          </main>
+          <Footer />
+        </Router>
+      </div>
+    </ToastProvider>
   );
 }
 

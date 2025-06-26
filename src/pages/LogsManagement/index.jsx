@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useMemo } from "react";
 import {
   collection,
   getDocs,
@@ -7,8 +7,8 @@ import {
   limit,
   where,
 } from "firebase/firestore";
-import { db } from "../../services/firebaseConfig";
-import { AuthContext } from "../../context/AuthContext";
+import { db } from "@/services/firebaseConfig";
+import { AuthContext } from "@/context/AuthContext";
 import { Navigate } from "react-router-dom";
 import {
   ClockIcon,
@@ -31,12 +31,21 @@ import {
   ArrowDownTrayIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import MetricCard from "@/components/MetricCard";
 import LogCard from "@/components/LogCard";
-import MetricsToggle from "@/components/MetricsToggle";
 import EmptyState from "@/components/ui/EmptyState";
 import "./LogsManagement.css";
+
+// Constantes para tooltips das métricas
+const METRIC_TOOLTIPS = {
+  totalLogs: "Total de registros de atividades no sistema",
+  withLocation: "Registros que contêm informações de localização",
+  withoutLocation: "Registros sem informações de localização",
+  uniqueUsers: "Número de usuários únicos que geraram registros",
+  uniqueIps: "Número de endereços IP únicos registrados",
+};
 
 const LogsManagement = () => {
   const [logs, setLogs] = useState([]);
@@ -56,6 +65,11 @@ const LogsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const logsPerPage = 10;
+
+  // Título e descrição da página
+  const pageTitle = "Histórico de Atividades";
+  const pageDescription =
+    "Visualize e analise todas as atividades realizadas no sistema, com informações detalhadas sobre cada ação.";
 
   const { user, isAdmin } = useContext(AuthContext);
 
@@ -137,20 +151,9 @@ const LogsManagement = () => {
     }
   }, [user, isAdmin]);
 
-  // Atualizar paginação quando os logs mudarem
-  useEffect(() => {
-    if (logs.length > 0) {
-      updatePagination(logs);
-    }
-  }, [logs]);
-
-  // Retornar apenas os logs regulares
-  const combinedLogs = () => {
-    return logs;
-  };
-
-  // Filtrar logs com base nos filtros aplicados
-  const filteredLogs = combinedLogs().filter((log) => {
+  // Filtrar logs com base nos filtros aplicados usando useMemo
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
     // Filtro de localização
     let matchesLocation = true;
     if (filterType === "with-location") {
@@ -276,7 +279,15 @@ const LogsManagement = () => {
       matchesDate &&
       matchesSearch
     );
-  });
+    });
+  }, [logs, filterType, dateFilter, startDate, endDate, userFilter, ipFilter, locationFilter, searchQuery]);
+
+  // Atualizar paginação quando os logs filtrados mudarem
+  useEffect(() => {
+    const totalItems = filteredLogs.length;
+    setTotalPages(Math.ceil(totalItems / logsPerPage));
+    setCurrentPage(1);
+  }, [filteredLogs, logsPerPage]);
 
   // Calcular métricas para os cards
   const calculateMetrics = (logsToAnalyze) => {
@@ -302,7 +313,7 @@ const LogsManagement = () => {
     // Métricas de IPs únicos
     const uniqueIPs = new Set(
       logsToAnalyze
-        .filter((log) => log.ip && log.ip !== 'IP não disponível')
+        .filter((log) => log.ip && log.ip !== "IP não disponível")
         .map((log) => log.ip),
     ).size;
 
@@ -357,13 +368,13 @@ const LogsManagement = () => {
         const row = [];
 
         // Campos dos logs regulares
-        row.push(`"${log.id || ""}"`); 
-        row.push(`"${log.date ? formatDate(log.date) : "Data indisponível"}"`); 
-        row.push(`"${log.idUser || log.email || "Usuário desconhecido"}"`); 
-        row.push(`"${log.description || ""}"`); 
-        row.push(`"${log.ip || "IP não disponível"}"`); 
-        row.push(`"${log.location?.latitude || ""}"`); 
-        row.push(`"${log.location?.longitude || ""}"`); 
+        row.push(`"${log.id || ""}"`);
+        row.push(`"${log.date ? formatDate(log.date) : "Data indisponível"}"`);
+        row.push(`"${log.idUser || log.email || "Usuário desconhecido"}"`);
+        row.push(`"${log.description || ""}"`);
+        row.push(`"${log.ip || "IP não disponível"}"`);
+        row.push(`"${log.location?.latitude || ""}"`);
+        row.push(`"${log.location?.longitude || ""}"`);
         row.push(`"${log.location?.status || ""}"`);
 
         csvContent += row.join(",") + "\n";
@@ -422,14 +433,30 @@ const LogsManagement = () => {
     return `${browser} em ${os}`;
   };
 
-  // Verificar se o usuário é administrador
   if (!user || !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" />;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <ArrowPathIcon className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-red-600">
+        <ExclamationCircleIcon className="w-6 h-6 mr-2" />
+        {error}
+      </div>
+    );
   }
 
   return (
     <div className="logs-container flex min-h-screen flex-col items-center justify-start bg-gradient-to-br from-[#00418F]/5 via-white to-[#FFEE00]/5 p-4 md:p-8">
-      <div className="w-full max-w-6xl transform overflow-hidden rounded-2xl border border-[#00418F]/10 bg-white/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
+      <div className="w-full max-w-7xl transform overflow-hidden rounded-2xl border border-[#00418F]/10 bg-white/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
         {/* Cabeçalho */}
         <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/20 to-[#00418F]/10 p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -455,48 +482,93 @@ const LogsManagement = () => {
           </div>
         </div>
 
-        {/* Cards de Métricas */}
+        {/* Menu Superior com Alternância de Visão */}
         <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
           <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-            <h2 className="text-lg font-semibold text-[#00418F]">
-              Métricas Gerais
-            </h2>
-            <MetricsToggle
-              showFilteredMetrics={showFilteredMetrics}
-              onToggle={() => setShowFilteredMetrics(!showFilteredMetrics)}
-            />
+            <div className="flex items-center gap-4">
+              <button
+                className={`flex items-center gap-2 rounded-xl px-6 py-3 font-medium transition-all duration-200 ${
+                  !showFilteredMetrics
+                    ? "bg-[#00418F] text-white"
+                    : "bg-[#00418F]/10 text-[#00418F]"
+                }`}
+                onClick={() => setShowFilteredMetrics(false)}
+              >
+                <ChartBarIcon className="h-5 w-5" />
+                Visão Geral
+              </button>
+              <button
+                className={`flex items-center gap-2 rounded-xl px-6 py-3 font-medium transition-all duration-200 ${
+                  showFilteredMetrics
+                    ? "bg-[#00418F] text-white"
+                    : "bg-[#00418F]/10 text-[#00418F]"
+                }`}
+                onClick={() => setShowFilteredMetrics(true)}
+              >
+                <FunnelIcon className="h-5 w-5" />
+                Dados Filtrados
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <InformationCircleIcon className="h-5 w-5 text-[#00418F]/70" />
+              <span className="text-sm text-[#00418F]/70">
+                {showFilteredMetrics
+                  ? "Exibindo métricas dos dados filtrados"
+                  : "Exibindo métricas de todos os registros"}
+              </span>
+            </div>
           </div>
 
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <MetricCard
-              title="Total de Logs"
-              value={metrics.totalLogs}
-              icon={DocumentTextIcon}
-            />
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 auto-rows-fr">
+            <div className="flex-1 min-w-[200px]">
+              <MetricCard
+                title="Total de Logs"
+                value={metrics.totalLogs}
+                icon={DocumentTextIcon}
+                tooltip={METRIC_TOOLTIPS.totalLogs}
+                className="h-full transform bg-gradient-to-br from-blue-50 via-blue-100/30 to-blue-50 border-blue-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              />
+            </div>
 
-            <MetricCard
-              title="Com Localização"
-              value={metrics.logsWithLocation}
-              icon={GlobeAltIcon}
-            />
-            
-            <MetricCard
-              title="Sem Localização"
-              value={metrics.logsWithoutLocation}
-              icon={ExclamationTriangleIcon}
-            />
-            
-            <MetricCard
-              title="Usuários Únicos"
-              value={metrics.uniqueUsers}
-              icon={UsersIcon}
-            />
-            
-            <MetricCard
-              title="IPs Únicos"
-              value={metrics.uniqueIPs}
-              icon={ServerIcon}
-            />
+            <div className="flex-1 min-w-[200px]">
+              <MetricCard
+                title="Com Localização"
+                value={metrics.logsWithLocation}
+                icon={GlobeAltIcon}
+                tooltip={METRIC_TOOLTIPS.withLocation}
+                className="h-full transform bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-50 border-emerald-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <MetricCard
+                title="Sem Localização"
+                value={metrics.logsWithoutLocation}
+                icon={ExclamationTriangleIcon}
+                tooltip={METRIC_TOOLTIPS.withoutLocation}
+                className="h-full transform bg-gradient-to-br from-amber-50 via-amber-100/30 to-amber-50 border-amber-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <MetricCard
+                title="Usuários Únicos"
+                value={metrics.uniqueUsers}
+                icon={UsersIcon}
+                tooltip={METRIC_TOOLTIPS.uniqueUsers}
+                className="h-full transform bg-gradient-to-br from-violet-50 via-violet-100/30 to-violet-50 border-violet-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[200px]">
+              <MetricCard
+                title="IPs Únicos"
+                value={metrics.uniqueIPs}
+                icon={ServerIcon}
+                tooltip={METRIC_TOOLTIPS.uniqueIps}
+                className="h-full transform bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-indigo-50 border-indigo-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              />
+            </div>
           </div>
         </div>
 
@@ -525,253 +597,360 @@ const LogsManagement = () => {
             <button
               onClick={exportLogsToCSV}
               disabled={isExporting || filteredLogs.length === 0}
-              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${isExporting || filteredLogs.length === 0 ? "cursor-not-allowed bg-gray-300 text-gray-500" : "bg-[#00418F] text-white hover:scale-105 hover:bg-[#00418F]/90"}`}
+              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${
+                isExporting || filteredLogs.length === 0
+                  ? "cursor-not-allowed bg-gray-300 text-gray-500"
+                  : "bg-[#00418F] text-white hover:scale-105 hover:bg-[#00418F]/90"
+              }`}
             >
               <ArrowDownTrayIcon className="h-5 w-5" />
               {isExporting ? "Exportando..." : "Exportar CSV"}
             </button>
           </div>
 
-          {/* Filtros avançados */}
-          <div className="mb-4 flex items-center">
-            <FunnelIcon className="mr-2 h-5 w-5 text-[#00418F]/70" />
-            <h3 className="text-md font-semibold text-[#00418F]">
-              Filtros Avançados
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Filtro de usuário */}
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <UserIcon className="h-5 w-5 text-[#00418F]/70" />
+          {/* Seção de Filtros */}
+          <div className="mt-8 rounded-xl bg-white/50 p-6 shadow-lg backdrop-blur-sm border border-[#00418F]/10">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-[#00418F]/10 p-2">
+                  <FunnelIcon className="h-6 w-6 text-[#00418F]" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#00418F]">
+                    Filtros de Pesquisa
+                  </h3>
+                  <p className="text-sm text-[#00418F]/70">
+                    Refine sua busca usando os filtros abaixo
+                  </p>
+                </div>
               </div>
-              <input
-                type="text"
-                placeholder="Filtrar por usuário..."
-                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                value={userFilter}
-                onChange={(e) => setUserFilter(e.target.value)}
-              />
-            </div>
-
-            {/* Filtro de IP */}
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <ServerIcon className="h-5 w-5 text-[#00418F]/70" />
-              </div>
-              <input
-                type="text"
-                placeholder="Filtrar por IP..."
-                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                value={ipFilter}
-                onChange={(e) => setIpFilter(e.target.value)}
-              />
-            </div>
-
-            {/* Filtro de localização */}
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                <MapPinIcon className="h-5 w-5 text-[#00418F]/70" />
-              </div>
-              <input
-                type="text"
-                placeholder="Filtrar por localização..."
-                className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                value={locationFilter}
-                onChange={(e) => setLocationFilter(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Filtro de data */}
-            <select
-              className="cursor-pointer appearance-none rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-12 pl-4 font-medium text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-              style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2300418F'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E")`,
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 0.75rem center",
-                backgroundSize: "1.25em 1.25em",
-              }}
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-            >
-              <option value="all">Todas as datas</option>
-              <option value="today">Hoje</option>
-              <option value="yesterday">Ontem</option>
-              <option value="last-week">Última semana</option>
-              <option value="last-month">Último mês</option>
-              <option value="custom">Período personalizado</option>
-            </select>
-          </div>
-
-          {/* Filtros de data personalizada */}
-          {dateFilter === "custom" && (
-            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-              <input
-                type="date"
-                placeholder="Data inicial"
-                className="cursor-pointer rounded-xl border border-[#00418F]/20 bg-white/80 px-4 py-3 text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-2 focus:ring-[#00418F]/20"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-              <input
-                type="date"
-                placeholder="Data final"
-                className="cursor-pointer rounded-xl border border-[#00418F]/20 bg-white/80 px-4 py-3 text-[#00418F] shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-2 focus:ring-[#00418F]/20"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-          )}
-
-          {/* Indicador de filtros ativos */}
-          {(filterType !== "all" || dateFilter !== "all" || userFilter) && (
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#00418F]/10 pt-4">
-              <span className="text-sm font-medium text-[#00418F]/70">
-                Filtros ativos:
-              </span>
-              {filterType !== "all" && (
-                <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
-                  {filterType === "with-location"
-                    ? "Com localização"
-                    : "Sem localização"}
-                </span>
-              )}
-
-              {userFilter && (
-                <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
-                  Usuário: "{userFilter}"
-                </span>
-              )}
-              {dateFilter !== "all" && (
-                <span className="rounded-full bg-[#00418F]/10 px-3 py-1 text-sm font-medium text-[#00418F]">
-                  {dateFilter === "today" && "Hoje"}
-                  {dateFilter === "yesterday" && "Ontem"}
-                  {dateFilter === "last-week" && "Última semana"}
-                  {dateFilter === "last-month" && "Último mês"}
-                  {dateFilter === "custom" && "Período personalizado"}
-                </span>
-              )}
               <button
                 onClick={() => {
                   setFilterType("all");
                   setDateFilter("all");
                   setUserFilter("");
+                  setIpFilter("");
+                  setLocationFilter("");
                   setStartDate("");
                   setEndDate("");
                 }}
-                className="rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-200"
+                className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-100 hover:scale-105 shadow-sm"
               >
-                Limpar filtros
+                <ExclamationCircleIcon className="h-4 w-4" />
+                Limpar Filtros
               </button>
             </div>
-          )}
-        </div>
 
-        {/* Conteúdo principal - Cards de logs */}
-        <div className="overflow-x-auto bg-white/70 backdrop-blur-sm">
-          {loading ? (
-            <div className="loading-state flex flex-col items-center justify-center space-y-4 p-16">
-              <div className="spinner"></div>
-              <p className="font-medium text-[#00418F]/70">
-                Carregando logs...
-              </p>
-            </div>
-          ) : error ? (
-            <div className="error-state m-4 flex items-center justify-center rounded-xl border border-red-100 bg-red-50/50 p-12 text-red-600 backdrop-blur-sm">
-              <ExclamationCircleIcon className="icon-animated mr-3 h-8 w-8" />
-              <span className="text-lg font-medium">{error}</span>
-            </div>
-          ) : currentLogs.length === 0 ? (
-            <EmptyState
-              icon={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? SearchX : History}
-              title={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? "Nenhum log encontrado" : "Histórico de atividades"}
-              message={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter
-                ? "Não há logs que correspondam aos critérios de pesquisa"
-                : isAdmin
-                  ? "Monitore as atividades dos usuários. Os registros aparecerão aqui conforme os usuários interagem com o sistema."
-                  : "Seu histórico de atividades será exibido aqui conforme você utiliza a calculadora."}
-              actionLabel={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter ? "Limpar filtros" : undefined}
-              onAction={searchQuery || filterType !== "all" || dateFilter !== "all" || userFilter
-                ? () => {
-                    setFilterType("all");
-                    setDateFilter("all");
-                    setUserFilter("");
-                    setStartDate("");
-                    setEndDate("");
-                    setSearchQuery("");
-                  }
-                : undefined}
-              className="m-4"
-            />
-          ) : (
-            <div className="grid gap-4 p-4">
-              {currentLogs.map((log) => (
-                <div key={log.id} className="mb-4">
-                  <LogCard
-                    log={log}
-                    formatDate={formatDate}
-                    openInMaps={openInMaps}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              {/* Filtro de usuário */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-[#00418F]/70">
+                  Usuário
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                    <UserIcon className="h-5 w-5 text-[#00418F]/70" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar por usuário..."
+                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                    value={userFilter}
+                    onChange={(e) => setUserFilter(e.target.value)}
                   />
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Paginação */}
-        {!loading && !error && filteredLogs.length > 0 && (
-          <div className="flex flex-col items-center justify-between border-t border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/10 to-transparent px-8 py-6 sm:flex-row">
-            <div className="mb-4 text-sm font-medium text-[#00418F]/70 sm:mb-0">
-              Mostrando{" "}
-              <span className="font-semibold text-[#00418F]">
-                {indexOfFirstLog + 1}
-              </span>{" "}
-              a{" "}
-              <span className="font-semibold text-[#00418F]">
-                {Math.min(indexOfLastLog, filteredLogs.length)}
-              </span>{" "}
-              de{" "}
-              <span className="font-semibold text-[#00418F]">
-                {filteredLogs.length}
-              </span>{" "}
-              logs
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="pagination-button flex items-center justify-center rounded-xl p-3 text-[#00418F] hover:bg-[#00418F]/10"
-                title="Página anterior"
-              >
-                <ChevronLeftIcon className="h-5 w-5" />
-              </button>
-
-              <div className="flex items-center space-x-2">
-                <span className="rounded-xl bg-gradient-to-r from-[#00418F] to-[#0066FF] px-4 py-2 font-semibold text-white shadow-lg">
-                  {currentPage}
-                </span>
-                <span className="font-medium text-[#00418F]/50">de</span>
-                <span className="rounded-lg bg-[#00418F]/10 px-3 py-2 font-semibold text-[#00418F]">
-                  {totalPages}
-                </span>
               </div>
 
-              <button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="pagination-button flex items-center justify-center rounded-xl p-3 text-[#00418F] hover:bg-[#00418F]/10"
-                title="Próxima página"
-              >
-                <ChevronRightIcon className="h-5 w-5" />
-              </button>
+              {/* Filtro de IP */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-[#00418F]/70">
+                  Endereço IP
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                    <ServerIcon className="h-5 w-5 text-[#00418F]/70" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar por IP..."
+                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                    value={ipFilter}
+                    onChange={(e) => setIpFilter(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Filtro de localização */}
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-[#00418F]/70">
+                  Localização
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                    <MapPinIcon className="h-5 w-5 text-[#00418F]/70" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Buscar por localização..."
+                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Filtro de Data */}
+            <div className="mt-6">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-[#00418F]/70">
+                  Período
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setDateFilter("all")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "all"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Todas as datas
+                  </button>
+                  <button
+                    onClick={() => setDateFilter("today")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "today"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => setDateFilter("yesterday")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "yesterday"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Ontem
+                  </button>
+                  <button
+                    onClick={() => setDateFilter("last-week")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "last-week"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Última semana
+                  </button>
+                  <button
+                    onClick={() => setDateFilter("last-month")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "last-month"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Último mês
+                  </button>
+                  <button
+                    onClick={() => setDateFilter("custom")}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      dateFilter === "custom"
+                        ? "bg-[#00418F] text-white"
+                        : "bg-[#00418F]/10 text-[#00418F] hover:bg-[#00418F]/20"
+                    }`}
+                  >
+                    Personalizado
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Filtros de data personalizada */}
+            {dateFilter === "custom" && (
+              <div className="mt-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-[#00418F]/70">
+                      Data Inicial
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                        <CalendarDaysIcon className="h-5 w-5 text-[#00418F]/70" />
+                      </div>
+                      <input
+                        type="date"
+                        className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-[#00418F]/70">
+                      Data Final
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                        <CalendarDaysIcon className="h-5 w-5 text-[#00418F]/70" />
+                      </div>
+                      <input
+                        type="date"
+                        className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Conteúdo principal - Cards de logs */}
+            <div className="overflow-x-auto bg-white/70 backdrop-blur-sm mt-8">
+              {loading ? (
+                <div className="loading-state flex flex-col items-center justify-center space-y-4 p-16">
+                  <div className="spinner"></div>
+                  <p className="font-medium text-[#00418F]/70">
+                    Carregando logs...
+                  </p>
+                </div>
+              ) : error ? (
+                <div className="error-state m-4 flex items-center justify-center rounded-xl border border-red-100 bg-red-50/50 p-12 text-red-600 backdrop-blur-sm">
+                  <ExclamationCircleIcon className="icon-animated mr-3 h-8 w-8" />
+                  <span className="text-lg font-medium">{error}</span>
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-[#00418F]">
+                      Registros de Atividade
+                    </h3>
+                    <div className="text-sm text-[#00418F]/70">
+                      {filteredLogs.length} {filteredLogs.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+                    </div>
+                  </div>
+
+                  {/* Grid de Logs */}
+                  <div className="space-y-4">
+                {currentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="transform rounded-xl border border-[#00418F]/10 bg-white p-4 transition-all duration-300 hover:border-[#00418F]/40"
+                  >
+                    <LogCard log={log} onLocationClick={openInMaps} formatDate={formatDate} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginação */}
+              {filteredLogs.length > 0 && (
+                <div className="mt-6 flex items-center justify-between border-t border-[#00418F]/10 pt-4">
+                  <div className="text-sm text-[#00418F]/70">
+                    Mostrando {indexOfFirstLog + 1} - {Math.min(indexOfLastLog, filteredLogs.length)} de {filteredLogs.length}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50`}
+                    >
+                      <ChevronLeftIcon className="h-5 w-5" />
+                      Anterior
+                    </button>
+                    <span className="text-sm font-medium text-[#00418F]">
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50`}
+                    >
+                      Próxima
+                      <ChevronRightIcon className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+                  {/* Estado vazio */}
+                  {filteredLogs.length === 0 && (
+                    <div className="mt-8 flex flex-col items-center justify-center rounded-xl border border-[#00418F]/10 bg-white/50 p-8 text-center">
+                      <ExclamationCircleIcon className="h-12 w-12 text-[#00418F]/30" />
+                      <h3 className="mt-4 text-lg font-medium text-[#00418F]">
+                        Nenhum registro encontrado
+                      </h3>
+                      <p className="mt-2 text-sm text-[#00418F]/70">
+                        Tente ajustar os filtros para encontrar o que procura
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Indicador de filtros ativos */}
+            {(filterType !== "all" ||
+              dateFilter !== "all" ||
+              userFilter ||
+              ipFilter ||
+              locationFilter) && (
+              <div className="mt-6 rounded-xl border border-[#00418F]/10 bg-white/50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <FunnelIcon className="h-5 w-5 text-[#00418F]/70" />
+                  <span className="text-sm font-medium text-[#00418F]/70">Filtros ativos</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {filterType !== "all" && (
+                    <span className="flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 shadow-sm">
+                      <MapPinIcon className="h-4 w-4" />
+                      {filterType === "with-location" ? "Com Localização" : "Sem Localização"}
+                    </span>
+                  )}
+                  {dateFilter !== "all" && (
+                    <span className="flex items-center gap-1 rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 shadow-sm">
+                      <CalendarDaysIcon className="h-4 w-4" />
+                      {dateFilter === "today"
+                        ? "Hoje"
+                        : dateFilter === "yesterday"
+                        ? "Ontem"
+                        : dateFilter === "last-week"
+                        ? "Última Semana"
+                        : dateFilter === "last-month"
+                        ? "Último Mês"
+                        : "Período Personalizado"}
+                    </span>
+                  )}
+                  {userFilter && (
+                    <span className="flex items-center gap-1 rounded-lg bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 shadow-sm">
+                      <UserIcon className="h-4 w-4" />
+                      Usuário: {userFilter}
+                    </span>
+                  )}
+                  {ipFilter && (
+                    <span className="flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 shadow-sm">
+                      <ServerIcon className="h-4 w-4" />
+                      IP: {ipFilter}
+                    </span>
+                  )}
+                  {locationFilter && (
+                    <span className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-700 shadow-sm">
+                      <MapPinIcon className="h-4 w-4" />
+                      Localização: {locationFilter}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+
+        </div>
       </div>
     </div>
   );

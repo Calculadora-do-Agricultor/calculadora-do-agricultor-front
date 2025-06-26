@@ -246,7 +246,7 @@ export default function Calculator() {
         </div>
 
         {/* Conteúdo principal com sidebar e lista de cálculos */}
-        <div className="content-container" id="calculations-list">
+        <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
             {loading ? (
@@ -353,6 +353,9 @@ export default function Calculator() {
                 {/* Descrição da categoria em largura total */}
                 {categoriaAtual?.description && showCategoryDescription && (
                   <div className="category-description-container">
+                    <div className="category-description-legend">
+                      <span>Descrição da categoria:</span>
+                    </div>
                     <div className="category-description">
                       {categoriaAtual.description}
                     </div>

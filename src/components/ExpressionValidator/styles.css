@@ -19,6 +19,32 @@
   font-size: 1.2rem;
 }
 
+.validator-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.validate-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.validate-btn:hover {
+  background-color: #218838;
+}
+
+.validate-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .toggle-docs-btn {
   background-color: #6c757d;
   color: white;

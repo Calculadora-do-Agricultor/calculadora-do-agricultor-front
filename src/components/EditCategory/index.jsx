@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { doc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import { X, Save, AlertCircle, Loader2, Trash2 } from "lucide-react"
+import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 
 const EditCategory = ({ category, onUpdate, onCancel }) => {
@@ -10,6 +11,7 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
+  const { success, error: toastError } = useToast()
 
   useEffect(() => {
     if (category) {
@@ -37,10 +39,12 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
         updatedAt: new Date(),
       })
 
+      success(`Categoria "${categoryName}" atualizada com sucesso!`)
       if (onUpdate) onUpdate()
     } catch (err) {
       console.error("Erro ao atualizar categoria:", err)
       setError("Ocorreu um erro ao atualizar a categoria. Por favor, tente novamente.")
+      toastError("Falha ao atualizar categoria. Tente novamente.")
     } finally {
       setIsSubmitting(false)
     }
@@ -50,6 +54,7 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
     // Verificar se a categoria tem cálculos associados
     if (category.calculos && category.calculos.length > 0) {
       setError("Esta categoria possui cálculos associados e não pode ser excluída.");
+      toastError("Não é possível excluir uma categoria com cálculos associados.");
       setShowConfirmDelete(false); // Fechar o modal de confirmação
       return;
     }
@@ -57,10 +62,12 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
     try {
       setIsSubmitting(true);
       await deleteDoc(doc(db, "categories", category.id));
+      success(`Categoria "${category.name}" excluída com sucesso!`);
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Erro ao excluir categoria:", err);
       setError("Ocorreu um erro ao excluir a categoria.");
+      toastError("Falha ao excluir categoria. Tente novamente.");
     } finally {
       setIsSubmitting(false);
     }

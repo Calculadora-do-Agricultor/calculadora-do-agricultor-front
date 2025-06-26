@@ -1,111 +1,114 @@
 import { useState, useEffect } from "react"
 import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../utils/mathEvaluator"
 
-export function useCalculationResult(calculation) {
-  const [paramValues, setParamValues] = useState({})
-  const [results, setResults] = useState({})
-  const [allFieldsFilled, setAllFieldsFilled] = useState(false)
+/**
+ * Hook to calculate results based on parameters and calculation expressions.
+ *
+ * @param {Object} calculation - Calculation object containing formulas and results
+ * @param {Object} paramValues - Parameter values from form
+ * @param {boolean} allFieldsFilled - Indicates if all parameters are filled
+ * @returns {Object} { results, error }
+ */
+export function useCalculationResult(calculation, paramValues, allFieldsFilled) {
+  const [results, setResults] = useState(() => {
+    // Initialize results with default values
+    const defaultResults = {}
+    if (calculation?.results?.length > 0) {
+      calculation.results.forEach((result, index) => {
+        defaultResults[`result_${index}`] = {
+          name: result.name,
+          description: result.description,
+          value: "0",
+          unit: result.unit || "",
+        }
+      })
+    } else if (calculation) {
+      defaultResults.value = "0"
+      if (calculation.additionalResults?.length > 0) {
+        calculation.additionalResults.forEach((result) => {
+          defaultResults[result.key] = "0"
+        })
+      }
+    }
+    return defaultResults
+  })
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (calculation && calculation.parameters) {
-      const initialValues = {}
-      calculation.parameters.forEach(param => {
-        initialValues[param.name] = ""
-      })
-      setParamValues(initialValues)
-
-      const initialResults = {}
-      if (calculation.results && calculation.results.length > 0) {
+    if (!calculation || !allFieldsFilled || Object.keys(paramValues).length === 0) {
+      // Initialize with default values when conditions are not met
+      const defaultResults = {}
+      if (calculation?.results?.length > 0) {
         calculation.results.forEach((result, index) => {
-          initialResults[`result_${index}`] = {
+          defaultResults[`result_${index}`] = {
             name: result.name,
             description: result.description,
             value: "0",
             unit: result.unit || "",
           }
         })
-      } else {
-        initialResults.value = "0"
-        if (calculation.additionalResults && calculation.additionalResults.length > 0) {
-          calculation.additionalResults.forEach(result => {
-            initialResults[result.key] = "0"
+      } else if (calculation) {
+        defaultResults.value = "0"
+        if (calculation.additionalResults?.length > 0) {
+          calculation.additionalResults.forEach((result) => {
+            defaultResults[result.key] = "0"
           })
         }
       }
-      setResults(initialResults)
-      setAllFieldsFilled(false)
-      setError(null)
+      setResults(defaultResults)
+      return
     }
-  }, [calculation])
 
-  useEffect(() => {
-    if (calculation && calculation.parameters) {
-      const filled = calculation.parameters.every(
-        param => paramValues[param.name] && paramValues[param.name] !== ""
-      )
-      setAllFieldsFilled(filled)
-    }
-  }, [paramValues, calculation])
-
-  const calculateExpressionResult = (expression, values) => {
     try {
-      const context = {}
-      Object.keys(values).forEach(key => {
-        context[key] = Number.parseFloat(values[key]) || 0
-      })
+      const newResults = {}
 
-      const validation = validateExpression(expression, context)
-      if (!validation.isValid) {
-        setError("Validation error: " + validation.errorMessage)
-        return 0
-      }
+      if (calculation.results && calculation.results.length > 0) {
+        calculation.results.forEach((result, index) => {
+          const val = calculateExpression(result.expression, paramValues)
+          newResults[`result_${index}`] = {
+            name: result.name,
+            description: result.description,
+            value: val.toFixed(2),
+            unit: result.unit || "",
+          }
+        })
+      } else {
+        const val = calculateExpression(calculation.expression, paramValues)
+        newResults.value = val.toFixed(2)
 
-      const normalizedExpression = normalizeMathFunctions(expression)
-      return evaluateExpression(normalizedExpression, context, true)
-    } catch (e) {
-      setError("Error evaluating expression: " + e.message)
-      return 0
-    }
-  }
-
-  useEffect(() => {
-    if (calculation && Object.keys(paramValues).length > 0 && allFieldsFilled) {
-      try {
-        setError(null)
-        const newResults = {}
-
-        if (calculation.results && calculation.results.length > 0) {
-          calculation.results.forEach((result, index) => {
-            const val = calculateExpressionResult(result.expression, paramValues)
-            newResults[`result_${index}`] = {
-              name: result.name,
-              description: result.description,
-              value: val.toFixed(2),
-              unit: result.unit || "",
+        if (calculation.additionalResults?.length > 0) {
+          calculation.additionalResults.forEach((result) => {
+            if (result.key === "coleta50m") {
+              newResults[result.key] = ((val * 50) / 1000).toFixed(2)
             }
           })
-        } else {
-          const val = calculation.expression
-            ? calculateExpressionResult(calculation.expression, paramValues)
-            : 0
-          newResults.value = val.toFixed(2)
-
-          if (calculation.additionalResults && calculation.additionalResults.length > 0) {
-            calculation.additionalResults.forEach(result => {
-              if (result.key === "coleta50m") {
-                newResults[result.key] = ((val * 50) / 1000).toFixed(2)
-              }
-            })
-          }
         }
-
-        setResults(newResults)
-      } catch (error) {
-        setError("Error calculating result: " + error.message)
       }
-    }
-  }, [paramValues, calculation, allFieldsFilled])
 
-  return { paramValues, setParamValues, results, allFieldsFilled, error }
+      setResults(newResults)
+      setError(null)
+    } catch (e) {
+      console.error("Erro no cálculo:", e)
+      setError(e.message.includes("Error in calculation:") ? e.message.replace("Error in calculation: ", "") : "Expressão inválida! Corrija e tente novamente")
+    }
+  }, [calculation, paramValues, allFieldsFilled])
+
+  // Helper function for safe expression evaluation
+  const calculateExpression = (expression, values) => {
+    const context = {}
+
+    Object.keys(values).forEach((key) => {
+      context[key] = parseFloat(values[key]) || 0
+    })
+
+    const validation = validateExpression(expression, context)
+    if (!validation.isValid && validation.errorType !== 'UNDEFINED_VARIABLE') {
+      throw new Error(validation.errorMessage)
+    }
+
+    const normalized = normalizeMathFunctions(expression)
+    return evaluateExpression(normalized, context, true)
+  }
+
+  return { results, error }
 }
