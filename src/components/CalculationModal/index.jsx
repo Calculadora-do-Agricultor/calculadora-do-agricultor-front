@@ -1,164 +1,23 @@
-import React, { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { X, Copy, Calculator, Check, Info, HelpCircle } from "lucide-react"
-import { useCalculationResult } from "../../hooks/useCalculationResult"
-import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import useCalculationResult from "../../hooks/useCalculationResult"
+import { useFormParameters } from "../../hooks/useFormParameters"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
 import { Tooltip } from "../ui/Tooltip"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
-  const { paramValues, setParamValues, results, setResults, allFieldsFilled, error } = useCalculationResult(calculation)
+  const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
+  const { results, error } = useCalculationResult(calculation, paramValues, allFieldsFilled)
   const { success, error: toastError } = useToast()
   const modalRef = useRef(null)
-  const [copied, setCopied] = React.useState({})
+  const [copied, setCopied] = useState({})
 
 
 
-
-
-  useEffect(() => {
-    if (calculation && Object.keys(paramValues).length > 0 && allFieldsFilled) {
-      try {
-        // Prepara o objeto de resultados
-        const newResults = {};
-
-        // Verifica se o cálculo tem múltiplos resultados (novo formato)
-        if (calculation.results && calculation.results.length > 0) {
-          // Processa cada resultado definido
-          calculation.results.forEach((result, index) => {
-            const calculatedValue = calculateExpressionResult(
-              result.expression,
-              paramValues,
-            );
-            newResults[`result_${index}`] = {
-              name: result.name,
-              description: result.description,
-              value: calculatedValue.toString(),
-              unit: result.unit || "",
-            };
-          });
-        } else {
-          // Compatibilidade com o formato antigo (resultado único)
-          const calculatedValue = calculateResult(calculation, paramValues);
-          newResults.value = calculatedValue.toString();
-
-          // Calcula resultados adicionais se existirem (formato antigo)
-          if (
-            calculation.additionalResults &&
-            calculation.additionalResults.length > 0
-          ) {
-            calculation.additionalResults.forEach((result) => {
-              if (result.key === "coleta50m") {
-                newResults[result.key] = (
-                  (calculatedValue * 50) /
-                  1000
-                ).toString();
-              }
-            });
-          }
-        }
-
-        setResults(newResults);
-      } catch (error) {
-        console.error("Erro ao calcular resultado:", error);
-      }
-    }
-  }, [paramValues, calculation, allFieldsFilled]);
-
-  // Função para calcular o resultado com base na expressão do cálculo (formato antigo)
-  const calculateResult = (calculation, values) => {
-    if (calculation.expression) {
-      try {
-        return calculateExpressionResult(calculation.expression, values);
-      } catch (error) {
-        console.error("Erro ao avaliar expressão:", error);
-        return 0;
-      }
-    }
-
-    return 0; // Valor padrão se não houver expressão
-  };
-
-  // Função para calcular o resultado de uma expressão com base nos valores dos parâmetros
-  const calculateExpressionResult = (expression, values) => {
-    try {
-      // Cria um contexto com os valores dos parâmetros
-      const context = {};
-
-      // Converte os valores para números quando possível
-      Object.keys(values).forEach((key) => {
-        context[key] = Number.parseFloat(values[key]) || 0;
-      });
-
-      // Valida a expressão antes de calcular
-      const validation = validateExpression(expression, context);
-      if (!validation.isValid) {
-        console.error("Erro de validação:", validation.errorMessage);
-        return 0;
-      }
-
-      // Normaliza as funções matemáticas na expressão
-      const normalizedExpression = normalizeMathFunctions(expression);
-
-      // Avalia a expressão de forma segura
-      return evaluateExpression(normalizedExpression, context, true);
-    } catch (error) {
-      console.error("Erro ao avaliar expressão:", error);
-      return 0;
-    }
-  };
-
-  // Atualiza o valor de um parâmetro (versão completa da branch feat/validador-parametros-calculo)
   const handleParamChange = (paramName, value, param) => {
-    if (param && param.type === "number") {
-      let numericValue = value;
-      // Só processa o valor se não estiver vazio
-      if (value !== "") {
-        const numValue = parseFloat(numericValue);
-        if (!isNaN(numValue)) {
-          // Aplica a máscara (step) apenas se estiver definida no parâmetro
-          if (param.step) {
-            const step = parseFloat(param.step);
-            if (!isNaN(step)) {
-              // Determina o número de casas decimais do step
-              const stepDecimals =
-                param.step.toString().split(".")[1]?.length || 0;
-              // Arredonda o valor de acordo com o step e mantém as casas decimais
-              const roundedValue = Math.round(numValue / step) * step;
-              // Limita o número de casas decimais para evitar zeros extras
-              numericValue = Number(
-                roundedValue.toFixed(stepDecimals),
-              ).toString();
-            }
-          } else {
-            // Se não tiver step, limita a 2 casas decimais
-            numericValue = Number(numValue.toFixed(2)).toString();
-          }
-        } else {
-          numericValue = "";
-        }
-      }
-      // Aplica apenas o limite máximo se houver um valor numérico
-      if (numericValue !== "") {
-        const currentValue = parseFloat(numericValue);
-        if (param.max !== "" && currentValue > parseFloat(param.max)) {
-          const maxValue = parseFloat(param.max);
-          const stepDecimals =
-            param.step?.toString().split(".")[1]?.length || 2;
-          numericValue = Number(maxValue.toFixed(stepDecimals)).toString();
-        }
-      }
-      setParamValues((prev) => ({
-        ...prev,
-        [paramName]: numericValue,
-      }));
-    } else {
-      setParamValues((prev) => ({
-        ...prev,
-        [paramName]: value,
-      }));
-    }
+    setParamValue(paramName, value);
   };
 
   // Copia o resultado para a área de transferência (combinando ambas as versões)
@@ -253,7 +112,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
             </div>
 
             <div className="calculation-modal-parameters">
-              {calculation.parameters &&
+              {calculation.parameters && paramValues &&
                 calculation.parameters.map((param, index) => (
                   <div key={param.name} className="calculation-modal-parameter">
                     <label htmlFor={param.name}>
@@ -344,24 +203,37 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
               {/* Verifica se estamos usando o novo formato de múltiplos resultados */}
               {calculation.results && calculation.results.length > 0 ? (
                 // Novo formato: múltiplos resultados - usando CalculationResult component
-                Object.keys(results).map((key) => (
-                  <CalculationResult
-                    key={key}
-                    name={results[key]?.name}
-                    value={results[key]?.value}
-                    unit={results[key]?.unit}
-                    description={results[key]?.description}
-                    copied={copied[key]}
-                    onCopy={() =>
-                      copyToClipboard(
-                        results[key]?.value || "0",
-                        key,
-                        results[key]?.name,
-                      )
-                    }
-                    disabled={!allFieldsFilled}
-                  />
-                ))
+                Object.entries(results).map(([key, result]) => {
+                  // Verifica se o resultado está no formato novo (objeto com name, value, etc)
+                  // ou no formato antigo (apenas o valor)
+                  const isObject = typeof result === 'object' && result !== null;
+                  const resultIndex = parseInt(key.split('_')[1], 10);
+                  const resultTemplate = calculation.results?.[resultIndex];
+
+                  const name = isObject ? result.name : resultTemplate?.name;
+                  const value = isObject ? result.value : result;
+                  const unit = isObject ? result.unit : resultTemplate?.unit;
+                  const description = isObject ? result.description : resultTemplate?.description;
+
+                  return (
+                    <CalculationResult
+                      key={key}
+                      name={name}
+                      value={value}
+                      unit={unit}
+                      description={description}
+                      copied={copied[key]}
+                      disabled={!allFieldsFilled}
+                      onCopy={() =>
+                        copyToClipboard(
+                          value || "0",
+                          key,
+                          name
+                        )
+                      }
+                    />
+                  )
+                })
               ) : (
                 <>
                   <CalculationResult
@@ -403,8 +275,8 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           </div>
         </div>
       </div>
-    </div >
-  )
-}
+    </div>
+  );
+};
 
 export default CalculationModal;

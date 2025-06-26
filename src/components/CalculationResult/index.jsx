@@ -1,22 +1,15 @@
-import React, { useState } from "react"
+import React from "react"
 import { Copy, Check } from "lucide-react"
 import "./style.css"
 
-const CalculationResult = ({ name, value, unit, description, disabled }) => {
-  const [copied, setCopied] = useState(false)
-
+const CalculationResult = ({ name, value, unit, description, disabled, copied, onCopy, primary }) => {
   const handleCopy = () => {
-    if (disabled) return
-    navigator.clipboard.writeText(value?.toString() || "").then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    }).catch(err => {
-      console.error("Copy error:", err)
-    })
-  }
+    if (disabled || !onCopy) return;
+    onCopy();
+  };
 
   return (
-    <div className={`calculation-result ${disabled ? "inactive" : ""}`}>
+    <div className={`calculation-result ${disabled ? "inactive" : ""} ${primary ? "primary" : ""}`}>
       <div className="calculation-result-label">
         <span className="result-name">{name}</span>
         {unit && <span className="unit">({unit})</span>}

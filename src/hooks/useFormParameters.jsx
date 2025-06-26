@@ -8,16 +8,14 @@ export function useFormParameters(calculation) {
   const [paramValues, setParamValues] = useState({})
   const [allFieldsFilled, setAllFieldsFilled] = useState(false)
 
-  // Initialize parameter values when loading new calculation
   useEffect(() => {
+    const initialValues = {}
     if (calculation?.parameters) {
-      const initialValues = {}
       calculation.parameters.forEach((param) => {
-        initialValues[param.name] = ""
+        initialValues[param.name] = param.defaultValue || ""
       })
-      setParamValues(initialValues)
-      setAllFieldsFilled(false)
     }
+    setParamValues(initialValues)
   }, [calculation])
 
   // Check if all fields are filled

@@ -9,7 +9,7 @@ import { evaluateExpression, normalizeMathFunctions, validateExpression } from "
  * @param {boolean} allFieldsFilled - Indicates if all parameters are filled
  * @returns {Object} { results, error }
  */
-export function useCalculationResult(calculation, paramValues, allFieldsFilled) {
+export default function useCalculationResult(calculation, paramValues, allFieldsFilled) {
   const [results, setResults] = useState(() => {
     // Initialize results with default values
     const defaultResults = {}
