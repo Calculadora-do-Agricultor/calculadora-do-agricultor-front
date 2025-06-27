@@ -10,6 +10,10 @@ import "./styles.css"
 const CreateCategory = ({ onCreate, onCancel }) => {
   const [categoryName, setCategoryName] = useState("")
   const [categoryDescription, setCategoryDescription] = useState("")
+  const [categoryImageUrl, setCategoryImageUrl] = useState("")
+  const [categoryColor, setCategoryColor] = useState("#00418F")
+  const [categoryTags, setCategoryTags] = useState([])
+  const [newTag, setNewTag] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { success, error: toastError } = useToast()
@@ -29,6 +33,9 @@ const CreateCategory = ({ onCreate, onCancel }) => {
       await addDoc(collection(db, "categories"), {
         name: categoryName.trim(),
         description: categoryDescription.trim(),
+        imageUrl: categoryImageUrl.trim(),
+        color: categoryColor,
+        tags: categoryTags,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -92,6 +99,85 @@ const CreateCategory = ({ onCreate, onCancel }) => {
               rows={4}
             />
             <p className="input-help">Uma boa descrição ajuda os usuários a entenderem o propósito desta categoria.</p>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="category-image-url" className="input-label">
+              URL da Imagem da Categoria
+            </label>
+            <input
+              id="category-image-url"
+              type="url"
+              placeholder="https://exemplo.com/imagem.jpg"
+              value={categoryImageUrl}
+              onChange={(e) => setCategoryImageUrl(e.target.value)}
+              className="input-field"
+              disabled={isSubmitting}
+            />
+            <p className="input-help">Insira a URL de uma imagem para representar esta categoria. Se a URL for inválida, um ícone padrão será exibido.</p>
+          </div>
+
+          <div className="input-group">
+            <label htmlFor="category-color" className="input-label">
+              Cor da Categoria
+            </label>
+            <input
+              id="category-color"
+              type="color"
+              value={categoryColor}
+              onChange={(e) => setCategoryColor(e.target.value)}
+              className="input-field h-10"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">
+              Tags/Badges
+            </label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {categoryTags.map((tag, index) => (
+                <span key={index} className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => setCategoryTags(tags => tags.filter((_, i) => i !== index))}
+                    className="ml-2 text-gray-500 hover:text-gray-700"
+                  >
+                    <X size={14} />
+                  </button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newTag}
+                onChange={(e) => setNewTag(e.target.value)}
+                placeholder="Adicionar nova tag"
+                className="input-field flex-1"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && newTag.trim()) {
+                    e.preventDefault();
+                    setCategoryTags([...categoryTags, newTag.trim()]);
+                    setNewTag('');
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newTag.trim()) {
+                    setCategoryTags([...categoryTags, newTag.trim()]);
+                    setNewTag('');
+                  }
+                }}
+                className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                disabled={!newTag.trim()}
+              >
+                <Plus size={20} />
+              </button>
+            </div>
           </div>
 
           {error && (

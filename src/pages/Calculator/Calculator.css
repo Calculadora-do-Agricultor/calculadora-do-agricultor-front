@@ -742,9 +742,13 @@
   /* Container de conteúdo principal */
   .content-container {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 400px 1fr;
     gap: 2rem;
     margin-top: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
   }
   
   /* Sidebar */
@@ -820,6 +824,10 @@
     border: 1px solid #e5e7eb;
     overflow: hidden;
     background-color: transparent;
+    height: calc(100vh - 200px);
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
   }
   
   .categories-header {
@@ -1688,6 +1696,7 @@
 
     .content-container {
       grid-template-columns: 1fr;
+      padding: 0 0.5rem;
     }
   
     .sidebar {
@@ -1739,6 +1748,21 @@
     }
   }
   
+  /* TABLET (max-width: 1200px) */
+  @media (max-width: 1200px) {
+    .content-container {
+      grid-template-columns: 320px 1fr;
+      gap: 1.5rem;
+      max-width: 100%;
+      padding: 0 0.75rem;
+    }
+
+    .categories-container-calculator {
+      height: calc(100vh - 180px);
+      min-height: 500px;
+    }
+  }
+
   /* MOBILE PEQUENO (max-width: 768px) */
   @media (max-width: 768px) {
     /* Ajustes específicos para telas pequenas */
