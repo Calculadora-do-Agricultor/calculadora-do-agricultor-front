@@ -23,6 +23,7 @@ const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
 
+
 // Componente de loading otimizado
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
@@ -57,6 +58,7 @@ function App() {
               <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/glossario" element={<GlossarioPage />} />
+              
               <Route
                 path="/login"
                 element={<PrivateRoute requiresAuth={false} />}
