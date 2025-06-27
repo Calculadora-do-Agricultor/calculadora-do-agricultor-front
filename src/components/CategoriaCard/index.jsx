@@ -72,7 +72,7 @@ const CategoriaCard = ({
       <div className="flex items-center gap-4 w-full">
         {/* Imagem da categoria */}
         <div 
-          className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 flex-shrink-0 overflow-hidden"
+          className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 flex-shrink-0 overflow-hidden p-2"
           style={{
             backgroundColor: color ? `${color}20` : '#00418F20',
           }}
@@ -81,12 +81,12 @@ const CategoriaCard = ({
             <img 
               src={imageUrl} 
               alt={`Ícone da categoria ${title}`}
-              className="w-full h-full object-cover rounded-lg"
+              className="w-full h-full object-cover rounded-md"
               onError={handleImageError}
             />
           ) : (
             <ImageIcon 
-              className="w-6 h-6" 
+              className="w-5 h-5" 
               style={{ color: color || '#00418F' }} 
               aria-hidden="true" 
             />
