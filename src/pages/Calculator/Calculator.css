@@ -1695,7 +1695,9 @@
     }
 
     .content-container {
-      grid-template-columns: 1fr;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
       padding: 0 0.5rem;
     }
   

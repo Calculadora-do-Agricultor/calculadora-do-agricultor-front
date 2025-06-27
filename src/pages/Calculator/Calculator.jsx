@@ -25,6 +25,7 @@ import {
   Loader2,
   Tags,
   FileSpreadsheet,
+  AlertTriangle,
 } from "lucide-react";
 import { auth, db } from "../../services/firebaseConfig";
 import CalculationList from "@/components/CalculationList";
@@ -42,6 +43,7 @@ export default function Calculator() {
   const [showOptions, setShowOptions] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid ou list
   const [showFilters, setShowFilters] = useState(false);
@@ -60,10 +62,13 @@ export default function Calculator() {
   const [selectedComplexities, setSelectedComplexities] = useState([]);
   const [showCategoryDescription, setShowCategoryDescription] = useState(false);
   const [calculos, setCalculos] = useState([]);
+  const [categoriesUpdateKey, setCategoriesUpdateKey] = useState(Date.now());
 
   const fetchCategorias = useCallback(async () => {
+    console.log("Fetching categories...");
     try {
       setLoading(true);
+      setError(null); // Clear any previous errors
       
       // Buscar todas as categorias e todos os cálculos em paralelo
       const [categoriasSnapshot, calculosSnapshot] = await Promise.all([
@@ -92,15 +97,18 @@ export default function Calculator() {
       });
 
       const categoriasComCalculos = Array.from(categoriasMap.values());
+      console.log("Categories fetched successfully:", categoriasComCalculos.length);
       setCategorias(categoriasComCalculos);
-
+      setCategoriesUpdateKey(Date.now()); // Force re-render
 
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
+      setError("Ocorreu um erro ao carregar as categorias. Por favor, tente novamente.");
+      setCategorias([]);
     } finally {
       setLoading(false);
     }
-  }, [categoriaSelecionada]);
+  }, []); // Remove categoriaSelecionada from dependencies
 
   // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
@@ -116,6 +124,13 @@ export default function Calculator() {
       fetchCategorias();
     }
   }, [user, fetchCategorias]);
+
+  // Add a callback to handle category updates and force re-render
+  const handleCategoryUpdated = useCallback(() => {
+    console.log("Category updated, refetching categories...");
+    setCategoriesUpdateKey(Date.now()); // Force immediate re-render
+    fetchCategorias();
+  }, [fetchCategorias]);
 
   // Limpar categoria selecionada ao montar o componente
   useEffect(() => {
@@ -234,10 +249,11 @@ export default function Calculator() {
           </div>
           <div className="mobile-categories-content">
             <Categories
+              key={`mobile-categories-${categoriesUpdateKey}`}
               categories={categorias}
               onSelect={setCategoriaSelecionada}
               selectedCategory={categoriaSelecionada}
-              onCategoryUpdated={fetchCategorias}
+              onCategoryUpdated={handleCategoryUpdated}
               idPrefix="mobile-"
             />
           </div>
@@ -247,7 +263,22 @@ export default function Calculator() {
         <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
-            {loading ? (
+            {error ? (
+            <div className="flex flex-col items-center justify-center p-6 text-center bg-red-50 rounded-lg">
+              <AlertTriangle className="w-12 h-12 text-red-500 mb-2" />
+              <h3 className="text-lg font-semibold text-red-700 mb-1">Erro ao carregar categorias</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button
+                onClick={() => {
+                  setError(null);
+                  fetchCategorias();
+                }}
+                className="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors duration-200"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          ) : loading ? (
               <div className="sidebar-loading">
                 <div className="skeleton-header"></div>
                 <div className="skeleton-item"></div>
@@ -261,12 +292,13 @@ export default function Calculator() {
                     <h2>Categorias</h2>
                   </div>
                   <Categories
+                    key={`desktop-categories-${categoriesUpdateKey}`}
                     categories={categorias}
                     onSelect={(category) => {
                       setCategoriaSelecionada(category);
                     }}
                     selectedCategory={categoriaSelecionada}
-                    onCategoryUpdated={fetchCategorias}
+                    onCategoryUpdated={handleCategoryUpdated}
                     idPrefix="desktop-"
                   />
                 </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
+import { useState, useEffect, useContext, memo } from "react"
 import { Search, Filter, Loader2, AlertTriangle, X, FolderPlus, SearchX, Calculator, Beaker, Sprout, Droplets, Zap, Gauge } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { deleteDoc, doc } from "firebase/firestore"
@@ -32,8 +32,13 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
 
   useEffect(() => {
-    if (!categories) return
+    if (!categories) {
+      logCategoryUpdate("No categories provided", []);
+      setFilteredCategories([]);
+      return;
+    }
 
+    logCategoryUpdate("Processing categories", categories);
     let result = [...categories]
 
     // Aplicar filtro por quantidade de cálculos
@@ -65,10 +70,11 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
       })
     }
 
+    logCategoryUpdate("Filtered categories", result);
     setFilteredCategories(result)
 
     // Removida a seleção automática da categoria
-  }, [categories, searchTerm, filterOption, onSelect])
+  }, [categories, searchTerm, filterOption])
 
   // Função para abrir o modal de edição
   const handleEditCategory = (category) => {
@@ -178,13 +184,16 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
               const isSelected = selectedCategory === category.name
               
               return (
-                <div key={index} className="relative w-full">
+                <div key={`${category.id || category.name}-${index}`} className="relative w-full">
                   <CategoriaCard
                     imageUrl={category.imageUrl}
                     title={category.name}
                     description={category.description || `Categoria com ${category.calculos?.length || 0} cálculos disponíveis`}
                     calculosCount={category.calculos?.length || 0}
-                    onClick={() => onSelect(category.name)}
+                    onClick={() => {
+                      console.log(`[Categories] Category selected: ${category.name}`);
+                      onSelect(category.name);
+                    }}
                     onEdit={canEditCategory(category) ? () => handleEditCategory(category) : null}
                     className={`w-full ${isSelected ? 'ring-2 ring-[#00418F] border-[#00418F]' : ''}`}
                     tags={category.tags || []}
@@ -223,4 +232,14 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   )
 }
 
-export default Categories
+// Adiciona logs para debug
+const logCategoryUpdate = (action, categories) => {
+  console.log(`[Categories] ${action}:`, {
+    timestamp: new Date().toISOString(),
+    categoriesCount: categories?.length || 0,
+    categories: categories?.map(c => ({ name: c.name, calculosCount: c.calculos?.length || 0 })) || []
+  });
+};
+
+// Componente Categories otimizado com memo
+export default memo(Categories)
