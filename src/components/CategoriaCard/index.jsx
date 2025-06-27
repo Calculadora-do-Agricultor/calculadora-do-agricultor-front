@@ -57,24 +57,13 @@ const CategoriaCard = ({
     >
 
 
-      {/* Botão de editar */}
-      {onEdit && (
-        <button
-          onClick={handleEdit}
-          className="absolute top-3 right-3 z-20 p-1.5 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors duration-200 opacity-0 group-hover:opacity-100"
-          aria-label={`Editar categoria ${title}`}
-        >
-          <PencilIcon className="w-4 h-4 text-gray-600" />
-        </button>
-      )}
-
       {/* Conteúdo principal - Layout horizontal */}
       <div className="flex items-center gap-4 w-full">
         {/* Imagem da categoria */}
         <div 
           className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 flex-shrink-0 overflow-hidden p-2"
           style={{
-            backgroundColor: color ? `${color}20` : '#00418F20',
+            backgroundColor: color ? `${color}50` : '#00418F20',
           }}
         >
           {imageUrl && !imageError ? (
@@ -94,7 +83,7 @@ const CategoriaCard = ({
         </div>
 
         {/* Nome da categoria */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 mr-3">
           <h3 className="text-lg font-semibold text-gray-900 truncate">
             {title}
           </h3>
@@ -112,9 +101,23 @@ const CategoriaCard = ({
           </div>
         </div>
 
-        {/* Contador de cálculos */}
-        <div className="text-right">
+        {/* Área direita - Contador e botão de editar */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Contador de cálculos */}
+          <div className="text-right">
             <p className="text-xs text-gray-500">{calculosCount} {calculosCount === 1 ? 'cálculo' : 'cálculos'}</p>
+          </div>
+          
+          {/* Botão de editar - sempre visível */}
+           {onEdit && (
+             <button
+               onClick={handleEdit}
+               className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 border border-gray-200 hover:border-gray-300 cursor-pointer"
+               aria-label={`Editar categoria ${title}`}
+             >
+               <PencilIcon className="w-4 h-4 text-gray-600" />
+             </button>
+           )}
         </div>
       </div>
     </div>

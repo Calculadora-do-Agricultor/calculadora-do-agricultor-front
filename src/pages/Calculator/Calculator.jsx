@@ -356,7 +356,7 @@ export default function Calculator() {
                     className={`category-image-container`}
                     style={{
                       backgroundColor: categoriaAtual?.color
-                        ? `${categoriaAtual?.color}20`
+                        ? `${categoriaAtual?.color}50`
                         : "",
                     }}
                   >

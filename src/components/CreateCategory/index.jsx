@@ -7,6 +7,11 @@ import { X, Plus, AlertCircle, Loader2 } from "lucide-react"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 
+// Configuration constants for easy future updates
+const CATEGORY_NAME_MAX = 50
+const CATEGORY_DESCRIPTION_MAX = 150
+const MAX_TAGS = 3
+
 const CreateCategory = ({ onCreate, onCancel }) => {
   const [categoryName, setCategoryName] = useState("")
   const [categoryDescription, setCategoryDescription] = useState("")
@@ -22,6 +27,21 @@ const CreateCategory = ({ onCreate, onCancel }) => {
     // Validação
     if (!categoryName.trim()) {
       setError("O nome da categoria é obrigatório.")
+      return
+    }
+
+    if (categoryName.length > CATEGORY_NAME_MAX) {
+      setError(`O nome da categoria deve ter no máximo ${CATEGORY_NAME_MAX} caracteres.`)
+      return
+    }
+
+    if (categoryDescription.length > CATEGORY_DESCRIPTION_MAX) {
+      setError(`A descrição da categoria deve ter no máximo ${CATEGORY_DESCRIPTION_MAX} caracteres.`)
+      return
+    }
+
+    if (categoryTags.length > MAX_TAGS) {
+      setError(`Você pode adicionar no máximo ${MAX_TAGS} tags.`)
       return
     }
 
@@ -73,30 +93,46 @@ const CreateCategory = ({ onCreate, onCancel }) => {
           <div className="input-group">
             <label htmlFor="category-name" className="input-label">
               Nome da Categoria <span className="required">*</span>
+              <span className={`ml-2 text-sm ${categoryName.length > CATEGORY_NAME_MAX ? 'text-red-500' : 'text-gray-500'}`}>
+                {categoryName.length} / {CATEGORY_NAME_MAX}
+              </span>
             </label>
             <input
               id="category-name"
               type="text"
               placeholder="Ex: Adubação, Irrigação, Plantio..."
               value={categoryName}
-              onChange={(e) => setCategoryName(e.target.value)}
-              className="input-field"
+              onChange={(e) => {
+                if (e.target.value.length <= CATEGORY_NAME_MAX) {
+                  setCategoryName(e.target.value)
+                }
+              }}
+              className={`input-field ${categoryName.length > CATEGORY_NAME_MAX ? 'border-red-500' : ''}`}
               disabled={isSubmitting}
+              maxLength={CATEGORY_NAME_MAX}
             />
           </div>
 
           <div className="input-group">
             <label htmlFor="category-description" className="input-label">
               Descrição da Categoria
+              <span className={`ml-2 text-sm ${categoryDescription.length > CATEGORY_DESCRIPTION_MAX ? 'text-red-500' : 'text-gray-500'}`}>
+                {categoryDescription.length} / {CATEGORY_DESCRIPTION_MAX}
+              </span>
             </label>
             <textarea
               id="category-description"
               placeholder="Descreva o propósito desta categoria de cálculos..."
               value={categoryDescription}
-              onChange={(e) => setCategoryDescription(e.target.value)}
-              className="input-field textarea-field"
+              onChange={(e) => {
+                if (e.target.value.length <= CATEGORY_DESCRIPTION_MAX) {
+                  setCategoryDescription(e.target.value)
+                }
+              }}
+              className={`input-field textarea-field ${categoryDescription.length > CATEGORY_DESCRIPTION_MAX ? 'border-red-500' : ''}`}
               disabled={isSubmitting}
               rows={4}
+              maxLength={CATEGORY_DESCRIPTION_MAX}
             />
             <p className="input-help">Uma boa descrição ajuda os usuários a entenderem o propósito desta categoria.</p>
           </div>
@@ -134,6 +170,9 @@ const CreateCategory = ({ onCreate, onCancel }) => {
           <div className="input-group">
             <label className="input-label">
               Tags/Badges
+              <span className={`ml-2 text-sm ${categoryTags.length >= MAX_TAGS ? 'text-red-500' : 'text-gray-500'}`}>
+                {categoryTags.length} / {MAX_TAGS}
+              </span>
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {categoryTags.map((tag, index) => (
@@ -149,15 +188,22 @@ const CreateCategory = ({ onCreate, onCancel }) => {
                 </span>
               ))}
             </div>
+            {categoryTags.length >= MAX_TAGS && (
+              <p className="text-sm text-amber-600 mb-2 flex items-center gap-1">
+                <AlertCircle size={14} />
+                Limite máximo de {MAX_TAGS} tags atingido. Remova uma tag para adicionar outra.
+              </p>
+            )}
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Adicionar nova tag"
-                className="input-field flex-1"
+                placeholder={categoryTags.length >= MAX_TAGS ? "Remova uma tag para adicionar outra" : "Adicionar nova tag"}
+                className={`input-field flex-1 ${categoryTags.length >= MAX_TAGS ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                disabled={categoryTags.length >= MAX_TAGS || isSubmitting}
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && newTag.trim()) {
+                  if (e.key === 'Enter' && newTag.trim() && categoryTags.length < MAX_TAGS) {
                     e.preventDefault();
                     setCategoryTags([...categoryTags, newTag.trim()]);
                     setNewTag('');
@@ -167,13 +213,17 @@ const CreateCategory = ({ onCreate, onCancel }) => {
               <button
                 type="button"
                 onClick={() => {
-                  if (newTag.trim()) {
+                  if (newTag.trim() && categoryTags.length < MAX_TAGS) {
                     setCategoryTags([...categoryTags, newTag.trim()]);
                     setNewTag('');
                   }
                 }}
-                className="px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                disabled={!newTag.trim()}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  categoryTags.length >= MAX_TAGS || !newTag.trim()
+                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+                disabled={!newTag.trim() || categoryTags.length >= MAX_TAGS}
               >
                 <Plus size={20} />
               </button>
