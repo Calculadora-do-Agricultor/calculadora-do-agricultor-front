@@ -1,8 +1,9 @@
 import { useRef, useEffect, useState } from "react"
-import { X, Copy, Calculator, Check, Info, HelpCircle } from "lucide-react"
+import { X, Copy, Calculator, Check, Info, HelpCircle, Save } from "lucide-react"
 import useCalculationResult from "../../hooks/useCalculationResult"
 import { useFormParameters } from "../../hooks/useFormParameters"
 import { useToast } from "../../context/ToastContext"
+import { CalculationHistoryService } from "../../services/calculationHistoryService"
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
 import { Tooltip } from "../ui/Tooltip"
@@ -13,11 +14,43 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { success, error: toastError } = useToast()
   const modalRef = useRef(null)
   const [copied, setCopied] = useState({})
+  const [isSavingHistory, setIsSavingHistory] = useState(false)
 
 
 
   const handleParamChange = (paramName, value, param) => {
     setParamValue(paramName, value);
+  };
+
+  // Save calculation to history
+  const handleSaveToHistory = async () => {
+    if (!allFieldsFilled || !calculation) {
+      toastError("Preencha todos os parâmetros antes de salvar no histórico.");
+      return;
+    }
+
+    setIsSavingHistory(true);
+    try {
+      const calculationId = calculation.id || calculation.name?.toLowerCase().replace(/\s+/g, '_') || 'unknown_calculation';
+      const { parametersUsed, results: resultsFormatted } = CalculationHistoryService.transformToHistoryFormat(
+        calculation,
+        paramValues,
+        results
+      );
+
+      await CalculationHistoryService.saveCalculationHistory(
+        calculationId,
+        parametersUsed,
+        resultsFormatted
+      );
+
+      success("Cálculo salvo no histórico com sucesso!");
+    } catch (error) {
+      console.error("Error saving to history:", error);
+      toastError("Erro ao salvar no histórico. Tente novamente.");
+    } finally {
+      setIsSavingHistory(false);
+    }
   };
 
   // Copia o resultado para a área de transferência (combinando ambas as versões)
@@ -195,6 +228,15 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           <div className="calculation-modal-section">
             <div className="section-header">
               <h3>Resultados</h3>
+              <button
+                onClick={handleSaveToHistory}
+                disabled={!allFieldsFilled || isSavingHistory}
+                className={`save-history-button ${!allFieldsFilled ? 'disabled' : ''}`}
+                title={!allFieldsFilled ? "Preencha todos os parâmetros para salvar" : "Salvar cálculo no histórico"}
+              >
+                <Save size={16} />
+                {isSavingHistory ? "Salvando..." : "Salvar no Histórico"}
+              </button>
             </div>
 
             <div

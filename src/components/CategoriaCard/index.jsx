@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PencilIcon } from '@heroicons/react/24/outline';
 import { Badge } from '../ui/badge';
-import { ImageIcon } from 'lucide-react';
+import { Edit, ImageIcon } from 'lucide-react';
 
 const CategoriaCard = ({
   imageUrl, // URL da imagem da categoria
@@ -115,7 +115,7 @@ const CategoriaCard = ({
                className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 border border-gray-200 hover:border-gray-300 cursor-pointer"
                aria-label={`Editar categoria ${title}`}
              >
-               <PencilIcon className="w-4 h-4 text-gray-600" />
+               <Edit className="w-4 h-4 text-gray-600" />
              </button>
            )}
         </div>
