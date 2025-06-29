@@ -46,14 +46,9 @@ const CalculationHistoryModal = ({
   // Fetch real data from Firestore
   const fetchHistoryData = async () => {
     if (!calculationHistoryId) {
-      console.log("No calculationHistoryId provided");
       return;
     }
 
-    console.log(
-      "Fetching history for calculationHistoryId:",
-      calculationHistoryId,
-    );
     setIsLoading(true);
     setError(null);
 
@@ -62,7 +57,6 @@ const CalculationHistoryModal = ({
         50,
         calculationHistoryId,
       );
-      console.log("Fetched history data:", data);
       setHistoryData(data);
     } catch (err) {
       console.error("Error fetching calculation history:", err);
@@ -454,7 +448,7 @@ const CalculationHistoryModal = ({
           </DialogHeader>
 
         <div className="flex flex-1 flex-col overflow-hidden px-6 py-4">
-          <div className="relative h-full w-full">
+          <div className="relative h-full w-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {/* Lista de Histórico */}
             <div
               className={`absolute inset-0 transition-all duration-300 ease-in-out ${
@@ -491,7 +485,7 @@ const CalculationHistoryModal = ({
               )}
 
               {!isLoading && !error && historyData.length > 0 && (
-                <div className="flex-1 space-y-4 overflow-y-auto">
+                <div className="flex-1 space-y-4 overflow-y-auto overflow-x-hidden">
                   {historyData.map((item) => (
                     <div
                       key={item.id}
@@ -623,7 +617,7 @@ const CalculationHistoryModal = ({
                   </div>
 
                   {/* Conteúdo Scrollável */}       
-                  <div className="flex-1 overflow-y-auto pr-2">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
                     <div className="space-y-6">
                       {/* Seção de Parâmetros */}
                       <div className="rounded-lg border border-blue-100 bg-blue-50 p-6">
@@ -633,7 +627,7 @@ const CalculationHistoryModal = ({
                             Parâmetros Utilizados
                           </h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           {getAllParameters(selectedItem).map(
                             (param, index) => (
                               <div
@@ -678,7 +672,7 @@ const CalculationHistoryModal = ({
                             Resultados Obtidos
                           </h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           {getAllResults(selectedItem).map((result, index) => (
                             <div
                               key={index}

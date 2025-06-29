@@ -177,7 +177,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       )}
       {/* Categories List */}
-      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
+      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thim scrollbar-thumb-blue-600 scrollbar-track-gray-100">
         {filteredCategories.length > 0 ? (
           <div className="space-y-3 p-3">
             {filteredCategories.map((category, index) => {
@@ -191,7 +191,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
                     description={category.description || `Categoria com ${category.calculos?.length || 0} cálculos disponíveis`}
                     calculosCount={category.calculos?.length || 0}
                     onClick={() => {
-                      console.log(`[Categories] Category selected: ${category.name}`);
                       onSelect(category.name);
                     }}
                     onEdit={canEditCategory(category) ? () => handleEditCategory(category) : null}
@@ -234,11 +233,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
 // Adiciona logs para debug
 const logCategoryUpdate = (action, categories) => {
-  console.log(`[Categories] ${action}:`, {
-    timestamp: new Date().toISOString(),
-    categoriesCount: categories?.length || 0,
-    categories: categories?.map(c => ({ name: c.name, calculosCount: c.calculos?.length || 0 })) || []
-  });
+  // Debug logs removed for production
 };
 
 // Componente Categories otimizado com memo

@@ -45,7 +45,6 @@ export class CalculationHistoryService {
       const historyRef = collection(db, "users", currentUser.uid, "calculationHistory");
       const docRef = await addDoc(historyRef, historyData);
       
-      console.log("Calculation history saved with ID:", docRef.id);
       return docRef.id;
     } catch (error) {
       console.error("Error saving calculation history:", error);
@@ -134,7 +133,6 @@ export class CalculationHistoryService {
 
       await Promise.all(deletePromises);
       
-      console.log(`Cleaned ${deletedCount} old calculation history entries`);
       return deletedCount;
     } catch (error) {
       console.error("Error cleaning old calculation history:", error);
@@ -156,8 +154,6 @@ export class CalculationHistoryService {
 
       const docRef = doc(db, "users", currentUser.uid, "calculationHistory", historyId);
       await deleteDoc(docRef);
-      
-      console.log("Calculation history deleted with ID:", historyId);
     } catch (error) {
       console.error("Error deleting calculation history:", error);
       throw error;
