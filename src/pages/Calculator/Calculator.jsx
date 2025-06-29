@@ -1,4 +1,11 @@
-import { useState, useEffect, useContext, useRef, useMemo, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
@@ -25,6 +32,8 @@ import {
   Loader2,
   Tags,
   FileSpreadsheet,
+  AlertTriangle,
+  ImageIcon,
 } from "lucide-react";
 import { auth, db } from "../../services/firebaseConfig";
 import CalculationList from "@/components/CalculationList";
@@ -42,6 +51,7 @@ export default function Calculator() {
   const [showOptions, setShowOptions] = useState(false);
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid ou list
   const [showFilters, setShowFilters] = useState(false);
@@ -60,30 +70,33 @@ export default function Calculator() {
   const [selectedComplexities, setSelectedComplexities] = useState([]);
   const [showCategoryDescription, setShowCategoryDescription] = useState(false);
   const [calculos, setCalculos] = useState([]);
+  const [categoriesUpdateKey, setCategoriesUpdateKey] = useState(Date.now());
+  const [categoryImageError, setCategoryImageError] = useState(false);
 
   const fetchCategorias = useCallback(async () => {
     try {
       setLoading(true);
-      
+      setError(null); // Clear any previous errors
+
       // Buscar todas as categorias e todos os cálculos em paralelo
       const [categoriasSnapshot, calculosSnapshot] = await Promise.all([
         getDocs(collection(db, "categories")),
-        getDocs(collection(db, "calculations"))
+        getDocs(collection(db, "calculations")),
       ]);
 
       // Mapear categorias
       const categoriasMap = new Map();
-      categoriasSnapshot.docs.forEach(doc => {
+      categoriasSnapshot.docs.forEach((doc) => {
         const categoria = { id: doc.id, ...doc.data(), calculos: [] };
         categoriasMap.set(doc.id, categoria);
       });
 
       // Agrupar cálculos por categoria
-      calculosSnapshot.docs.forEach(doc => {
+      calculosSnapshot.docs.forEach((doc) => {
         const calculo = { id: doc.id, ...doc.data() };
         const categories = calculo.categories || [];
-        
-        categories.forEach(categoryId => {
+
+        categories.forEach((categoryId) => {
           const categoria = categoriasMap.get(categoryId);
           if (categoria) {
             categoria.calculos.push(calculo);
@@ -93,14 +106,17 @@ export default function Calculator() {
 
       const categoriasComCalculos = Array.from(categoriasMap.values());
       setCategorias(categoriasComCalculos);
-
-
+      setCategoriesUpdateKey(Date.now()); // Force re-render
     } catch (error) {
       console.error("Erro ao buscar categorias com cálculos:", error);
+      setError(
+        "Ocorreu um erro ao carregar as categorias. Por favor, tente novamente.",
+      );
+      setCategorias([]);
     } finally {
       setLoading(false);
     }
-  }, [categoriaSelecionada]);
+  }, []); // Remove categoriaSelecionada from dependencies
 
   // Atualizar a exibição da contagem de usuários com base no status de admin
   useEffect(() => {
@@ -117,10 +133,21 @@ export default function Calculator() {
     }
   }, [user, fetchCategorias]);
 
+  // Add a callback to handle category updates and force re-render
+  const handleCategoryUpdated = useCallback(() => {
+    setCategoriesUpdateKey(Date.now()); // Force immediate re-render
+    fetchCategorias();
+  }, [fetchCategorias]);
+
   // Limpar categoria selecionada ao montar o componente
   useEffect(() => {
     setCategoriaSelecionada(null);
   }, []);
+
+  // Reset image error when category changes
+  useEffect(() => {
+    setCategoryImageError(false);
+  }, [categoriaSelecionada]);
 
   useEffect(() => {
     // Escutar eventos de mudança de modo de visualização
@@ -164,9 +191,7 @@ export default function Calculator() {
 
   // Encontrar a categoria selecionada (memoizado)
   const categoriaAtual = useMemo(() => {
-    return categorias.find(
-      (cat) => cat.name === categoriaSelecionada,
-    );
+    return categorias.find((cat) => cat.name === categoriaSelecionada);
   }, [categorias, categoriaSelecionada]);
 
   const fetchUserCount = useCallback(async () => {
@@ -234,10 +259,11 @@ export default function Calculator() {
           </div>
           <div className="mobile-categories-content">
             <Categories
+              key={`mobile-categories-${categoriesUpdateKey}`}
               categories={categorias}
               onSelect={setCategoriaSelecionada}
               selectedCategory={categoriaSelecionada}
-              onCategoryUpdated={fetchCategorias}
+              onCategoryUpdated={handleCategoryUpdated}
               idPrefix="mobile-"
             />
           </div>
@@ -247,7 +273,24 @@ export default function Calculator() {
         <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
-            {loading ? (
+            {error ? (
+              <div className="flex flex-col items-center justify-center rounded-lg bg-red-50 p-6 text-center">
+                <AlertTriangle className="mb-2 h-12 w-12 text-red-500" />
+                <h3 className="mb-1 text-lg font-semibold text-red-700">
+                  Erro ao carregar categorias
+                </h3>
+                <p className="mb-4 text-red-600">{error}</p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    fetchCategorias();
+                  }}
+                  className="rounded-md bg-red-100 px-4 py-2 text-red-700 transition-colors duration-200 hover:bg-red-200"
+                >
+                  Tentar novamente
+                </button>
+              </div>
+            ) : loading ? (
               <div className="sidebar-loading">
                 <div className="skeleton-header"></div>
                 <div className="skeleton-item"></div>
@@ -261,12 +304,13 @@ export default function Calculator() {
                     <h2>Categorias</h2>
                   </div>
                   <Categories
+                    key={`desktop-categories-${categoriesUpdateKey}`}
                     categories={categorias}
                     onSelect={(category) => {
                       setCategoriaSelecionada(category);
                     }}
                     selectedCategory={categoriaSelecionada}
-                    onCategoryUpdated={fetchCategorias}
+                    onCategoryUpdated={handleCategoryUpdated}
                     idPrefix="desktop-"
                   />
                 </div>
@@ -301,51 +345,79 @@ export default function Calculator() {
             ) : (
               <>
                 <div className="category-header">
-                  <div className="category-info">
-                    <div className="category-title-wrapper">
-                      <h2>{categoriaSelecionada}</h2>
-                      {categoriaAtual?.description && (
-                        <button
-                          className={`category-description-indicator ${showCategoryDescription ? "active" : ""}`}
-                          onClick={() =>
-                            setShowCategoryDescription(!showCategoryDescription)
-                          }
-                          aria-label="Mostrar/ocultar descrição da categoria"
-                        >
-                          <svg
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="info-icon"
-                          >
-                            <circle cx="12" cy="12" r="10" />
-                            <path d="M12 16v-4" />
-                            <path d="M12 8h.01" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    {!categoriaAtual?.description && (
-                      <p>
-                        Explore nossa coleção de cálculos e conversores para{" "}
-                        {categoriaSelecionada.toLowerCase()}.
-                      </p>
+                  {/* Category Image/Icon */}
+                  <div
+                    className={`category-image-container`}
+                    style={{
+                      backgroundColor: categoriaAtual?.color
+                        ? `${categoriaAtual?.color}50`
+                        : "",
+                    }}
+                  >
+                    {categoriaAtual?.imageUrl && !categoryImageError ? (
+                      <img
+                        src={categoriaAtual.imageUrl}
+                        alt={`Ícone da categoria ${categoriaSelecionada}`}
+                        className="category-image"
+                        onError={() => setCategoryImageError(true)}
+                      />
+                    ) : (
+                      <div className="category-icon-fallback">
+                        <ImageIcon size={32} />
+                      </div>
                     )}
                   </div>
-                  {categoriaAtual?.calculos?.length > 0 && (
-                    <div className="category-badge">
-                      <CalculatorIcon size={16} />
-                      <span>
-                        {categoriaAtual.calculos.length} cálculo
-                        {categoriaAtual.calculos.length !== 1 ? "s" : ""}
-                      </span>
+
+                  {/* Category Content */}
+                  <div className="category-content">
+                    <div className="category-info">
+                      <div className="category-title-wrapper">
+                        <h2>{categoriaSelecionada}</h2>
+                        {categoriaAtual?.description && (
+                          <button
+                            className={`category-description-indicator ${showCategoryDescription ? "active" : ""}`}
+                            onClick={() =>
+                              setShowCategoryDescription(
+                                !showCategoryDescription,
+                              )
+                            }
+                            aria-label="Mostrar/ocultar descrição da categoria"
+                          >
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="info-icon"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <path d="M12 16v-4" />
+                              <path d="M12 8h.01" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                      {!categoriaAtual?.description && (
+                        <p>
+                          Explore nossa coleção de cálculos e conversores para{" "}
+                          {categoriaSelecionada.toLowerCase()}.
+                        </p>
+                      )}
                     </div>
-                  )}
+                    {categoriaAtual?.calculos?.length > 0 && (
+                      <div className="category-badge">
+                        <CalculatorIcon size={16} />
+                        <span>
+                          {categoriaAtual.calculos.length} cálculo
+                          {categoriaAtual.calculos.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Descrição da categoria em largura total */}
@@ -361,7 +433,7 @@ export default function Calculator() {
                 )}
 
                 {/* Breadcrumbs */}
-                
+
                 <div className="breadcrumbs">
                   <span
                     className="breadcrumb-link"
@@ -372,10 +444,10 @@ export default function Calculator() {
                     style={{
                       cursor: "pointer",
                       color: "#007bff",
-                      transition: "color 0.2s"
+                      transition: "color 0.2s",
                     }}
-                    onMouseOver={(e) => e.target.style.color = "#0056b3"}
-                    onMouseOut={(e) => e.target.style.color = "#007bff"}
+                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
+                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
                     role="link"
                     tabIndex={0}
                     onKeyPress={(e) => {
@@ -393,21 +465,25 @@ export default function Calculator() {
                     className="breadcrumb-link"
                     onClick={() => {
                       setCategoriaSelecionada(null);
-                      navigate("/calculator", { state: { from: "breadcrumb" } });
+                      navigate("/calculator", {
+                        state: { from: "breadcrumb" },
+                      });
                     }}
                     style={{
                       cursor: "pointer",
                       color: "#007bff",
-                      transition: "color 0.2s"
+                      transition: "color 0.2s",
                     }}
-                    onMouseOver={(e) => e.target.style.color = "#0056b3"}
-                    onMouseOut={(e) => e.target.style.color = "#007bff"}
+                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
+                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
                     role="link"
                     tabIndex={0}
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         setCategoriaSelecionada(null);
-                        navigate("/calculator", { state: { from: "breadcrumb" } });
+                        navigate("/calculator", {
+                          state: { from: "breadcrumb" },
+                        });
                       }
                     }}
                   >
@@ -419,7 +495,7 @@ export default function Calculator() {
                     className="current"
                     style={{
                       fontWeight: "bold",
-                      color: "#333"
+                      color: "#333",
                     }}
                     role="text"
                     aria-current="page"

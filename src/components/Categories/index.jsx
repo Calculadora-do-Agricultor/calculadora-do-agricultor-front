@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useEffect, useContext } from "react"
-import { Search, Filter, Loader2, AlertTriangle, X, FolderPlus, SearchX } from "lucide-react"
+import { useState, useEffect, useContext, memo } from "react"
+import { Search, Filter, Loader2, AlertTriangle, X, FolderPlus, SearchX, Calculator, Beaker, Sprout, Droplets, Zap, Gauge } from "lucide-react"
 import { AuthContext } from "../../context/AuthContext"
 import { deleteDoc, doc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
 import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
 import EmptyState from "../ui/EmptyState"
+import CategoriaCard from "../CategoriaCard"
 
 const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
   // Add this style for hiding scrollbar in category names
@@ -28,9 +29,16 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   const [categoryToEdit, setCategoryToEdit] = useState(null)
   const [showEditModal, setShowEditModal] = useState(false)
 
-  useEffect(() => {
-    if (!categories) return
 
+
+  useEffect(() => {
+    if (!categories) {
+      logCategoryUpdate("No categories provided", []);
+      setFilteredCategories([]);
+      return;
+    }
+
+    logCategoryUpdate("Processing categories", categories);
     let result = [...categories]
 
     // Aplicar filtro por quantidade de cálculos
@@ -62,10 +70,11 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
       })
     }
 
+    logCategoryUpdate("Filtered categories", result);
     setFilteredCategories(result)
 
     // Removida a seleção automática da categoria
-  }, [categories, searchTerm, filterOption, onSelect])
+  }, [categories, searchTerm, filterOption])
 
   // Função para abrir o modal de edição
   const handleEditCategory = (category) => {
@@ -110,7 +119,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white rounded-b-xl p-4 sm:p-5 lg:p-6">
+    <div className="flex flex-col w-full h-full bg-white rounded-b-xl p-4 sm:p-5 lg:p-6 flex-1">
       {/* Search and Filter Section */}
       <div className="mb-4 space-y-3 sm:space-y-4">
         {/* Search Input */}
@@ -168,75 +177,44 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       )}
       {/* Categories List */}
-      <div className="flex-1 overflow-y-auto max-h-[300px] sm:max-h-[400px] lg:max-h-[500px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
-        <div className="space-y-2 pr-2">
-          {filteredCategories.length > 0 ? (
-            filteredCategories.map((category, index) => (
-              <div key={index} className="relative">
-                <div
-                  className={`flex items-center w-full p-3 sm:p-4 border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-sm hover:border-gray-300 ${
-                    selectedCategory === category.name
-                      ? "bg-blue-50 border-blue-500"
-                      : "bg-white border-gray-200 hover:bg-gray-50"
-                  }`}
-                  onClick={() => onSelect(category.name)}
-                >
-                  {/* Category Info */}
-                  <div className="flex-1 min-w-0 flex items-center justify-between ">
-                     <div className="flex-1 min-w-0 pr-2 sm:max-w-[70%]">
-                       <span 
-                         className={`block overflow-x-auto font-medium text-sm sm:text-base transition-colors duration-200 overflow-x-auto scrollbar-none whitespace-nowrap pb-1 ${ 
-                           selectedCategory === category.name
-                             ? "text-blue-700"
-                             : "text-gray-800 group-hover:text-blue-600"
-                         }`}
-                         style={{
-                           scrollbarWidth: "none",
-                           msOverflowStyle: "none",
-                         }}
-                       >
-                         {category.name}
-                       </span>
-                     </div>
- 
-                     <div className="flex select-none items-center gap-2 sm:gap-3 flex-shrink-0">
-                       {/* Count Badge */}
-                       <span
-                         className={`inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full text-xs font-medium transition-all duration-200 ${ 
-                           selectedCategory === category.name ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                         }`}
-                       >
-                         {category.calculos?.length || 0}
-                       </span>
-
-                       {/* Actions */}
-                       {canEditCategory(category) && (
-                         <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                           <CategoryActions 
-                            category={category} 
-                            onEdit={() => handleEditCategory(category)} 
-                           />
-                         </div>
-                       )}
-                     </div>
-                   </div>
+      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
+        {filteredCategories.length > 0 ? (
+          <div className="space-y-3 p-3">
+            {filteredCategories.map((category, index) => {
+              const isSelected = selectedCategory === category.name
+              
+              return (
+                <div key={`${category.id || category.name}-${index}`} className="relative w-full">
+                  <CategoriaCard
+                    imageUrl={category.imageUrl}
+                    title={category.name}
+                    description={category.description || `Categoria com ${category.calculos?.length || 0} cálculos disponíveis`}
+                    calculosCount={category.calculos?.length || 0}
+                    onClick={() => {
+                      onSelect(category.name);
+                    }}
+                    onEdit={canEditCategory(category) ? () => handleEditCategory(category) : null}
+                    className={`w-full ${isSelected ? 'ring-2 ring-[#00418F] border-[#00418F]' : ''}`}
+                    tags={category.tags || []}
+                    color={category.color}
+                  />
                 </div>
-              </div>
-            ))
-          ) : (
-            <EmptyState
-              icon={searchTerm ? SearchX : FolderPlus}
-              title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
-              message={searchTerm
-                ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
-                : isAdmin
-                  ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
-                  : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
-              actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
-              onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => setShowCreateCategory(true) : undefined}
-            />
-          )}
-        </div>
+              )
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={searchTerm ? SearchX : FolderPlus}
+            title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
+            message={searchTerm
+              ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
+              : isAdmin
+                ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
+                : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
+            actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
+             onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => window.location.href = '/categories/new' : undefined}
+          />
+        )}
       </div>
 
       {/* Modal de edição de categoria */}
@@ -253,4 +231,10 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   )
 }
 
-export default Categories
+// Adiciona logs para debug
+const logCategoryUpdate = (action, categories) => {
+  // Debug logs removed for production
+};
+
+// Componente Categories otimizado com memo
+export default memo(Categories)

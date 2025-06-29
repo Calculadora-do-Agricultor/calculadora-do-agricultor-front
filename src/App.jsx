@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
 import { ToastProvider, useToast } from "./context/ToastContext";
 import { setToastInstance } from "./services/firebaseWrapper";
+import { useCalculationHistoryCleanup } from "./hooks/useCalculationHistoryCleanup";
 
 
 // Lazy loading das páginas para reduzir bundle inicial
@@ -21,6 +22,7 @@ const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
+
 
 
 // Componente de loading otimizado
@@ -46,6 +48,9 @@ function App() {
   // Hook para preload inteligente de rotas baseado no contexto do usuário
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
   
+  // Hook para limpeza automática do histórico de cálculos (90 dias)
+  useCalculationHistoryCleanup(90, true);
+  
   return (
     <Router>
       <ToastProvider>
@@ -57,6 +62,7 @@ function App() {
               <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/glossario" element={<GlossarioPage />} />
+              
               <Route
                 path="/login"
                 element={<PrivateRoute requiresAuth={false} />}

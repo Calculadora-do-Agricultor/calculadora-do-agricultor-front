@@ -58,6 +58,8 @@ export default defineConfig({
   // Otimização: configurar servidor de desenvolvimento
   server: {
     // Warm up de arquivos frequentemente usados
+    host: true, // Listen on all network interfaces
+    hmr: true, // Enable HMR with default settings
     warmup: {
       clientFiles: [
         './src/App.jsx',

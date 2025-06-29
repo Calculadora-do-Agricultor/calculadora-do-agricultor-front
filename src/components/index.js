@@ -12,6 +12,7 @@ export { default as ExpressionValidator } from './ExpressionValidator';
 // CalculationList removido para evitar conflito com importação dinâmica
 // Use: import CalculationList from '@/components/CalculationList';
 export { default as Categories } from './Categories';
+export { default as CategoriaCard } from './CategoriaCard';
 
 // Outros componentes podem ser importados diretamente quando necessários
 // para evitar carregar código desnecessário no bundle inicial
