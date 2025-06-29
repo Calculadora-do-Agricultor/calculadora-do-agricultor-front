@@ -20,6 +20,7 @@ const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
+const FAQ = React.lazy(() => import("./pages/FAQ"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
@@ -62,6 +63,7 @@ function App() {
               <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/glossario" element={<GlossarioPage />} />
+              <Route path="/faq" element={<FAQ />} />
               
               <Route
                 path="/login"
