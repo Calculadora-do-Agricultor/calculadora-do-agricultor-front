@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +78,26 @@ const CalculationHistoryModal = ({
     }
   }, [isOpen, calculationHistoryId]);
 
+  // Adicionar listener para tecla ESC no modal de exclusão
+  useEffect(() => {
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && showDeleteModal && !deletingId) {
+        handleCancelDelete();
+      }
+    };
+
+    if (showDeleteModal) {
+      document.addEventListener('keydown', handleEscKey);
+      // Prevenir scroll do body quando modal está aberto
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [showDeleteModal, deletingId]);
+
   const formatDate = (timestamp) => {
     const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
     return new Intl.DateTimeFormat("pt-BR", {
@@ -113,17 +133,26 @@ const CalculationHistoryModal = ({
   };
 
   const handleDeleteClick = (historyItem) => {
-    setItemToDelete(historyItem);
-    setShowDeleteModal(true);
-    setDeleteError(null);
-    setDeleteSuccess(false);
+    // Fechar o modal principal primeiro
+    onClose();
+    
+    // Aguardar um momento antes de abrir o modal de exclusão
+    setTimeout(() => {
+      setItemToDelete(historyItem);
+      setDeleteError(null);
+      setDeleteSuccess(false);
+      setDeletingId(null);
+      setShowDeleteModal(true);
+    }, 200);
   };
 
   const handleCancelDelete = () => {
+    // Resetar todos os estados e fechar modal
     setShowDeleteModal(false);
     setItemToDelete(null);
     setDeleteError(null);
     setDeleteSuccess(false);
+    setDeletingId(null);
   };
 
   const handleConfirmDelete = async () => {
@@ -131,6 +160,7 @@ const CalculationHistoryModal = ({
 
     setDeletingId(itemToDelete.id);
     setDeleteError(null);
+    setDeleteSuccess(false);
 
     try {
       await CalculationHistoryService.deleteCalculationHistory(itemToDelete.id);
@@ -155,6 +185,8 @@ const CalculationHistoryModal = ({
       setDeletingId(null);
     }
   };
+
+
 
   const getMainParameters = (item) => {
     if (!item.parametersUsed || !calculation?.parameters) return [];
@@ -357,57 +389,63 @@ const CalculationHistoryModal = ({
     });
   };
 
+  // Memoized content component to prevent unnecessary re-renders
+  const MemoizedDialogContent = memo(({ children, ...props }) => (
+    <DialogContent {...props}>{children}</DialogContent>
+  ));
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex h-[80vh] max-w-5xl flex-col overflow-hidden p-0">
-        <DialogHeader className="flex-shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
-          <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
-            {showDetails ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleBackToList}
-                  className="rounded-lg p-2 transition-colors hover:bg-blue-200"
-                >
-                  <ArrowLeft className="h-5 w-5 text-blue-600" />
-                </Button>
-                <div className="rounded-lg bg-blue-100 p-2">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                </div>
-                Detalhes do Cálculo
-              </>
-            ) : (
-              <>
-                <div className="rounded-lg bg-blue-100 p-2">
-                  <History className="h-6 w-6 text-blue-600" />
-                </div>
-                Histórico de Cálculos
-              </>
-            )}
-          </DialogTitle>
-          <DialogDescription className="mt-2 text-base text-gray-700">
-            {showDetails ? (
-              selectedItem ? (
+    <>
+      <Dialog open={isOpen && !showDeleteModal} onOpenChange={onClose}>
+        <MemoizedDialogContent className="flex h-[80vh] max-w-5xl flex-col overflow-hidden p-0">
+          <DialogHeader className="flex-shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
+            <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
+              {showDetails ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToList}
+                    className="rounded-lg p-2 transition-colors hover:bg-blue-200"
+                  >
+                    <ArrowLeft className="h-5 w-5 text-blue-600" />
+                  </Button>
+                  <div className="rounded-lg bg-blue-100 p-2">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                  </div>
+                  Detalhes do Cálculo
+                </>
+              ) : (
+                <>
+                  <div className="rounded-lg bg-blue-100 p-2">
+                    <History className="h-6 w-6 text-blue-600" />
+                  </div>
+                  Histórico de Cálculos
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription className="mt-2 text-base text-gray-700">
+              {showDetails ? (
+                selectedItem ? (
+                  <span>
+                    Visualizando detalhes de{" "}
+                    <span className="font-semibold text-blue-700">
+                      "{selectedItem.title || "Cálculo sem título"}"
+                    </span>
+                  </span>
+                ) : (
+                  "Detalhes do cálculo selecionado"
+                )
+              ) : (
                 <span>
-                  Visualizando detalhes de{" "}
+                  Visualize e gerencie os cálculos salvos de{" "}
                   <span className="font-semibold text-blue-700">
-                    "{selectedItem.title || "Cálculo sem título"}"
+                    "{calculation?.name || "Cálculo"}"
                   </span>
                 </span>
-              ) : (
-                "Detalhes do cálculo selecionado"
-              )
-            ) : (
-              <span>
-                Visualize e gerencie os cálculos salvos de{" "}
-                <span className="font-semibold text-blue-700">
-                  "{calculation?.name || "Cálculo"}"
-                </span>
-              </span>
-            )}
-          </DialogDescription>
-        </DialogHeader>
+              )}
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="flex flex-1 flex-col overflow-hidden px-6 py-4">
           <div className="relative h-full w-full">
@@ -676,99 +714,107 @@ const CalculationHistoryModal = ({
           </div>
         </div>
 
-        <div className="flex flex-shrink-0 justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="px-8 py-2 font-medium transition-colors hover:bg-gray-100"
-          >
-            Fechar
-          </Button>
-        </div>
-      </DialogContent>
-
-      {/* Modal de Confirmação de Exclusão */}
-      {showDeleteModal && (
-        <div className="bg-opacity-50 fixed inset-0 z-[70] flex items-center justify-center bg-black p-4">
-          <div className="mx-4 w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl">
-            {deleteSuccess ? (
-              <div className="p-6 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                  Cálculo Excluído
-                </h3>
-                <p className="text-gray-600">
-                  O cálculo foi excluído do histórico com sucesso.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="p-6">
-                  <div className="mb-4 flex items-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                      <AlertTriangle className="h-6 w-6 text-red-600" />
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                      Confirmar Exclusão
-                    </h3>
-                    <p className="mb-4 text-gray-600">
-                      Tem certeza que deseja excluir o cálculo{" "}
-                      <span className="font-semibold text-gray-900">
-                        "{itemToDelete?.title || "sem título"}"
-                      </span>{" "}
-                      do histórico?
-                    </p>
-                    <p className="text-sm font-medium text-red-600">
-                      Esta ação não pode ser desfeita.
-                    </p>
-
-                    {deleteError && (
-                      <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                        <div className="flex items-center">
-                          <AlertTriangle className="mr-2 h-4 w-4 text-red-600" />
-                          <span className="text-sm text-red-700">
-                            {deleteError}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
-                  <Button
-                    variant="outline"
-                    onClick={handleCancelDelete}
-                    disabled={deletingId === itemToDelete?.id}
-                    className="px-4 py-2 font-medium transition-colors hover:bg-gray-100"
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleConfirmDelete}
-                    disabled={deletingId === itemToDelete?.id}
-                    className="flex items-center gap-2 bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {deletingId === itemToDelete?.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Excluindo...</span>
-                      </>
-                    ) : (
-                      "Sim, excluir"
-                    )}
-                  </Button>
-                </div>
-              </>
-            )}
+          <div className="flex flex-shrink-0 justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="px-8 py-2 font-medium transition-colors hover:bg-gray-100"
+            >
+              Fechar
+            </Button>
           </div>
-        </div>
-      )}
-    </Dialog>
+        </MemoizedDialogContent>
+      </Dialog>
+
+      {/* Modal de Exclusão usando Dialog do ShadCN */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-md">
+          {deleteSuccess ? (
+            <>
+              <div className="flex items-center justify-center p-6">
+                <div className="text-center">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                  </div>
+                  <DialogTitle className="mb-2 text-lg font-semibold text-gray-900">
+                    Cálculo excluído com sucesso!
+                  </DialogTitle>
+                  <p className="text-sm text-gray-600">
+                    O cálculo foi removido do seu histórico.
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-center bg-gray-50 px-6 py-4">
+                <Button
+                  onClick={handleCancelDelete}
+                  className="px-6 py-2 font-medium"
+                >
+                  Fechar
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="p-6">
+                <div className="flex items-center">
+                  <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
+                    <AlertTriangle className="h-6 w-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="mt-3 text-center">
+                  <DialogTitle className="text-lg font-semibold leading-6 text-gray-900">
+                    Confirmar Exclusão
+                  </DialogTitle>
+                  <p className="mt-2 text-sm text-gray-600">
+                    Tem certeza que deseja excluir o cálculo{" "}
+                    <strong>"{itemToDelete?.title || "sem título"}"</strong> do histórico?
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Esta ação não pode ser desfeita.
+                  </p>
+
+                  {deleteError && (
+                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                      <div className="flex items-center">
+                        <AlertTriangle className="mr-2 h-4 w-4 text-red-600" />
+                        <span className="text-sm text-red-700">
+                          {deleteError}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
+                <Button
+                  variant="outline"
+                  onClick={handleCancelDelete}
+                  disabled={deletingId === itemToDelete?.id}
+                  className="px-4 py-2 font-medium transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleConfirmDelete}
+                  disabled={deletingId === itemToDelete?.id}
+                  className="flex items-center gap-2 bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deletingId === itemToDelete?.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Excluindo...</span>
+                    </>
+                  ) : (
+                    "Sim, excluir"
+                  )}
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
