@@ -507,53 +507,61 @@ const CalculationHistoryModal = ({
                             {item.title || "Cálculo sem título"}
                           </h3>
 
-                          {/* Parâmetros Principais */}
+                          {/* Prévia dos Parâmetros */}
                           <div className="mb-3">
                             <div className="mb-2 flex items-center gap-2">
                               <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                               <span className="text-sm font-semibold tracking-wide text-blue-700 uppercase">
-                                Parâmetros Principais
+                                Prévia de Parâmetros
                               </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {getMainParameters(item).map((param, index) => (
-                                <div
-                                  key={index}
-                                  className="rounded-md border border-blue-100 bg-blue-50 p-2"
-                                >
-                                  <div className="text-xs font-medium text-blue-600">
-                                    {param.name}
+                            <div className="rounded-md border border-blue-100 bg-blue-50 p-3">
+                              <div className="space-y-1">
+                                {getMainParameters(item).slice(0, 3).map((param, index) => (
+                                  <div key={index} className="text-sm text-blue-800">
+                                    <span className="font-medium">{param.name}:</span> {param.value}
                                   </div>
-                                  <div className="text-sm font-semibold text-blue-800">
-                                    {param.value}
+                                ))}
+                                {getAllParameters(item).length > getMainParameters(item).slice(0, 3).length && (
+                                  <div className="text-xs text-blue-600 italic mt-2">
+                                    ... e mais {getAllParameters(item).length - getMainParameters(item).slice(0, 3).length} parâmetros (ver detalhes)
                                   </div>
-                                </div>
-                              ))}
+                                )}
+                                {getMainParameters(item).length === 0 && (
+                                  <div className="text-sm text-blue-600 italic">
+                                    Nenhum parâmetro disponível
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
 
-                          {/* Resultados Principais */}
+                          {/* Prévia dos Resultados */}
                           <div className="mb-3">
                             <div className="mb-2 flex items-center gap-2">
                               <div className="h-2 w-2 rounded-full bg-green-500"></div>
                               <span className="text-sm font-semibold tracking-wide text-green-700 uppercase">
-                                Resultados Principais
+                                Prévia de Resultados
                               </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                              {getMainResults(item).map((result, index) => (
-                                <div
-                                  key={index}
-                                  className="rounded-md border border-green-100 bg-green-50 p-2"
-                                >
-                                  <div className="text-xs font-medium text-green-600">
-                                    {result.name}
+                            <div className="rounded-md border border-green-100 bg-green-50 p-3">
+                              <div className="space-y-1">
+                                {getMainResults(item).slice(0, 3).map((result, index) => (
+                                  <div key={index} className="text-sm text-green-800">
+                                    <span className="font-medium">{result.name}:</span> {result.value}
                                   </div>
-                                  <div className="text-sm font-semibold text-green-800">
-                                    {result.value}
+                                ))}
+                                {getAllResults(item).length > getMainResults(item).slice(0, 3).length && (
+                                  <div className="text-xs text-green-600 italic mt-2">
+                                    ... e mais {getAllResults(item).length - getMainResults(item).slice(0, 3).length} resultados (ver detalhes)
                                   </div>
-                                </div>
-                              ))}
+                                )}
+                                {getMainResults(item).length === 0 && (
+                                  <div className="text-sm text-green-600 italic">
+                                    Nenhum resultado disponível
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>

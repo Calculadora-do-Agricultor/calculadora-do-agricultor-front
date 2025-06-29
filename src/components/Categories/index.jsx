@@ -177,7 +177,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       )}
       {/* Categories List */}
-      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thim scrollbar-thumb-blue-600 scrollbar-track-gray-100">
+      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100">
         {filteredCategories.length > 0 ? (
           <div className="space-y-3 p-3">
             {filteredCategories.map((category, index) => {
