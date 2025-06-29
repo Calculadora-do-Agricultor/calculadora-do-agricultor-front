@@ -524,7 +524,7 @@ const CalculationHistoryModal = ({
                                 ))}
                                 {getAllParameters(item).length > getMainParameters(item).slice(0, 3).length && (
                                   <div className="text-xs text-blue-600 italic mt-2">
-                                    ... e mais {getAllParameters(item).length - getMainParameters(item).slice(0, 3).length} parâmetros (ver detalhes)
+                                    ... e mais {getAllParameters(item).length - getMainParameters(item).slice(0, 3).length} {getAllParameters(item).length - getMainParameters(item).slice(0, 3).length === 1 ? 'parâmetro' : 'parâmetros'} (ver detalhes)
                                   </div>
                                 )}
                                 {getMainParameters(item).length === 0 && (
@@ -553,7 +553,7 @@ const CalculationHistoryModal = ({
                                 ))}
                                 {getAllResults(item).length > getMainResults(item).slice(0, 3).length && (
                                   <div className="text-xs text-green-600 italic mt-2">
-                                    ... e mais {getAllResults(item).length - getMainResults(item).slice(0, 3).length} resultados (ver detalhes)
+                                    ... e mais {getAllResults(item).length - getMainResults(item).slice(0, 3).length} {getAllResults(item).length - getMainResults(item).slice(0, 3).length === 1 ? 'resultado' : 'resultados'} (ver detalhes)
                                   </div>
                                 )}
                                 {getMainResults(item).length === 0 && (
