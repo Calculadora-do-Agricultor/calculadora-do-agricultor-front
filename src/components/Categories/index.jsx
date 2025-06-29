@@ -191,7 +191,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
                     description={category.description || `Categoria com ${category.calculos?.length || 0} cálculos disponíveis`}
                     calculosCount={category.calculos?.length || 0}
                     onClick={() => {
-                      console.log(`[Categories] Category selected: ${category.name}`);
                       onSelect(category.name);
                     }}
                     onEdit={canEditCategory(category) ? () => handleEditCategory(category) : null}
@@ -234,11 +233,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
 // Adiciona logs para debug
 const logCategoryUpdate = (action, categories) => {
-  console.log(`[Categories] ${action}:`, {
-    timestamp: new Date().toISOString(),
-    categoriesCount: categories?.length || 0,
-    categories: categories?.map(c => ({ name: c.name, calculosCount: c.calculos?.length || 0 })) || []
-  });
+  // Debug logs removed for production
 };
 
 // Componente Categories otimizado com memo

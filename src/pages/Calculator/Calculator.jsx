@@ -74,7 +74,6 @@ export default function Calculator() {
   const [categoryImageError, setCategoryImageError] = useState(false);
 
   const fetchCategorias = useCallback(async () => {
-    console.log("Fetching categories...");
     try {
       setLoading(true);
       setError(null); // Clear any previous errors
@@ -106,10 +105,6 @@ export default function Calculator() {
       });
 
       const categoriasComCalculos = Array.from(categoriasMap.values());
-      console.log(
-        "Categories fetched successfully:",
-        categoriasComCalculos.length,
-      );
       setCategorias(categoriasComCalculos);
       setCategoriesUpdateKey(Date.now()); // Force re-render
     } catch (error) {
@@ -140,7 +135,6 @@ export default function Calculator() {
 
   // Add a callback to handle category updates and force re-render
   const handleCategoryUpdated = useCallback(() => {
-    console.log("Category updated, refetching categories...");
     setCategoriesUpdateKey(Date.now()); // Force immediate re-render
     fetchCategorias();
   }, [fetchCategorias]);

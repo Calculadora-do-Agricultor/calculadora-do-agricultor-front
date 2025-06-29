@@ -6,6 +6,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
 import { ToastProvider, useToast } from "./context/ToastContext";
 import { setToastInstance } from "./services/firebaseWrapper";
+import { useCalculationHistoryCleanup } from "./hooks/useCalculationHistoryCleanup";
 
 
 // Lazy loading das páginas para reduzir bundle inicial
@@ -46,6 +47,9 @@ function App() {
   
   // Hook para preload inteligente de rotas baseado no contexto do usuário
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
+  
+  // Hook para limpeza automática do histórico de cálculos (90 dias)
+  useCalculationHistoryCleanup(90, true);
   
   return (
     <Router>
