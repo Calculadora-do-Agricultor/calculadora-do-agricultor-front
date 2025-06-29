@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Função para atualizar preferências
-  const updatePreferences = async (newPreferences) => {
+  const updatePreferences = async (newPreferences, showNotification = true) => {
     if (user) {
       const updatedPreferences = { ...preferences, ...newPreferences };
       setPreferences(updatedPreferences);
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
         // CORREÇÃO AQUI: Usando firestoreWrapper.updateDocument
         await firestoreWrapper.updateDocument("users", user.uid, {
           preferences: updatedPreferences
-        });
+        }, showNotification);
       } catch (error) {
         console.error("Erro ao atualizar preferências:", error);
       }
@@ -157,8 +157,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Função para atualizar a preferência de ocultar rodapé (mantida para compatibilidade)
-  const toggleHideFooter = async (value) => {
-    await updatePreferences({ hideFooter: value });
+  const toggleHideFooter = async (value, toastCallback = null) => {
+    try {
+      await updatePreferences({ hideFooter: value }, false);
+      if (toastCallback) {
+        if (value) {
+          toastCallback.success('Footer desativado');
+        } else {
+          toastCallback.success('Footer ativado');
+        }
+      }
+    } catch (error) {
+      if (toastCallback) {
+        toastCallback.error('Erro ao alterar configuração do footer');
+      }
+    }
   };
 
   return (

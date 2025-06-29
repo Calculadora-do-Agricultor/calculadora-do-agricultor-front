@@ -1,12 +1,13 @@
 import React, { useState, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { handleLogout } from '../../../hooks/useAuthentication';
-import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, CalculatorIcon, CogIcon, UserIcon, ArrowRightOnRectangleIcon, UserPlusIcon, ShieldCheckIcon, ClipboardDocumentListIcon, ChevronDownIcon, UsersIcon, BookOpenIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../../../context/AuthContext';
 
 const MobileMenu = ({ user, userName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
+  const [helpMenuOpen, setHelpMenuOpen] = useState(false);
   const location = useLocation();
   const { isAdmin } = useContext(AuthContext);
 
@@ -57,14 +58,44 @@ const MobileMenu = ({ user, userName }) => {
             Página Inicial
           </Link>
 
-          <Link
-            to="/glossario"
-            className={`${linkStyle('/glossario')} border-b border-[#00418F]/80`}
-            onClick={() => setIsOpen(false)}
-          >
-            <BookOpenIcon className="w-5 h-5 mr-2" />
-            Glossário
-          </Link>
+          {/* Menu Dropdown de Ajuda */}
+          <div className="border-b border-[#00418F]/80">
+            <button
+              onClick={() => setHelpMenuOpen(!helpMenuOpen)}
+              className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${(location.pathname === '/glossario' || location.pathname === '/faq') ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+            >
+              <QuestionMarkCircleIcon className="w-5 h-5 mr-2" />
+              Ajuda
+              <ChevronDownIcon className={`w-4 h-4 ml-1 transition-transform duration-200 ${helpMenuOpen ? 'transform rotate-180' : ''}`} />
+            </button>
+            
+            {helpMenuOpen && (
+              <div className="bg-[#00418F]/80 pl-6">
+                <Link
+                  to="/glossario"
+                  className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/glossario' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                  onClick={() => {
+                    setHelpMenuOpen(false);
+                    setIsOpen(false);
+                  }}
+                >
+                  <BookOpenIcon className="w-5 h-5 mr-2" />
+                  Glossário
+                </Link>
+                <Link
+                  to="/faq"
+                  className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/faq' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                  onClick={() => {
+                    setHelpMenuOpen(false);
+                    setIsOpen(false);
+                  }}
+                >
+                  <QuestionMarkCircleIcon className="w-5 h-5 mr-2" />
+                  FAQ
+                </Link>
+              </div>
+            )}
+          </div>
 
           {user === null ? (
             <>
@@ -146,6 +177,17 @@ const MobileMenu = ({ user, userName }) => {
                       >
                         <UsersIcon className="w-5 h-5 mr-2" />
                         Gerenciar Usuários
+                      </Link>
+                      <Link
+                        to="/admin/faq"
+                        className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/faq' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <QuestionMarkCircleIcon className="w-5 h-5 mr-2" />
+                        Gerenciar FAQ
                       </Link>
                       <Link
                         to="/admin/data-integrity"
