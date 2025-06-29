@@ -15,6 +15,8 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const modalRef = useRef(null)
   const [copied, setCopied] = useState({})
   const [isSavingHistory, setIsSavingHistory] = useState(false)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [historyTitle, setHistoryTitle] = useState("")
 
 
 
@@ -23,9 +25,21 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   };
 
   // Save calculation to history
-  const handleSaveToHistory = async () => {
+  const handleSaveToHistory = () => {
     if (!allFieldsFilled || !calculation) {
       toastError("Preencha todos os parâmetros antes de salvar no histórico.");
+      return;
+    }
+    
+    // Generate default title
+    const defaultTitle = `${calculation.name} - ${new Date().toLocaleDateString('pt-BR')}`;
+    setHistoryTitle(defaultTitle);
+    setShowSaveDialog(true);
+  };
+
+  const handleConfirmSave = async () => {
+    if (!historyTitle.trim()) {
+      toastError("Por favor, insira um nome para o cálculo.");
       return;
     }
 
@@ -41,10 +55,13 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
       await CalculationHistoryService.saveCalculationHistory(
         calculationId,
         parametersUsed,
-        resultsFormatted
+        resultsFormatted,
+        historyTitle.trim()
       );
 
       success("Cálculo salvo no histórico com sucesso!");
+      setShowSaveDialog(false);
+      setHistoryTitle("");
     } catch (error) {
       console.error("Error saving to history:", error);
       toastError("Erro ao salvar no histórico. Tente novamente.");
@@ -317,6 +334,86 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           </div>
         </div>
       </div>
+      
+      {/* Diálogo para nomear o cálculo ao salvar */}
+      {showSaveDialog && (
+        <div className="calculation-modal-overlay" style={{ zIndex: 10000 }}>
+          <div className="calculation-modal" style={{ maxWidth: '500px', height: 'auto' }}>
+            <div className="calculation-modal-header">
+              <div className="calculation-modal-title">
+                <div className="calculation-modal-icon">
+                  <Save size={24} />
+                </div>
+                <div>
+                  <h2>Salvar no Histórico</h2>
+                  <p>Dê um nome para este cálculo</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSaveDialog(false);
+                  setHistoryTitle("");
+                }}
+                className="calculation-modal-close"
+                aria-label="Fechar"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="calculation-modal-content">
+              <div className="calculation-modal-parameter">
+                <label htmlFor="historyTitle">
+                  Nome do Cálculo
+                  <span className="required">*</span>
+                </label>
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    id="historyTitle"
+                    value={historyTitle}
+                    onChange={(e) => setHistoryTitle(e.target.value)}
+                    placeholder="Ex: Análise de Produtividade - Janeiro 2024"
+                    maxLength={100}
+                    autoFocus
+                  />
+                </div>
+                <div className="input-constraints">
+                  {historyTitle.length}/100 caracteres
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                <button
+                  onClick={() => {
+                    setShowSaveDialog(false);
+                    setHistoryTitle("");
+                  }}
+                  className="calculation-modal-close"
+                  style={{
+                    background: '#f3f4f6',
+                    color: '#4b5563',
+                    padding: '12px 24px',
+                    borderRadius: '6px',
+                    border: '1px solid #d1d5db'
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmSave}
+                  disabled={!historyTitle.trim() || isSavingHistory}
+                  className={`save-history-button ${!historyTitle.trim() ? 'disabled' : ''}`}
+                  style={{ padding: '12px 24px' }}
+                >
+                  <Save size={16} />
+                  {isSavingHistory ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

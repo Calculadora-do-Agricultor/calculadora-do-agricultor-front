@@ -1,6 +1,18 @@
-import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, deleteDoc, doc } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { authWrapper } from "./firebaseWrapper";
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  orderBy, 
+  limit, 
+  serverTimestamp,
+  deleteDoc,
+  doc,
+  Timestamp
+} from "firebase/firestore";
 
 /**
  * Service for managing user calculation history in Firestore
@@ -11,9 +23,10 @@ export class CalculationHistoryService {
    * @param {string} calculationId - Unique ID of the calculation type
    * @param {Object} parametersUsed - Key-value pairs of parameter IDs and values
    * @param {Object} results - Key-value pairs of result IDs and values
+   * @param {string} title - User-defined title for the calculation
    * @returns {Promise<string>} - Document ID of the saved history entry
    */
-  static async saveCalculationHistory(calculationId, parametersUsed, results) {
+  static async saveCalculationHistory(calculationId, parametersUsed, results, title) {
     try {
       const currentUser = authWrapper.getCurrentUser();
       if (!currentUser) {
@@ -22,6 +35,7 @@ export class CalculationHistoryService {
 
       const historyData = {
         calculationId,
+        title: title || `Cálculo - ${new Date().toLocaleDateString('pt-BR')}`,
         timestamp: serverTimestamp(),
         parametersUsed,
         results,
@@ -124,6 +138,28 @@ export class CalculationHistoryService {
       return deletedCount;
     } catch (error) {
       console.error("Error cleaning old calculation history:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a specific calculation history entry
+   * @param {string} historyId - ID of the history entry to delete
+   * @returns {Promise<void>}
+   */
+  static async deleteCalculationHistory(historyId) {
+    try {
+      const currentUser = authWrapper.getCurrentUser();
+      if (!currentUser) {
+        throw new Error("User must be authenticated to delete calculation history");
+      }
+
+      const docRef = doc(db, "users", currentUser.uid, "calculationHistory", historyId);
+      await deleteDoc(docRef);
+      
+      console.log("Calculation history deleted with ID:", historyId);
+    } catch (error) {
+      console.error("Error deleting calculation history:", error);
       throw error;
     }
   }

@@ -17,10 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "../dropdown-menu";
 import { Button } from "../button";
+import CalculationHistoryModal from "../../CalculationHistoryModal";
 
 const CalculationDropdownMenu = ({ calculation, onEdit, onDelete, onToggleFavorite }) => {
   const { user, isAdmin } = useContext(AuthContext);
   const [isFavorite, setIsFavorite] = useState(false); // TODO: Implementar lógica de favoritos
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
   // Verifica se o usuário atual é o criador do cálculo ou um administrador
   const canEdit = isAdmin || (user && calculation.createdBy === user.uid);
@@ -36,8 +38,7 @@ const CalculationDropdownMenu = ({ calculation, onEdit, onDelete, onToggleFavori
   };
 
   const handleHistory = () => {
-    // TODO: Implementar funcionalidade de histórico
-    console.log("Histórico do cálculo:", calculation.id);
+    setIsHistoryModalOpen(true);
   };
 
   const handleToggleFavorite = () => {
@@ -48,6 +49,7 @@ const CalculationDropdownMenu = ({ calculation, onEdit, onDelete, onToggleFavori
   };
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
@@ -118,6 +120,15 @@ const CalculationDropdownMenu = ({ calculation, onEdit, onDelete, onToggleFavori
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+    
+    {/* Modal de Histórico */}
+    <CalculationHistoryModal
+      isOpen={isHistoryModalOpen}
+      onClose={() => setIsHistoryModalOpen(false)}
+      calculation={calculation}
+      calculationHistoryId={calculation?.historyId || calculation?.id}
+    />
+  </>
   );
 };
 
