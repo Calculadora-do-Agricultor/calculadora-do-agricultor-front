@@ -397,9 +397,9 @@ const CalculationHistoryModal = ({
   return (
     <>
       <Dialog open={isOpen && !showDeleteModal} onOpenChange={onClose}>
-        <MemoizedDialogContent className="flex h-[80vh] max-w-5xl flex-col overflow-hidden p-0">
-          <DialogHeader className="flex-shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4">
-            <DialogTitle className="flex items-center gap-3 text-2xl font-bold text-gray-800">
+        <MemoizedDialogContent className="flex h-[85vh] sm:h-[80vh] w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:max-w-5xl flex-col overflow-hidden p-0">
+          <DialogHeader className="flex-shrink-0 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 sm:px-6 py-3 sm:py-4">
+            <DialogTitle className="flex items-center gap-2 sm:gap-3 text-lg sm:text-xl lg:text-2xl font-bold text-gray-800">
               {showDetails ? (
                 <>
                   <Button
@@ -424,7 +424,7 @@ const CalculationHistoryModal = ({
                 </>
               )}
             </DialogTitle>
-            <DialogDescription className="mt-2 text-base text-gray-700">
+            <DialogDescription className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-700">
               {showDetails ? (
                 selectedItem ? (
                   <span>
@@ -447,7 +447,7 @@ const CalculationHistoryModal = ({
             </DialogDescription>
           </DialogHeader>
 
-        <div className="flex flex-1 flex-col overflow-hidden px-6 py-4">
+        <div className="flex flex-1 flex-col overflow-hidden px-3 sm:px-6 py-3 sm:py-4">
           <div className="relative h-full w-full overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
             {/* Lista de Histórico */}
             <div
@@ -491,9 +491,9 @@ const CalculationHistoryModal = ({
                       key={item.id}
                       className="rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
                         <div className="flex-1">
-                          <div className="mb-2 flex items-center gap-3">
+                          <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
                             <Calendar className="h-4 w-4 text-gray-500" />
                             <span className="text-sm text-gray-600">
                               {formatDate(item.timestamp)}
@@ -515,7 +515,7 @@ const CalculationHistoryModal = ({
                                 Parâmetros Principais
                               </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {getMainParameters(item).map((param, index) => (
                                 <div
                                   key={index}
@@ -540,7 +540,7 @@ const CalculationHistoryModal = ({
                                 Resultados Principais
                               </span>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {getMainResults(item).map((result, index) => (
                                 <div
                                   key={index}
@@ -558,17 +558,17 @@ const CalculationHistoryModal = ({
                           </div>
                         </div>
 
-                        <div className="ml-4 flex flex-col gap-2">
+                        <div className="mt-3 sm:mt-0 sm:ml-4 flex flex-row sm:flex-col gap-2">
                           <button
                             onClick={() => handleViewDetails(item)}
-                            className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-blue-700"
+                            className="flex items-center gap-1 rounded-md bg-blue-600 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-white transition-colors hover:bg-blue-700 flex-1 sm:flex-none justify-center"
                           >
                             <Eye className="h-3 w-3" />
                             Ver Detalhes
                           </button>
                           <button
                             onClick={() => handleDeleteClick(item)}
-                            className="flex items-center gap-1 rounded-md bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700"
+                            className="flex items-center gap-1 rounded-md bg-red-600 px-2 sm:px-3 py-1.5 text-xs sm:text-sm text-white transition-colors hover:bg-red-700 flex-1 sm:flex-none justify-center"
                           >
                             <Trash2 className="h-3 w-3" />
                             Excluir
@@ -592,13 +592,13 @@ const CalculationHistoryModal = ({
               {showDetails && selectedItem && (
                 <div className="flex h-full flex-col">
                   {/* Informações do Cabeçalho */}
-                  <div className="mb-4 rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 p-4">
+                  <div className="mb-4 rounded-lg border border-indigo-200 bg-gradient-to-r from-indigo-50 to-purple-50 p-3 sm:p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h2 className="mb-2 text-lg font-bold text-gray-800">
+                        <h2 className="mb-2 text-base sm:text-lg font-bold text-gray-800">
                           {selectedItem.title || "Cálculo sem título"}
                         </h2>
-                        <div className="flex items-center gap-4 text-sm">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
                           <div className="flex items-center text-indigo-600">
                             <Calendar className="mr-1 h-4 w-4" />
                             <span className="font-medium">
@@ -617,30 +617,30 @@ const CalculationHistoryModal = ({
                   </div>
 
                   {/* Conteúdo Scrollável */}       
-                  <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2">
                     <div className="space-y-6">
                       {/* Seção de Parâmetros */}
-                      <div className="rounded-lg border border-blue-100 bg-blue-50 p-6">
-                        <div className="mb-4 flex items-center gap-3">
+                      <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 sm:p-6">
+                        <div className="mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
                           <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                          <h3 className="text-lg font-bold tracking-wide text-blue-800 uppercase">
+                          <h3 className="text-sm sm:text-lg font-bold tracking-wide text-blue-800 uppercase">
                             Parâmetros Utilizados
                           </h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
                           {getAllParameters(selectedItem).map(
                             (param, index) => (
                               <div
                                 key={index}
-                                className="rounded-lg border border-blue-200 bg-white p-4 shadow-sm"
+                                className="rounded-lg border border-blue-200 bg-white p-3 sm:p-4 shadow-sm"
                               >
                                 <div className="flex flex-col space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm font-semibold text-gray-800">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                                    <span className="text-xs sm:text-sm font-semibold text-gray-800">
                                       {param.name}
                                     </span>
                                     {param.type && (
-                                      <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700">
+                                      <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-700 whitespace-nowrap">
                                         {param.type === "select"
                                           ? "Seleção"
                                           : param.type === "number"
@@ -649,7 +649,7 @@ const CalculationHistoryModal = ({
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-base font-bold text-blue-700">
+                                  <div className="text-sm sm:text-base font-bold text-blue-700 break-words">
                                     {param.value}
                                   </div>
                                   {param.description && (
@@ -665,26 +665,26 @@ const CalculationHistoryModal = ({
                       </div>
 
                       {/* Seção de Resultados */}
-                      <div className="rounded-lg border border-green-100 bg-green-50 p-6">
-                        <div className="mb-4 flex items-center gap-3">
+                      <div className="rounded-lg border border-green-100 bg-green-50 p-3 sm:p-6">
+                        <div className="mb-3 sm:mb-4 flex items-center gap-2 sm:gap-3">
                           <div className="h-2 w-2 rounded-full bg-green-500"></div>
-                          <h3 className="text-lg font-bold tracking-wide text-green-800 uppercase">
+                          <h3 className="text-sm sm:text-lg font-bold tracking-wide text-green-800 uppercase">
                             Resultados Obtidos
                           </h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
                           {getAllResults(selectedItem).map((result, index) => (
                             <div
                               key={index}
-                              className="rounded-lg border border-green-200 bg-white p-4 shadow-sm"
+                              className="rounded-lg border border-green-200 bg-white p-3 sm:p-4 shadow-sm"
                             >
                               <div className="flex flex-col space-y-2">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm font-semibold text-gray-800">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                                  <span className="text-xs sm:text-sm font-semibold text-gray-800">
                                     {result.name}
                                   </span>
                                   {result.type && (
-                                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700">
+                                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-700 whitespace-nowrap">
                                       {result.type === "select"
                                         ? "Seleção"
                                         : result.type === "number"
@@ -693,7 +693,7 @@ const CalculationHistoryModal = ({
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-base font-bold text-green-700">
+                                <div className="text-sm sm:text-base font-bold text-green-700 break-words">
                                   {result.value}
                                 </div>
                                 {result.description && (
@@ -714,11 +714,11 @@ const CalculationHistoryModal = ({
           </div>
         </div>
 
-          <div className="flex flex-shrink-0 justify-end border-t border-gray-200 bg-gray-50 px-6 py-4">
+          <div className="flex flex-shrink-0 justify-end border-t border-gray-200 bg-gray-50 px-3 sm:px-6 py-3 sm:py-4">
             <Button
               variant="outline"
               onClick={onClose}
-              className="px-8 py-2 font-medium transition-colors hover:bg-gray-100"
+              className="px-4 sm:px-8 py-2 font-medium transition-colors hover:bg-gray-100 text-sm sm:text-base"
             >
               Fechar
             </Button>
@@ -728,7 +728,7 @@ const CalculationHistoryModal = ({
 
       {/* Modal de Exclusão usando Dialog do ShadCN */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] sm:w-[90vw] sm:max-w-md mx-auto">
           {deleteSuccess ? (
             <>
               <DialogHeader>
