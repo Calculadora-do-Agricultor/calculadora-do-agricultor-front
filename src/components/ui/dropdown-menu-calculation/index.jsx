@@ -125,6 +125,7 @@ const CalculationDropdownMenu = ({ calculation, onEdit, onDelete, onToggleFavori
     <CalculationHistoryModal
       isOpen={isHistoryModalOpen}
       onClose={() => setIsHistoryModalOpen(false)}
+      onOpen={() => setIsHistoryModalOpen(true)}
       calculation={calculation}
       calculationHistoryId={calculation?.historyId || calculation?.id}
     />

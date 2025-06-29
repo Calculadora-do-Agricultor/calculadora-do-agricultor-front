@@ -27,6 +27,7 @@ import { useToast } from "../../context/ToastContext";
 const CalculationHistoryModal = ({
   isOpen,
   onClose,
+  onOpen,
   calculation,
   calculationHistoryId,
 }) => {
@@ -153,6 +154,11 @@ const CalculationHistoryModal = ({
     setDeleteError(null);
     setDeleteSuccess(false);
     setDeletingId(null);
+    
+    // Reabrir o modal do histórico após fechar o modal de exclusão
+    setTimeout(() => {
+      onOpen();
+    }, 100);
   };
 
   const handleConfirmDelete = async () => {
@@ -731,17 +737,19 @@ const CalculationHistoryModal = ({
         <DialogContent className="sm:max-w-md">
           {deleteSuccess ? (
             <>
+              <DialogHeader>
+                <DialogTitle className="mb-2 text-lg font-semibold text-gray-900">
+                  Cálculo excluído com sucesso!
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-600">
+                  O cálculo foi removido do seu histórico.
+                </DialogDescription>
+              </DialogHeader>
               <div className="flex items-center justify-center p-6">
                 <div className="text-center">
                   <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
                     <CheckCircle className="h-6 w-6 text-green-600" />
                   </div>
-                  <DialogTitle className="mb-2 text-lg font-semibold text-gray-900">
-                    Cálculo excluído com sucesso!
-                  </DialogTitle>
-                  <p className="text-sm text-gray-600">
-                    O cálculo foi removido do seu histórico.
-                  </p>
                 </div>
               </div>
               <div className="flex justify-center bg-gray-50 px-6 py-4">
@@ -755,35 +763,33 @@ const CalculationHistoryModal = ({
             </>
           ) : (
             <>
+              <DialogHeader>
+                <DialogTitle className="text-lg font-semibold leading-6 text-gray-900">
+                  Confirmar Exclusão
+                </DialogTitle>
+                <DialogDescription className="text-sm text-gray-600">
+                  Tem certeza que deseja excluir o cálculo{" "}
+                  <strong>"{itemToDelete?.title || "sem título"}"</strong> do histórico?
+                  Esta ação não pode ser desfeita.
+                </DialogDescription>
+              </DialogHeader>
               <div className="p-6">
                 <div className="flex items-center">
                   <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100">
                     <AlertTriangle className="h-6 w-6 text-red-600" />
                   </div>
                 </div>
-                <div className="mt-3 text-center">
-                  <DialogTitle className="text-lg font-semibold leading-6 text-gray-900">
-                    Confirmar Exclusão
-                  </DialogTitle>
-                  <p className="mt-2 text-sm text-gray-600">
-                    Tem certeza que deseja excluir o cálculo{" "}
-                    <strong>"{itemToDelete?.title || "sem título"}"</strong> do histórico?
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Esta ação não pode ser desfeita.
-                  </p>
 
-                  {deleteError && (
-                    <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                      <div className="flex items-center">
-                        <AlertTriangle className="mr-2 h-4 w-4 text-red-600" />
-                        <span className="text-sm text-red-700">
-                          {deleteError}
-                        </span>
-                      </div>
+                {deleteError && (
+                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                    <div className="flex items-center">
+                      <AlertTriangle className="mr-2 h-4 w-4 text-red-600" />
+                      <span className="text-sm text-red-700">
+                        {deleteError}
+                      </span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-3 bg-gray-50 px-6 py-4">
