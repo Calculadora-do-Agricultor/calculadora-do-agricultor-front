@@ -225,7 +225,7 @@ export const firestoreWrapper = {
   },
 
   // Atualizar documento
-  async updateDocument(collectionName, docId, data) {
+  async updateDocument(collectionName, docId, data, showNotification = true) {
     try {
       if (!isOnline) {
         offlineCache.set(`${collectionName}/${docId}`, {
@@ -234,7 +234,9 @@ export const firestoreWrapper = {
           id: docId,
           data
         });
-        notify.info('Atualização será sincronizada quando voltar online');
+        if (showNotification) {
+          notify.info('Atualização será sincronizada quando voltar online');
+        }
         return true;
       }
 
@@ -242,7 +244,9 @@ export const firestoreWrapper = {
         const db = getDbInstance();
         await updateDoc(doc(db, collectionName, docId), data);
       }, notify);
-      notify.success('Documento atualizado com sucesso');
+      if (showNotification) {
+        notify.success('Documento atualizado com sucesso');
+      }
       return true;
     } catch (error) {
       notify.error(`Erro ao atualizar documento: ${error.message}`);

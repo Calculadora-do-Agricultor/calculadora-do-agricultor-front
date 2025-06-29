@@ -27,12 +27,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { useToast } from "../../context/ToastContext";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, isAdmin } = useContext(AuthContext);
+  const toast = useToast();
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [loading, setLoading] = useState(true);
@@ -754,6 +754,31 @@ const Settings = () => {
                     </div>
                     <span className="text-lg font-semibold">Escuro</span>
                   </button>
+                </div>
+                
+                {/* Opção para mostrar/ocultar Footer */}
+                <div className="mt-6">
+                  <h4 className="mb-3 text-md font-medium text-[#00418F]">Rodapé</h4>
+                  <div className="flex items-center justify-between rounded-lg border border-[#00418F]/10 bg-white p-4 shadow-sm">
+                    <div className="flex-1">
+                      <span className="font-medium text-[#00418F]">Mostrar Rodapé</span>
+                      <p className="text-sm text-gray-500">
+                        Exibir ou ocultar o rodapé na parte inferior das páginas.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => toggleHideFooter(!hideFooter, toast)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#00418F] focus:ring-offset-2 ${
+                        !hideFooter ? 'bg-[#00418F]' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                          !hideFooter ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
