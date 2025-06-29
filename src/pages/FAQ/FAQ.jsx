@@ -1,144 +1,57 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon, TagIcon } from '@heroicons/react/24/outline';
+import { useFAQ } from '../../hooks/useFAQ';
+import { faqService } from '../../services/faqService';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 const FAQ = () => {
+  const { faqItems, loading, error, loadActiveFAQItems } = useFAQ();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [expandedItems, setExpandedItems] = useState(new Set());
+  useEffect(() => {
+    loadActiveFAQItems();
+  }, []);
 
-  // Dados do FAQ organizados por categoria
-  const faqData = {
-    plantio: {
-      title: 'Plantio e Cultivo',
-      icon: '🌱',
-      items: [
-        {
-          id: 'plantio-1',
-          question: 'Qual é a melhor época para plantar milho?',
-          answer: 'O milho deve ser plantado preferencialmente no início do período chuvoso, entre setembro e dezembro, dependendo da região. É importante considerar a temperatura do solo (mínimo 16°C) e a disponibilidade de água.',
-          tags: ['milho', 'época', 'plantio', 'clima']
-        },
-        {
-          id: 'plantio-2',
-          question: 'Como calcular o espaçamento ideal entre plantas?',
-          answer: 'O espaçamento varia conforme a cultura. Para milho: 70-90cm entre fileiras e 20-25cm entre plantas. Para soja: 40-50cm entre fileiras. Use nossa calculadora para obter valores precisos baseados na sua cultura específica.',
-          tags: ['espaçamento', 'densidade', 'produtividade']
-        },
-        {
-          id: 'plantio-3',
-          question: 'Qual a profundidade ideal para semear?',
-          answer: 'A regra geral é plantar a uma profundidade de 2-3 vezes o diâmetro da semente. Sementes pequenas (1-2cm), sementes médias (2-4cm), sementes grandes (4-6cm). Ajuste conforme umidade e tipo de solo.',
-          tags: ['profundidade', 'semeadura', 'sementes']
-        }
-      ]
-    },
-    solo: {
-      title: 'Solo e Nutrição',
-      icon: '🌍',
-      items: [
-        {
-          id: 'solo-1',
-          question: 'Como interpretar a análise de solo?',
-          answer: 'A análise de solo mostra pH, matéria orgânica, fósforo, potássio e outros nutrientes. pH ideal: 6.0-7.0 para maioria das culturas. Matéria orgânica: mínimo 2.5%. Use nossa calculadora para interpretar os resultados.',
-          tags: ['análise', 'pH', 'nutrientes', 'interpretação']
-        },
-        {
-          id: 'solo-2',
-          question: 'Quando fazer calagem?',
-          answer: 'Faça calagem quando o pH estiver abaixo de 5.5 ou quando a saturação por bases for inferior a 60%. Aplique calcário 2-3 meses antes do plantio para permitir a reação no solo.',
-          tags: ['calagem', 'pH', 'calcário', 'correção']
-        },
-        {
-          id: 'solo-3',
-          question: 'Como calcular a necessidade de adubo?',
-          answer: 'Base-se na análise de solo, expectativa de produtividade e exigência da cultura. Nossa calculadora considera estes fatores e recomenda as quantidades de N, P e K necessárias.',
-          tags: ['adubação', 'NPK', 'fertilizantes', 'cálculo']
-        }
-      ]
-    },
-    calculadora: {
-      title: 'Uso da Calculadora',
-      icon: '🧮',
-      items: [
-        {
-          id: 'calc-1',
-          question: 'Como criar um novo cálculo?',
-          answer: 'Acesse a seção "Calculadora", clique em "Novo Cálculo", escolha a categoria (plantio, solo, etc.), preencha os parâmetros solicitados e clique em "Calcular". O resultado será exibido com explicações detalhadas.',
-          tags: ['novo cálculo', 'tutorial', 'como usar']
-        },
-        {
-          id: 'calc-2',
-          question: 'Posso salvar meus cálculos?',
-          answer: 'Sim! Todos os cálculos são automaticamente salvos no seu histórico. Você pode acessá-los, editá-los e compartilhá-los a qualquer momento através do menu "Meus Cálculos".',
-          tags: ['salvar', 'histórico', 'editar']
-        },
-        {
-          id: 'calc-3',
-          question: 'Como interpretar os resultados?',
-          answer: 'Cada resultado inclui: valor calculado, unidade de medida, explicação do cálculo e recomendações práticas. Clique no ícone "?" ao lado de cada resultado para mais detalhes.',
-          tags: ['resultados', 'interpretação', 'explicação']
-        }
-      ]
-    },
-    tecnico: {
-      title: 'Suporte Técnico',
-      icon: '🔧',
-      items: [
-        {
-          id: 'tec-1',
-          question: 'A calculadora não está funcionando',
-          answer: 'Verifique sua conexão com a internet, atualize a página (F5) e tente novamente. Se o problema persistir, limpe o cache do navegador ou entre em contato conosco.',
-          tags: ['erro', 'não funciona', 'problema técnico']
-        },
-        {
-          id: 'tec-2',
-          question: 'Como recuperar minha senha?',
-          answer: 'Na tela de login, clique em "Esqueci minha senha", digite seu email e siga as instruções enviadas para sua caixa de entrada. Verifique também a pasta de spam.',
-          tags: ['senha', 'recuperar', 'login']
-        },
-        {
-          id: 'tec-3',
-          question: 'Posso usar no celular?',
-          answer: 'Sim! Nossa calculadora é totalmente responsiva e funciona perfeitamente em smartphones e tablets. Recomendamos usar no modo paisagem para melhor visualização.',
-          tags: ['mobile', 'celular', 'responsivo']
-        }
-      ]
-    }
-  };
-
-  const categories = [
-    { id: 'todos', name: 'Todas as Categorias', icon: '📋' },
-    { id: 'plantio', name: 'Plantio e Cultivo', icon: '🌱' },
-    { id: 'solo', name: 'Solo e Nutrição', icon: '🌍' },
-    { id: 'calculadora', name: 'Uso da Calculadora', icon: '🧮' },
-    { id: 'tecnico', name: 'Suporte Técnico', icon: '🔧' }
-  ];
+  // Categorias disponíveis
+  const categories = useMemo(() => {
+    const baseCategories = [
+      { id: 'todos', name: 'Todas as Categorias', icon: '📋' }
+    ];
+    
+    const faqCategories = faqService.CATEGORIES.map(cat => ({
+      id: cat.value,
+      name: cat.label,
+      icon: cat.icon || '📄'
+    }));
+    
+    return [...baseCategories, ...faqCategories];
+  }, []);
 
   // Filtrar itens baseado na busca e categoria
   const filteredItems = useMemo(() => {
-    let items = [];
+    let items = [...faqItems];
     
-    if (selectedCategory === 'todos') {
-      Object.values(faqData).forEach(category => {
-        items.push(...category.items.map(item => ({ ...item, category: category.title })));
-      });
-    } else {
-      items = faqData[selectedCategory]?.items.map(item => ({ 
-        ...item, 
-        category: faqData[selectedCategory].title 
-      })) || [];
+    // Filtrar por categoria
+    if (selectedCategory !== 'todos') {
+      items = items.filter(item => item.category === selectedCategory);
     }
 
+    // Filtrar por termo de busca
     if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       items = items.filter(item => 
-        item.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.answer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        item.question.toLowerCase().includes(term) ||
+        item.answer.toLowerCase().includes(term) ||
+        (item.tags && item.tags.some(tag => 
+          tag.toLowerCase().includes(term)
+        ))
       );
     }
 
-    return items;
-  }, [searchTerm, selectedCategory]);
+    // Ordenar por ordem definida
+    return items.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [faqItems, searchTerm, selectedCategory]);
 
   const toggleExpanded = (id) => {
     const newExpanded = new Set(expandedItems);
@@ -149,6 +62,39 @@ const FAQ = () => {
     }
     setExpandedItems(newExpanded);
   };
+
+  // Mostrar loading enquanto carrega
+  if (loading) {
+    return <LoadingSpinner size="xl" text="Carregando FAQ..." />;
+  }
+
+  // Se não há itens e não há erro, mostrar mensagem amigável
+  if (!loading && faqItems.length === 0 && !error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Perguntas Frequentes
+            </h1>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 mt-8">
+              <div className="text-center">
+                <svg className="mx-auto h-12 w-12 text-blue-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="text-lg font-medium text-blue-900 mb-2">
+                  Nenhuma pergunta disponível no momento
+                </h3>
+                <p className="text-blue-700">
+                  As perguntas frequentes serão adicionadas em breve. Entre em contato conosco se tiver dúvidas específicas.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -162,6 +108,35 @@ const FAQ = () => {
             Encontre respostas rápidas para suas dúvidas sobre agricultura e uso da nossa calculadora
           </p>
         </div>
+
+        {/* Mensagem de Erro */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Erro ao carregar FAQ
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={loadActiveFAQItems}
+                    className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Busca e Filtros */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">

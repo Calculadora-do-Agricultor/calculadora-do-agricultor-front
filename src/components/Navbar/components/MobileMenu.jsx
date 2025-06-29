@@ -179,6 +179,17 @@ const MobileMenu = ({ user, userName }) => {
                         Gerenciar Usuários
                       </Link>
                       <Link
+                        to="/admin/faq"
+                        className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/faq' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
+                        onClick={() => {
+                          setAdminMenuOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        <QuestionMarkCircleIcon className="w-5 h-5 mr-2" />
+                        Gerenciar FAQ
+                      </Link>
+                      <Link
                         to="/admin/data-integrity"
                         className={`flex items-center w-full text-left px-4 py-2 transition-all duration-300 transform hover:scale-105 ${location.pathname === '/admin/data-integrity' ? 'bg-[#FFEE00] text-[#00418F] font-bold' : 'text-white hover:bg-[#FFEE00] hover:text-[#00418F]'}`}
                         onClick={() => {

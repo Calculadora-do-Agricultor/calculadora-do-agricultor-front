@@ -155,6 +155,17 @@ const NavLinks = ({ user }) => {
                     </div>
                   </Link>
                   <Link
+                    to="/admin/faq"
+                    className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/faq' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
+                    role="menuitem"
+                    onClick={() => setAdminMenuOpen(false)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <QuestionMarkCircleIcon className="w-5 h-5" />
+                      <span>Gerenciar FAQ</span>
+                    </div>
+                  </Link>
+                  <Link
                     to="/admin/data-integrity"
                     className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/data-integrity' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
                     role="menuitem"

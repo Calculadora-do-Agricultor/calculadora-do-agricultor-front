@@ -21,6 +21,7 @@ const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
 const FAQ = React.lazy(() => import("./pages/FAQ"));
+const FAQAdmin = React.lazy(() => import("./pages/Admin/FAQAdmin"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
@@ -127,6 +128,14 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly={true} redirectTo="/">
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/faq"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <FAQAdmin />
                   </ProtectedRoute>
                 }
               />
