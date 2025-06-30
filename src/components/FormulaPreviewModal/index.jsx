@@ -1,88 +1,98 @@
-import React, { useEffect, useRef } from 'react'
-import { X, Calculator, Play, ArrowLeft, Info, Hash } from 'lucide-react'
-import { Button } from '../ui/button'
-import './styles.css'
+import React, { useEffect, useRef } from "react";
+import { X, Calculator, Play, ArrowLeft, Info, Hash } from "lucide-react";
+import { Button } from "../ui/button";
+import "./styles.css";
 
-const FormulaPreviewModal = ({ 
-  calculation, 
-  paramValues, 
-  isOpen, 
-  onClose, 
-  onProceedToCalculation 
+const FormulaPreviewModal = ({
+  calculation,
+  paramValues,
+  isOpen,
+  onClose,
+  onProceedToCalculation,
 }) => {
-  const modalRef = useRef(null)
+  const modalRef = useRef(null);
 
   // Handle ESC key and overlay click
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose()
-    }
+      if (e.key === "Escape") onClose();
+    };
 
     const handleOverlayClick = (e) => {
-      if (e.target === e.currentTarget) onClose()
-    }
+      if (e.target === e.currentTarget) onClose();
+    };
 
     if (isOpen) {
-      window.addEventListener('keydown', handleEsc)
-      document.body.style.overflow = 'hidden'
-      
+      window.addEventListener("keydown", handleEsc);
+      document.body.style.overflow = "hidden";
+
       // Add overlay click listener
-      const overlay = document.querySelector('.formula-preview-overlay')
+      const overlay = document.querySelector(".formula-preview-overlay");
       if (overlay) {
-        overlay.addEventListener('click', handleOverlayClick)
+        overlay.addEventListener("click", handleOverlayClick);
       }
     } else {
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = "unset";
     }
 
     return () => {
-      window.removeEventListener('keydown', handleEsc)
-      document.body.style.overflow = 'unset'
-      const overlay = document.querySelector('.formula-preview-overlay')
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "unset";
+      const overlay = document.querySelector(".formula-preview-overlay");
       if (overlay) {
-        overlay.removeEventListener('click', handleOverlayClick)
+        overlay.removeEventListener("click", handleOverlayClick);
       }
-    }
-  }, [isOpen, onClose])
+    };
+  }, [isOpen, onClose]);
 
   // Format expression for display
   const formatExpression = (expression) => {
-    if (!expression) return 'Não definida'
-    
+    if (!expression) return "Não definida";
+
     // Replace parameter names with their display values
-    let formattedExpression = expression
-    
+    let formattedExpression = expression;
+
     if (calculation?.parameters) {
-      calculation.parameters.forEach(param => {
-        const value = paramValues?.[param.name]
-        if (value !== undefined && value !== '') {
+      calculation.parameters.forEach((param) => {
+        const value = paramValues?.[param.name];
+        
+        if (
+          value !== undefined &&
+          value !== null &&
+          String(value).trim() !== ""
+        ) {
           // Replace parameter name with its value in the expression
-          const regex = new RegExp(`\\b${param.name}\\b`, 'g')
-          formattedExpression = formattedExpression.replace(regex, `${value}`)
+          const regex = new RegExp(`\\b${param.name}\\b`, 'g');
+          formattedExpression = formattedExpression.replace(regex, `${value}`);
         } else {
           // Keep parameter name if no value provided
-          const regex = new RegExp(`\\b${param.name}\\b`, 'g')
-          formattedExpression = formattedExpression.replace(regex, `[${param.name}]`)
+          const regex = new RegExp(`\\b${param.name}\\b`, "g");
+          formattedExpression = formattedExpression.replace(
+            regex,
+            `${param.name}`,
+          );
         }
-      })
+      });
     }
-    
-    return formattedExpression
-  }
+
+    return formattedExpression;
+  };
 
   // Check if all required parameters are filled
   const allRequiredFilled = () => {
-    if (!calculation?.parameters) return true
-    
-    return calculation.parameters
-      .filter(param => param.required)
-      .every(param => {
-        const value = paramValues?.[param.name]
-        return value !== undefined && value !== '' && value !== null
-      })
-  }
+    if (!calculation?.parameters) return true;
 
-  if (!isOpen || !calculation) return null
+    return calculation.parameters
+      .filter((param) => param.required)
+      .every((param) => {
+        const value = paramValues?.[param.name];
+        return (
+          value !== undefined && value !== null && String(value).trim() !== ""
+        );
+      });
+  };
+
+  if (!isOpen || !calculation) return null;
 
   return (
     <div className="formula-preview-overlay">
@@ -116,7 +126,9 @@ const FormulaPreviewModal = ({
                 <Info size={18} />
                 <h3>Descrição</h3>
               </div>
-              <p className="calculation-description">{calculation.description}</p>
+              <p className="calculation-description">
+                {calculation.description}
+              </p>
             </div>
           )}
 
@@ -126,7 +138,7 @@ const FormulaPreviewModal = ({
               <Hash size={18} />
               <h3>Estrutura da Fórmula</h3>
             </div>
-            
+
             {/* Main formula */}
             {calculation.expression && (
               <div className="formula-display">
@@ -146,7 +158,9 @@ const FormulaPreviewModal = ({
                     <div className="result-name">{result.name}:</div>
                     <div className="formula-expression">
                       <code>{formatExpression(result.expression)}</code>
-                      {result.unit && <span className="formula-unit">({result.unit})</span>}
+                      {result.unit && (
+                        <span className="formula-unit">({result.unit})</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -160,19 +174,27 @@ const FormulaPreviewModal = ({
               <Calculator size={18} />
               <h3>Parâmetros Necessários</h3>
             </div>
-            
+
             {calculation.parameters && calculation.parameters.length > 0 ? (
               <div className="parameters-list">
                 {calculation.parameters.map((param, index) => {
-                  const value = paramValues?.[param.name]
-                  const hasValue = value !== undefined && value !== '' && value !== null
-                  
+                  const value = paramValues?.[param.name];
+                  const hasValue =
+                    value !== undefined &&
+                    value !== null &&
+                    String(value).trim() !== "";
+
                   return (
-                    <div key={index} className={`parameter-item ${hasValue ? 'filled' : 'empty'}`}>
+                    <div
+                      key={index}
+                      className={`parameter-item ${hasValue ? "filled" : "empty"}`}
+                    >
                       <div className="parameter-header">
                         <span className="parameter-name">
                           {param.name}
-                          {param.required && <span className="required">*</span>}
+                          {param.required && (
+                            <span className="required">*</span>
+                          )}
                         </span>
                         <span className="parameter-status">
                           {hasValue ? (
@@ -182,20 +204,32 @@ const FormulaPreviewModal = ({
                           )}
                         </span>
                       </div>
-                      
+
                       <div className="parameter-details">
                         {param.description && (
-                          <p className="parameter-description">{param.description}</p>
+                          <p className="parameter-description">
+                            {param.description}
+                          </p>
                         )}
-                        
+
                         <div className="parameter-meta">
-                          <span className="parameter-type">Tipo: {param.type}</span>
-                          {param.unit && <span className="parameter-unit">Unidade: {param.unit}</span>}
-                          {hasValue && <span className="parameter-value">Valor: {value}</span>}
+                          <span className="parameter-type">
+                            Tipo: {param.type}
+                          </span>
+                          {param.unit && (
+                            <span className="parameter-unit">
+                              Unidade: {param.unit}
+                            </span>
+                          )}
+                          {hasValue && (
+                            <span className="parameter-value">
+                              Valor: {value}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             ) : (
@@ -223,7 +257,9 @@ const FormulaPreviewModal = ({
                   </div>
                   <div>
                     <h4>Parâmetros Pendentes</h4>
-                    <p>Preencha todos os campos obrigatórios antes de calcular</p>
+                    <p>
+                      Preencha todos os campos obrigatórios antes de calcular
+                    </p>
                   </div>
                 </div>
               )}
@@ -233,26 +269,22 @@ const FormulaPreviewModal = ({
 
         {/* Footer */}
         <div className="formula-preview-footer">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            icon={ArrowLeft}
-          >
+          <Button variant="outline" onClick={onClose} icon={ArrowLeft}>
             Voltar
           </Button>
-          
+
           <Button
             variant="primary"
             onClick={onProceedToCalculation}
             disabled={!allRequiredFilled()}
             icon={Play}
           >
-            {allRequiredFilled() ? 'Calcular' : 'Preencher Parâmetros'}
+            {allRequiredFilled() ? "Calcular" : "Preencher Parâmetros"}
           </Button>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default FormulaPreviewModal
+export default FormulaPreviewModal;
