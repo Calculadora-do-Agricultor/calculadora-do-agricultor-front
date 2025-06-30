@@ -118,14 +118,22 @@ const FormulaManager = () => {
 
   const handleDelete = async (formulaId) => {
     if (window.confirm('Tem certeza que deseja excluir esta fórmula?')) {
-      await deleteFormula(formulaId);
+      try {
+        await deleteFormula(formulaId);
+      } catch (error) {
+        console.error('Erro ao excluir fórmula:', error);
+      }
     }
   };
 
   const handleValidateIntegrity = async (formulaId) => {
-    const result = await validateFormulaIntegrity(formulaId);
-    if (result) {
-      alert(`Validação: ${result.isValid ? 'Válida' : 'Inválida'}\n${result.issues.join('\n')}`);
+    try {
+      const result = await validateFormulaIntegrity(formulaId);
+      if (result) {
+        alert(`Validação: ${result.isValid ? 'Válida' : 'Inválida'}\n${result.issues.join('\n')}`);
+      }
+    } catch (error) {
+      console.error('Erro ao validar integridade da fórmula:', error);
     }
   };
 
@@ -174,6 +182,8 @@ const FormulaManager = () => {
       {/* Filtros */}
       <div className="formula-filters">
         <input
+          id="formula-search"
+          name="formula-search"
           type="text"
           placeholder="Buscar fórmulas..."
           value={searchTerm}
@@ -181,6 +191,8 @@ const FormulaManager = () => {
           className="search-input"
         />
         <select
+          id="formula-category-filter"
+          name="formula-category-filter"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="category-select"
