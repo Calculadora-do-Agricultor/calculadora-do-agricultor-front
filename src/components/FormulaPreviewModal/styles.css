@@ -1,0 +1,535 @@
+/* Formula Preview Modal Styles */
+
+/* Overlay */
+.formula-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Modal Container */
+.formula-preview-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Header */
+.formula-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #00418f 0%, #0056b3 100%);
+  color: white;
+}
+
+.formula-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.formula-preview-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+}
+
+.formula-preview-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.formula-preview-title p {
+  margin: 0;
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+.formula-preview-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.formula-preview-close:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Content */
+.formula-preview-content {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Sections */
+.formula-preview-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.25rem;
+  background: #f9fafb;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #00418f;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Calculation Description */
+.calculation-description {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* Formula Display */
+.formula-display {
+  margin-bottom: 1rem;
+}
+
+.formula-display:last-child {
+  margin-bottom: 0;
+}
+
+.formula-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.formula-expression {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 1rem;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #1f2937;
+  overflow-x: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.formula-expression code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  color: inherit;
+  flex: 1;
+}
+
+.formula-unit {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Results Formulas */
+.results-formulas {
+  margin-top: 1rem;
+}
+
+.result-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #059669;
+  margin-bottom: 0.25rem;
+}
+
+/* Parameters List */
+.parameters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.parameter-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.parameter-item.filled {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.parameter-item.empty {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.parameter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.parameter-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.parameter-name .required {
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
+.parameter-status {
+  font-size: 0.875rem;
+}
+
+.status-filled {
+  color: #059669;
+  font-weight: 500;
+}
+
+.status-empty {
+  color: #d97706;
+  font-weight: 500;
+}
+
+.parameter-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.parameter-description {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.parameter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.parameter-type,
+.parameter-unit,
+.parameter-value {
+  background: #f3f4f6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.parameter-value {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.no-parameters {
+  margin: 0;
+  color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Status Summary */
+.status-summary {
+  background: white;
+  border-radius: 8px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+}
+
+.status-ready,
+.status-pending {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.status-icon.success {
+  background: #dcfce7;
+  color: #059669;
+}
+
+.status-icon.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.status-ready h4,
+.status-pending h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.status-ready h4 {
+  color: #059669;
+}
+
+.status-pending h4 {
+  color: #d97706;
+}
+
+.status-ready p,
+.status-pending p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Footer */
+.formula-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  gap: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .formula-preview-overlay {
+    padding: 0.5rem;
+  }
+
+  .formula-preview-modal {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+
+  .formula-preview-header {
+    padding: 1rem;
+  }
+
+  .formula-preview-title {
+    gap: 0.75rem;
+  }
+
+  .formula-preview-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .formula-preview-title h2 {
+    font-size: 1.25rem;
+  }
+
+  .formula-preview-content {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .formula-preview-section {
+    padding: 1rem;
+  }
+
+  .formula-preview-footer {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .formula-preview-footer button {
+    width: 100%;
+  }
+
+  .parameter-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .parameter-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .formula-expression {
+    font-size: 0.875rem;
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .formula-preview-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .formula-preview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .formula-preview-close {
+    align-self: flex-end;
+  }
+
+  .status-ready,
+  .status-pending {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .formula-preview-overlay,
+  .formula-preview-modal {
+    animation: none;
+  }
+
+  .parameter-item {
+    transition: none;
+  }
+}
+
+/* Focus styles for accessibility */
+.formula-preview-close:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.formula-preview-footer button:focus {
+  outline: 2px solid #00418f;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .formula-preview-modal {
+    border: 2px solid #000000;
+  }
+
+  .formula-preview-section {
+    border: 2px solid #000000;
+  }
+
+  .parameter-item {
+    border: 2px solid #000000;
+  }
+}
+
+/* Print styles */
+@media print {
+  .formula-preview-overlay {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+  }
+
+  .formula-preview-modal {
+    box-shadow: none;
+    max-height: none;
+    animation: none;
+  }
+
+  .formula-preview-header {
+    background: #00418f;
+    color: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .formula-preview-close,
+  .formula-preview-footer {
+    display: none;
+  }
+}
