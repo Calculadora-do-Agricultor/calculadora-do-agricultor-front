@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, memo } from "react"
+import React, { useState, useEffect, useContext, memo } from "react"
 import { useNavigate } from "react-router-dom"
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db, auth } from "../../services/firebaseConfig"
@@ -594,23 +594,37 @@ const CalculationList = ({
 }
 // Adicionar função para buscar nomes das categorias
 const resolveCategoryNames = async (calculations) => {
-  const categoryIds = [...new Set(
-    calculations.flatMap(calc => calc.categories || [])
-  )]
+  try {
+    const categoryIds = [...new Set(
+      calculations.flatMap(calc => calc.categories || [])
+    )]
 
-  const categoryPromises = categoryIds.map(async (id) => {
-    const categoryDoc = await getDoc(doc(db, "categories", id))
-    return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
-  })
+    const categoryPromises = categoryIds.map(async (id) => {
+      try {
+        const categoryDoc = await getDoc(doc(db, "categories", id))
+        return { id, name: categoryDoc.exists() ? categoryDoc.data().name : "Categoria não encontrada" }
+      } catch (error) {
+        console.error(`Erro ao buscar categoria ${id}:`, error)
+        return { id, name: "Erro ao carregar categoria" }
+      }
+    })
 
-  const categoryMap = await Promise.all(categoryPromises)
-  const categoryLookup = Object.fromEntries(
-    categoryMap.map(cat => [cat.id, cat.name])
-  )
+    const categoryMap = await Promise.all(categoryPromises)
+    const categoryLookup = Object.fromEntries(
+      categoryMap.map(cat => [cat.id, cat.name])
+    )
 
-  return calculations.map(calc => ({
-    ...calc,
-    categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
-  }))
+    return calculations.map(calc => ({
+      ...calc,
+      categoryNames: (calc.categories || []).map(id => categoryLookup[id] || "Desconhecida")
+    }))
+  } catch (error) {
+    console.error('Erro ao resolver nomes das categorias:', error)
+    // Retorna os cálculos sem os nomes das categorias em caso de erro
+    return calculations.map(calc => ({
+      ...calc,
+      categoryNames: (calc.categories || []).map(() => "Erro ao carregar")
+    }))
+  }
 }
 export default memo(CalculationList);

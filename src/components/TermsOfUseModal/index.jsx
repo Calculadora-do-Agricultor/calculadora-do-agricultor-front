@@ -40,8 +40,13 @@ const TermsOfUseModal = ({
     if (!acceptTerms) return;
     
     setLoading(true);
-    await onAccept(acceptLocationSharing);
-    setLoading(false);
+    try {
+      await onAccept(acceptLocationSharing);
+    } catch (error) {
+      console.error('Erro ao aceitar termos:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDecline = () => {

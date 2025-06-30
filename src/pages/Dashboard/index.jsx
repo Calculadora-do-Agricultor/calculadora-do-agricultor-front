@@ -443,6 +443,8 @@ const Dashboard = () => {
                     <div className="filter-group">
                       <label>Categoria:</label>
                       <select 
+                        id="dashboard-category-filter"
+                        name="dashboard-category-filter"
                         value={categoryFilter} 
                         onChange={(e) => setCategoryFilter(e.target.value)}
                         className="filter-select"
@@ -524,6 +526,8 @@ const Dashboard = () => {
                     <div className="filter-group">
                       <label>Período:</label>
                       <select 
+                        id="dashboard-date-range-filter"
+                        name="dashboard-date-range-filter"
                         value={dateRange} 
                         onChange={(e) => setDateRange(e.target.value)}
                         className="filter-select"
@@ -537,6 +541,8 @@ const Dashboard = () => {
                     <div className="filter-group">
                       <label>Ordenação:</label>
                       <select 
+                        id="dashboard-activity-sort-filter"
+                        name="dashboard-activity-sort-filter"
                         value={activitySortOrder} 
                         onChange={(e) => setActivitySortOrder(e.target.value)}
                         className="filter-select"

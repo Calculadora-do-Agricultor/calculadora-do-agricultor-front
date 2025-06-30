@@ -77,7 +77,10 @@ async function withRetry(operation) {
 window.addEventListener('online', () => {
   isOnline = true;
   notify.success('Conexão restaurada. Sincronizando dados...');
-  syncOfflineData();
+  syncOfflineData().catch(error => {
+    console.error('Erro na sincronização offline:', error);
+    notify.error('Erro ao sincronizar dados offline');
+  });
 });
 
 window.addEventListener('offline', () => {

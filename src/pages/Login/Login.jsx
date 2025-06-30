@@ -178,14 +178,16 @@ const Login = () => {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">
+                  <FormLabel htmlFor="email" className="text-gray-700 font-medium">
                     Email
                   </FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input
                         {...field}
+                        id="email"
                         type="email"
+                        autoComplete="email"
                         placeholder="seu@email.com"
                         className={cn(
                           "pl-10 h-11 border-gray-200 transition-all duration-200",
@@ -221,7 +223,7 @@ const Login = () => {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel className="text-gray-700 font-medium">
+                    <FormLabel htmlFor="password" className="text-gray-700 font-medium">
                       Senha
                     </FormLabel>
                     <Link
@@ -239,7 +241,9 @@ const Login = () => {
                     <div className="relative">
                       <Input
                         {...field}
+                        id="password"
                         type={showPassword ? "text" : "password"}
+                        autoComplete="current-password"
                         placeholder="Sua senha"
                         className={cn(
                           "pl-10 pr-10 h-11 border-gray-200 transition-all duration-200",
