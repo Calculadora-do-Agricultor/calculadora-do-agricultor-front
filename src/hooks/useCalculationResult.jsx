@@ -56,6 +56,7 @@ export default function useCalculationResult(calculation, paramValues, allFields
         }
       }
       setResults(defaultResults)
+      setError(null) // Clear any previous errors when not calculating
       return
     }
 
@@ -88,7 +89,10 @@ export default function useCalculationResult(calculation, paramValues, allFields
       setResults(newResults)
       setError(null)
     } catch (e) {
-      console.error("Erro no cálculo:", e)
+      // Only log errors when actually trying to calculate (all fields filled)
+      if (allFieldsFilled) {
+        console.error("Erro no cálculo:", e)
+      }
       setError(e.message.includes("Error in calculation:") ? e.message.replace("Error in calculation: ", "") : "Expressão inválida! Corrija e tente novamente")
     }
   }, [calculation, paramValues, allFieldsFilled])

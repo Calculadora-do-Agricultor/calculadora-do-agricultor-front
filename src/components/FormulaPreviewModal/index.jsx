@@ -55,14 +55,14 @@ const FormulaPreviewModal = ({
     if (calculation?.parameters) {
       calculation.parameters.forEach((param) => {
         const value = paramValues?.[param.name];
-        
+
         if (
           value !== undefined &&
           value !== null &&
           String(value).trim() !== ""
         ) {
           // Replace parameter name with its value in the expression
-          const regex = new RegExp(`\\b${param.name}\\b`, 'g');
+          const regex = new RegExp(`\\b${param.name}\\b`, "g");
           formattedExpression = formattedExpression.replace(regex, `${value}`);
         } else {
           // Keep parameter name if no value provided
