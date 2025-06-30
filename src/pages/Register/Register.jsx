@@ -268,7 +268,7 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  if (firebaseLoading || isProcessing || isLogging) {
+  if (authLoading || isProcessing || isLogging) {
     return (
       <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center">
         <div className="text-center">
