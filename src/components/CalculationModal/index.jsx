@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react"
-import { X, Copy, Calculator, Check, Info, HelpCircle, Save } from "lucide-react"
+import { X, Copy, Calculator, Check, Info, HelpCircle, Save, Eye } from "lucide-react"
 import useCalculationResult from "../../hooks/useCalculationResult"
 import { useFormParameters } from "../../hooks/useFormParameters"
 import { useToast } from "../../context/ToastContext"
@@ -7,6 +7,7 @@ import { CalculationHistoryService } from "../../services/calculationHistoryServ
 import "./styles.css"
 import CalculationResult from "../CalculationResult"
 import { Tooltip } from "../ui/Tooltip"
+import FormulaPreviewModal from "../FormulaPreviewModal"
 
 const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const { paramValues, setParamValue, allFieldsFilled } = useFormParameters(calculation)
@@ -17,6 +18,7 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
   const [isSavingHistory, setIsSavingHistory] = useState(false)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [historyTitle, setHistoryTitle] = useState("")
+  const [showFormulaPreview, setShowFormulaPreview] = useState(false)
 
 
 
@@ -148,16 +150,26 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           <div className="calculation-modal-section">
             <div className="section-header">
               <h3>Parâmetros</h3>
-              <div className="section-badge">
-                {allFieldsFilled ? (
-                  <span className="badge success">
-                    <Check size={14} /> Completo
-                  </span>
-                ) : (
-                  <span className="badge warning">
-                    <Info size={14} /> Preencha todos os campos
-                  </span>
-                )}
+              <div className="section-actions">
+                <button
+                  onClick={() => setShowFormulaPreview(true)}
+                  className="preview-formula-button"
+                  title="Visualizar fórmula antes de calcular"
+                >
+                  <Eye size={16} />
+                  Visualizar Fórmula
+                </button>
+                <div className="section-badge">
+                  {allFieldsFilled ? (
+                    <span className="badge success">
+                      <Check size={14} /> Completo
+                    </span>
+                  ) : (
+                    <span className="badge warning">
+                      <Info size={14} /> Preencha todos os campos
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -414,6 +426,30 @@ const CalculationModal = ({ calculation, isOpen, onClose }) => {
           </div>
         </div>
       )}
+      
+      {/* Formula Preview Modal */}
+      <FormulaPreviewModal
+        calculation={calculation}
+        paramValues={paramValues}
+        isOpen={showFormulaPreview}
+        onClose={() => setShowFormulaPreview(false)}
+        onProceedToCalculation={() => {
+          setShowFormulaPreview(false)
+          // Focus on first empty parameter if not all filled
+          if (!allFieldsFilled && calculation?.parameters) {
+            const firstEmptyParam = calculation.parameters.find(param => {
+              const value = paramValues[param.name]
+              return !value || value === ''
+            })
+            if (firstEmptyParam) {
+              setTimeout(() => {
+                const input = document.getElementById(firstEmptyParam.name)
+                if (input) input.focus()
+              }, 100)
+            }
+          }
+        }}
+      />
     </div>
   );
 };
