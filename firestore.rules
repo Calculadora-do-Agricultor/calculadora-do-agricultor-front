@@ -26,6 +26,14 @@ service cloud.firestore {
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
       // Apenas administradores podem excluir usuários
       allow delete: if isAdmin();
+      
+      // Subcoleção de histórico de cálculos
+      match /calculationHistory/{historyId} {
+        // Usuários podem ler, criar, atualizar e excluir seu próprio histórico
+        allow read, write: if isAuthenticated() && isOwner(userId);
+        // Administradores têm acesso total
+        allow read, write: if isAdmin();
+      }
     }
     
     // Regras para coleção de logs de acesso (nova)
@@ -40,6 +48,16 @@ service cloud.firestore {
     
     // Regras para coleção Logs (existente - manter compatibilidade)
     match /Logs/{logId} {
+      // Qualquer usuário autenticado pode criar logs
+      allow create: if isAuthenticated();
+      // Apenas administradores podem ler logs (privacidade)
+      allow read: if isAdmin();
+      // Ninguém pode atualizar ou excluir logs (integridade dos dados)
+      allow update, delete: if false;
+    }
+    
+    // Regras para coleção logs (minúscula - compatibilidade adicional)
+    match /logs/{logId} {
       // Qualquer usuário autenticado pode criar logs
       allow create: if isAuthenticated();
       // Apenas administradores podem ler logs (privacidade)
@@ -96,6 +114,28 @@ service cloud.firestore {
         (!('expression' in data) || (data.expression is string && data.expression.size() > 0 && data.expression.size() <= 1000)) &&
         (!('userId' in data) || data.userId == resource.data.userId) &&
         data.updatedAt is timestamp;
+    }
+
+    // Regras para coleção de FAQ
+    match /faq/{faqId} {
+      // Qualquer usuário autenticado pode ler itens do FAQ
+      allow read: if isAuthenticated();
+      
+      // Apenas administradores podem criar, atualizar e excluir itens do FAQ
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Regras para outras coleções que podem estar faltando
+    match /categories/{categoryId} {
+      // Usuários autenticados podem ler categorias
+      allow read: if isAuthenticated();
+      
+      // Apenas administradores podem criar categorias
+      allow create: if isAuthenticated() && isAdmin();
+      
+      // Apenas o criador ou admin pode atualizar/excluir
+      allow update, delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.createdBy || isAdmin());
     }
   }
 }
