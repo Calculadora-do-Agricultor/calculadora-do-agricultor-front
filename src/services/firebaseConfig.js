@@ -51,4 +51,16 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
   }
 }
 
+// Suprimir warnings conhecidos do Firebase
+if (typeof window !== 'undefined') {
+  const originalWarn = console.warn;
+  console.warn = function(...args) {
+    // Suprimir warning específico do BloomFilter do Firebase
+    if (args[0] && typeof args[0] === 'string' && args[0].includes('BloomFilter error')) {
+      return;
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
 export { auth, db, app }; // Exporte 'app' também, caso precise em outros wrappers

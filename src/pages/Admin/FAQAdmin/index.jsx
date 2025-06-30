@@ -39,6 +39,7 @@ const FAQAdmin = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, item: null });
   const [showStats, setShowStats] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState(null);
 
   useEffect(() => {
     loadFAQItems();
@@ -60,8 +61,13 @@ const FAQAdmin = () => {
 
   const confirmDelete = async () => {
     if (deleteConfirm.item) {
-      await deleteFAQItem(deleteConfirm.item.id);
-      setDeleteConfirm({ open: false, item: null });
+      setDeletingItemId(deleteConfirm.item.id);
+      try {
+        await deleteFAQItem(deleteConfirm.item.id);
+        setDeleteConfirm({ open: false, item: null });
+      } finally {
+        setDeletingItemId(null);
+      }
     }
   };
 
@@ -321,10 +327,15 @@ const FAQAdmin = () => {
                             </button>
                             <button
                               onClick={() => handleDelete(item)}
-                              className="p-1 rounded-full text-red-600 hover:bg-red-100"
-                              title="Excluir"
+                              disabled={deletingItemId === item.id}
+                              className={`p-1 rounded-full ${deletingItemId === item.id ? 'text-gray-400 cursor-not-allowed' : 'text-red-600 hover:bg-red-100'}`}
+                              title={deletingItemId === item.id ? "Excluindo..." : "Excluir"}
                             >
-                              <TrashIcon className="h-4 w-4" />
+                              {deletingItemId === item.id ? (
+                                <div className="h-4 w-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                              ) : (
+                                <TrashIcon className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </td>

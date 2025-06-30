@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import { useFAQ } from '../../../hooks/useFAQ';
 import { faqService } from '../../../services/faqService';
 import LoadingSpinner from '../../../components/LoadingSpinner';
