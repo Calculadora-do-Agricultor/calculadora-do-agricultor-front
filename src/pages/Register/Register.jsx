@@ -316,10 +316,12 @@ const Register = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Nome Completo</FormLabel>
+                    <FormLabel htmlFor="name" className="text-gray-700 font-medium">Nome Completo</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
+                          id="name"
+                          autoComplete="name"
                           placeholder="Seu nome completo"
                           {...field}
                           className={cn(
@@ -354,11 +356,13 @@ const Register = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                    <FormLabel htmlFor="email" className="text-gray-700 font-medium">Email</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
+                          id="email"
                           type="email"
+                          autoComplete="email"
                           placeholder="seu@email.com"
                           {...field}
                           className={cn(
@@ -393,11 +397,13 @@ const Register = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Senha</FormLabel>
+                    <FormLabel htmlFor="password" className="text-gray-700 font-medium">Senha</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
+                          id="password"
                           type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
                           placeholder="Sua senha"
                           {...field}
                           className={cn(
@@ -486,11 +492,13 @@ const Register = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-gray-700 font-medium">Confirmar Senha</FormLabel>
+                    <FormLabel htmlFor="confirmPassword" className="text-gray-700 font-medium">Confirmar Senha</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <Input
+                          id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
                           placeholder="Confirme sua senha"
                           {...field}
                           className={cn(

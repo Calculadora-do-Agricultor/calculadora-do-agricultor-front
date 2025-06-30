@@ -31,9 +31,10 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = authWrapper.onAuthStateChanged(async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const userData = await firestoreWrapper.getDocument("users", firebaseUser.uid);
+      try {
+        if (firebaseUser) {
+          try {
+            const userData = await firestoreWrapper.getDocument("users", firebaseUser.uid);
 
           if (userData) {
             // Verificar se a conta está ativa
@@ -133,6 +134,12 @@ export const AuthProvider = ({ children }) => {
           }
         });
         setLoading(false); // Garante que loading seja false mesmo sem usuário
+        }
+      } catch (error) {
+        console.error("Erro no onAuthStateChanged:", error);
+        setUser(null);
+        setIsAdmin(false);
+        setLoading(false);
       }
     });
 

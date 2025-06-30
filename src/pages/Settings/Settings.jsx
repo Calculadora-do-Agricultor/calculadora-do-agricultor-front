@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper";
 import { useToast } from "../../context/ToastContext";
@@ -674,7 +674,12 @@ const Settings = () => {
                                   Ativar recursos para desenvolvedores
                                 </p>
                               </div>
-                              <input type="checkbox" className="rounded" />
+                              <input 
+                                id="developer-mode"
+                                name="developer-mode"
+                                type="checkbox" 
+                                className="rounded" 
+                              />
                             </div>
                             <div className="flex items-center justify-between">
                               <div>
