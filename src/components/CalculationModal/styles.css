@@ -60,6 +60,11 @@
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0 0 0.25rem 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
 }
 
 .calculation-modal-title p {
@@ -92,6 +97,40 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  max-height: calc(90vh - 200px);
+}
+
+/* SECTION ACTIONS */
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.preview-formula-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.preview-formula-button:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #1f2937;
+}
+
+.preview-formula-button:focus {
+  outline: 2px solid #00418f;
+  outline-offset: 2px;
 }
 
 /* SEÇÕES */
@@ -158,22 +197,81 @@
   gap: 0.5rem;
 }
 
+.calculation-modal-parameter {
+  margin-bottom: 1rem;
+}
+
 .calculation-modal-parameter label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #4b5563;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 4px;
 }
 
-.unit {
-  font-size: 0.75rem;
+.calculation-modal-parameter .unit {
+  margin-left: 0.25rem;
   color: #6b7280;
-  font-weight: normal;
+  font-size: 0.875rem;
 }
 
-.calculation-modal-parameter input,
+.calculation-modal-parameter .required {
+  color: #dc2626;
+  margin-left: 0.25rem;
+}
+
+.calculation-modal-parameter .tooltip-icon {
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.calculation-modal-parameter .tooltip-icon:hover {
+  color: #374151;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper input,
+.calculation-modal-parameter select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: #1f2937;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.input-wrapper input:hover {
+  border-color: #9ca3af;
+}
+
+.input-wrapper input:focus {
+  outline: none;
+  border-color: #00418f;
+  box-shadow: 0 0 0 2px rgba(0, 65, 143, 0.1);
+}
+
+.input-constraints {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: var(--text-color-light);
+  text-align: right;
+}
+
+.constraint-range {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 .calculation-modal-parameter select {
   padding: 0.75rem 1rem;
   border: 1px solid #d1d5db;
@@ -182,6 +280,17 @@
   width: 100%;
   transition: all 0.2s;
   background-color: #f9fafb;
+}
+
+/* Remove as setas do input number */
+.input-wrapper input[type="number"]::-webkit-outer-spin-button,
+.input-wrapper input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-wrapper input[type="number"] {
+  -moz-appearance: textfield;
 }
 
 .calculation-modal-parameter select {
@@ -309,6 +418,50 @@
   margin-top: 0.5rem;
 }
 
+/* SAVE TO HISTORY BUTTON */
+.save-history-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #00418f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.save-history-button:hover:not(:disabled) {
+  background-color: #003875;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 65, 143, 0.2);
+}
+
+.save-history-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 65, 143, 0.2);
+}
+
+.save-history-button:disabled,
+.save-history-button.disabled {
+  background-color: #9ca3af;
+  color: #6b7280;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.save-history-button:disabled:hover,
+.save-history-button.disabled:hover {
+  background-color: #9ca3af;
+  transform: none;
+  box-shadow: none;
+}
+
 /* ANIMAÇÕES */
 @keyframes fadeIn {
   from {
@@ -348,6 +501,17 @@
 
   .calculation-modal-header {
     padding: 1rem;
+  }
+
+  .section-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .preview-formula-button {
+    width: 100%;
+    justify-content: center;
   }
 }
 

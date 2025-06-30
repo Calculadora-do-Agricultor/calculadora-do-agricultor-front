@@ -1,9 +1,8 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "@/context/AuthContext";
-import { doc, setDoc } from "firebase/firestore";
-import { useCreateUserWithEmailAndPassword } from "react-firebase-hooks/auth";
-import { auth, db } from "@/services/firebaseConfig";
+import { authWrapper, firestoreWrapper } from "@/services/firebaseWrapper";
+import { useToast } from "@/context/ToastContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema } from "@/schemas";
@@ -45,13 +44,19 @@ const Register = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [registrationData, setRegistrationData] = useState(null);
+  
+  // Hook de Toast para notificações
+  const { success, error: toastError, info } = useToast();
 
   // Hook para gerenciar logs de localização
   const { locationPermission, logUserRegistration, isLogging } = useLocationLogger();
 
-  // Hook do Firebase para criação de usuário
-  const [createUserWithEmailAndPassword, firebaseUser, firebaseLoading, firebaseError] = 
-    useCreateUserWithEmailAndPassword(auth);
+  // Estado para controlar o status do registro
+  const [registrationStatus, setRegistrationStatus] = useState({
+    user: null,
+    loading: false,
+    error: null
+  });
 
   // Configuração do formulário com react-hook-form e Zod
   const form = useForm({
@@ -93,10 +98,10 @@ const Register = () => {
         throw new Error("Dados de registro não encontrados");
       }
 
-      // Primeiro, criar o usuário no Firebase Authentication
-      const result = await createUserWithEmailAndPassword(
+      // Primeiro, criar o usuário no Firebase Authentication com fallback
+      const result = await authWrapper.createUserWithEmailAndPassword(
         registrationData.email,
-        registrationData.password,
+        registrationData.password
       );
 
       if (!result) {
@@ -106,8 +111,8 @@ const Register = () => {
       console.log("Cadastro realizado com sucesso!", result.user);
       const uid = result.user.uid;
 
-      // Salvar os dados do usuário no Firestore
-      await setDoc(doc(db, "users", uid), {
+      // Salvar os dados do usuário no Firestore com fallback
+      await firestoreWrapper.setDocument("users", uid, {
         name: registrationData.name,
         email: registrationData.email,
         createdAt: new Date(),
@@ -149,6 +154,7 @@ const Register = () => {
       }
 
       localStorage.setItem("authToken", "logado");
+      success("Cadastro realizado com sucesso! Bem-vindo à Calculadora do Agricultor.");
       navigate("/Calculator");
       console.log("Usuário registrado e salvo no Firestore.");
     } catch (error) {
@@ -163,6 +169,17 @@ const Register = () => {
       // Definir código de erro específico do Firebase Auth
       setErrorCode(error.code || 'default');
       setErrorMessage("Erro de cadastro");
+      
+      // Mensagens de erro mais específicas para o usuário
+      if (error.code === 'auth/email-already-in-use') {
+        toastError("Este email já está sendo usado por outra conta.");
+      } else if (error.code === 'auth/weak-password') {
+        toastError("A senha fornecida é muito fraca. Use uma senha mais forte.");
+      } else if (error.code === 'auth/invalid-email') {
+        toastError("O email fornecido é inválido.");
+      } else {
+        toastError("Erro ao criar conta. Tente novamente.");
+      }
       
       // Log adicional para erros críticos de segurança
       if (error.code === 'auth/email-already-in-use') {
@@ -251,7 +268,7 @@ const Register = () => {
     setIsLoading(false);
   };
 
-  if (firebaseLoading || isProcessing || isLogging) {
+  if (authLoading || isProcessing || isLogging) {
     return (
       <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center">
         <div className="text-center">

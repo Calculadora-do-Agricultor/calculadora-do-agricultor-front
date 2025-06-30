@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { db } from "../../services/firebaseConfig"
 import { collection, doc, getDoc, updateDoc, getDocs, query, where, writeBatch } from "firebase/firestore"
+import { useToast } from "../../context/ToastContext"
 import {
   PlusCircle,
   X,
@@ -26,7 +27,8 @@ import {
 } from "lucide-react"
 import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
-import { evaluateExpression, normalizeMathFunctions } from "../../utils/mathEvaluator"
+import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
+import ExpressionValidator from "../ExpressionValidator"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -34,6 +36,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Estado para controlar a navegação entre as etapas
   const [step, setStep] = useState(1)
   const totalSteps = 4
+  
+  // Hook de Toast para notificações
+  const { success: toastSuccess, error: toastError, info: toastInfo } = useToast()
 
   // Dados do cálculo
   const [calculationName, setCalculationName] = useState("")
@@ -44,9 +49,46 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   const [currentTag, setCurrentTag] = useState("")
   const [lastModified, setLastModified] = useState(null)
 
+  // Limites de caracteres
+  const NAME_MAX_LENGTH = 50
+  const DESCRIPTION_MAX_LENGTH = 200
+  const TAG_MAX_LENGTH = 20
+  
+  // Função para validar o tamanho do nome
+  const handleNameChange = (value) => {
+    if (value.length <= NAME_MAX_LENGTH) {
+      setCalculationName(value)
+    }
+  }
+
+  // Função para validar o tamanho da descrição
+  const handleDescriptionChange = (value) => {
+    if (value.length <= DESCRIPTION_MAX_LENGTH) {
+      setCalculationDescription(value)
+    }
+  }
+
+  // Função para validar o tamanho da tag
+  const handleTagChange = (value) => {
+    if (value.length <= TAG_MAX_LENGTH) {
+      setCurrentTag(value)
+    }
+  }
+
   // Dados dos parâmetros
   const [parameters, setParameters] = useState([
-    { name: "", type: "number", unit: "", description: "", required: true, options: [] },
+    { 
+      name: "", 
+      type: "number", 
+      unit: "", 
+      description: "", 
+      required: true, 
+      options: [],
+      max: "",
+      step: "0.01",
+      mask: "#.##",
+      tooltip: "Digite um valor numérico"
+    },
   ])
 
   // Dados dos resultados
@@ -232,7 +274,11 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           if (calculationData.parameters && calculationData.parameters.length > 0) {
             const parametersWithIds = calculationData.parameters.map((param, index) => ({
               ...param,
-              id: param.id || `param-${Date.now()}-${index}`
+              id: param.id || `param-${Date.now()}-${index}`,
+              step: param.step || "0.01",
+              max: param.max || "",
+              mask: param.mask || "",
+              tooltip: param.tooltip || ""
             }))
             setParameters(parametersWithIds)
           }
@@ -240,7 +286,9 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           if (calculationData.results && calculationData.results.length > 0) {
             const resultsWithIds = calculationData.results.map((result, index) => ({
               ...result,
-              id: result.id || `result-${Date.now()}-${index}`
+              id: result.id || `result-${Date.now()}-${index}`,
+              unit: result.unit || "",
+              description: result.description || ""
             }))
             setResults(resultsWithIds)
           }
@@ -320,10 +368,33 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         return result
       })
       setResults(updatedResults)
-  
     }
 
-    updatedParameters[index][field] = value
+    // Se estamos mudando o tipo para número, adicionamos as propriedades numéricas
+    if (field === 'type' && value === 'number') {
+      updatedParameters[index] = {
+        ...updatedParameters[index],
+        [field]: value,
+        max: '',
+        step: '0.01',
+        mask: '',
+        tooltip: 'Digite um valor numérico'
+      }
+    } else if (field === 'max' || field === 'step') {
+      // Validação para campos numéricos
+      const numValue = value === '' ? '' : Number(value)
+      if (!isNaN(numValue) || value === '') {
+        updatedParameters[index][field] = value
+      }
+    } else if (field === 'mask') {
+      // Validação para máscara (apenas # e . são permitidos)
+      if (/^[#.]*$/.test(value)) {
+        updatedParameters[index][field] = value
+      }
+    } else {
+      updatedParameters[index][field] = value
+    }
+
     setParameters(updatedParameters)
   }
 
@@ -549,6 +620,29 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
           isValid = false
         }
 
+        if (param.type === "number") {
+          // Validação de min/max
+          if (param.min !== "" && param.max !== "" && Number(param.min) >= Number(param.max)) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].range = "O valor mínimo deve ser menor que o valor máximo."
+            isValid = false
+          }
+
+          // Validação do step
+          if (param.step !== "" && Number(param.step) <= 0) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].step = "O incremento deve ser maior que zero."
+            isValid = false
+          }
+
+          // Validação da máscara (opcional)
+          if (param.mask && param.mask.trim() !== '' && !/^[#.]+$/.test(param.mask)) {
+            if (!errors.parameters[index]) errors.parameters[index] = {}
+            errors.parameters[index].mask = "A máscara deve conter apenas # e ."
+            isValid = false
+          }
+        }
+
         if (param.type === "select" && (!param.options || param.options.length === 0)) {
           if (!errors.parameters[index]) errors.parameters[index] = {}
           errors.parameters[index].options = "Adicione pelo menos uma opção para o parâmetro de seleção."
@@ -579,7 +673,23 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         if (!result.expression.trim()) {
           if (!errors.results[index]) errors.results[index] = {}
           errors.results[index].expression = "A expressão de cálculo é obrigatória."
-          isValid = false
+          isValid = false 
+         } else {
+          // Valida a expressão matemática usando a função validateExpression
+          const paramValues = {}
+          parameters.forEach(param => {
+            if (param.name) {
+              paramValues[param.name] = param.type === "number" ? 10 : 0
+            }
+          })
+          
+          const validationResult = validateExpression(result.expression, paramValues)
+          
+          if (!validationResult.isValid) {
+            if (!errors.results[index]) errors.results[index] = {}
+            errors.results[index].expression = validationResult.errorMessage
+            isValid = false
+          }
         }
 
         if (result.isMainResult) {
@@ -626,17 +736,24 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   // Função para calcular o resultado com base na expressão
   const calculateResult = (expression, values) => {
     try {
+           // Primeiro valida a expressão
+      const validation = validateExpression(expression, values)
+      if (!validation.isValid) {
+        console.error("Erro de validação:", validation.errorMessage)
+        return "Erro: " + validation.errorMessage
+      }
+      
       // Normaliza as funções matemáticas na expressão
       const normalizedExpression = normalizeMathFunctions(expression)
 
       // Avalia a expressão de forma segura
-      const result = evaluateExpression(normalizedExpression, values)
+      const result = evaluateExpression(normalizedExpression, values, true)
       
       // Retorna "Erro" se o resultado for 0 devido a erro (mantém compatibilidade)
       return result === 0 && normalizedExpression.includes('@[') ? "Erro" : result
     } catch (error) {
       console.error("Erro ao calcular resultado:", error)
-      return "Erro"
+      return "Erro: " + error.message
     }
   }
 
@@ -724,6 +841,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
   
   // Função para atualizar o cálculo
   const handleUpdateCalculation = async () => {
+    // Valida o formulário
+    if (!validateStep(3)) {
+      toastError("Verifique os campos obrigatórios antes de continuar.")
+      return
+    }
+    
     try {
       setLoading(true);
       
@@ -755,10 +878,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         lastModified: new Date(),
       });
       setSuccess(true);
+      toastSuccess(`Cálculo "${calculationName}" atualizado com sucesso!`);
       if (onUpdate) onUpdate();
     } catch (error) {
       console.error("Erro ao atualizar cálculo:", error);
       setError("Erro ao atualizar cálculo. Tente novamente.");
+      toastError("Falha ao atualizar cálculo. Verifique sua conexão e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -885,7 +1010,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                     type="text"
                     placeholder="Ex: Cálculo de Adubação, Conversão de Unidades..."
                     value={calculationName}
-                    onChange={(e) => setCalculationName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    maxLength={NAME_MAX_LENGTH}
                     className={validationErrors.basic?.name ? "input-error" : ""}
                   />
                   {validationErrors.basic?.name && <div className="error-text">{validationErrors.basic.name}</div>}
@@ -899,7 +1025,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                     id="edit-calculationDescription"
                     placeholder="Descreva o propósito deste cálculo e como ele pode ser útil..."
                     value={calculationDescription}
-                    onChange={(e) => setCalculationDescription(e.target.value)}
+                    onChange={(e) => handleDescriptionChange(e.target.value)}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
                     className={validationErrors.basic?.description ? "input-error" : ""}
                     rows={4}
                   />
@@ -948,7 +1075,8 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                         type="text"
                         placeholder="Adicionar tag..."
                         value={currentTag}
-                        onChange={(e) => setCurrentTag(e.target.value)}
+                        onChange={(e) => handleTagChange(e.target.value)}
+                        maxLength={TAG_MAX_LENGTH}
                         onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())}
                       />
                       <button type="button" onClick={addTag} className="tag-add-button" disabled={!currentTag.trim()}>
@@ -1059,7 +1187,83 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                         onChange={(e) => updateParameter(index, "unit", e.target.value)}
                       />
                     </div>
+
+                    <div className="form-group form-checkbox">
+                      <input
+                        id={`param-required-${index}`}
+                        type="checkbox"
+                        checked={param.required}
+                        onChange={(e) => updateParameter(index, "required", e.target.checked)}
+                      />
+                      <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                    </div>
                   </div>
+
+                  {param.type === "number" && (
+                    <div className="numeric-config">
+                      <div className="form-row">
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-max`} title="Valor máximo permitido">
+                            Máximo
+                          </label>
+                          <input
+                            type="number"
+                            id={`param-${index}-max`}
+                            value={param.max}
+                            onChange={(e) => updateParameter(index, "max", e.target.value)}
+                            placeholder="Valor máximo"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-step`} title="Incremento/decremento do valor">
+                            Incremento
+                          </label>
+                          <input
+                            type="number"
+                            id={`param-${index}-step`}
+                            value={param.step}
+                            onChange={(e) => updateParameter(index, "step", e.target.value)}
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0.01"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-mask`} title="Use # para dígitos e . para decimal">
+                            Máscara
+                          </label>
+                          <input
+                            type="text"
+                            id={`param-${index}-mask`}
+                            value={param.mask}
+                            onChange={(e) => updateParameter(index, "mask", e.target.value)}
+                            placeholder="#.##"
+                          />
+                          {validationErrors.parameters[index]?.mask && (
+                            <div className="error-text">{validationErrors.parameters[index].mask}</div>
+                          )}
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor={`param-${index}-tooltip`}>
+                            Tooltip
+                          </label>
+                          <input
+                            type="text"
+                            id={`param-${index}-tooltip`}
+                            value={param.tooltip}
+                            onChange={(e) => updateParameter(index, "tooltip", e.target.value)}
+                            placeholder="Mensagem de ajuda"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="form-group">
                     <label htmlFor={`param-description-${index}`}>Descrição</label>
@@ -1070,16 +1274,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       onChange={(e) => updateParameter(index, "description", e.target.value)}
                       rows={2}
                     />
-                  </div>
-
-                  <div className="form-group form-checkbox">
-                    <input
-                      id={`param-required-${index}`}
-                      type="checkbox"
-                      checked={param.required}
-                      onChange={(e) => updateParameter(index, "required", e.target.checked)}
-                    />
-                    <label htmlFor={`param-required-${index}`}>Obrigatório</label>
                   </div>
 
                   {param.type === "select" && (
@@ -1362,6 +1556,15 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                     />
                     {validationErrors.results[resultIndex]?.expression && (
                       <div className="error-text">{validationErrors.results[resultIndex].expression}</div>
+                    )}
+
+                    {/* Validador de expressão */}
+                    {result.expression && (
+                      <ExpressionValidator 
+                        expression={result.expression} 
+                        onChange={(e) => updateExpressionWithHistory(resultIndex, e)}
+                        parameters={parameters}
+                      />
                     )}
                   </div>
 

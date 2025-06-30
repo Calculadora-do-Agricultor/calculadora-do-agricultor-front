@@ -4,6 +4,10 @@ import { Navbar, Footer, PrivateRoute, ProtectedRoute } from "@/components";
 import { useIntelligentPreload } from "./utils/preloadRoutes";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./services/firebaseConfig";
+import { ToastProvider, useToast } from "./context/ToastContext";
+import { setToastInstance } from "./services/firebaseWrapper";
+import { useCalculationHistoryCleanup } from "./hooks/useCalculationHistoryCleanup";
+
 
 // Lazy loading das páginas para reduzir bundle inicial
 const Home = React.lazy(() => import("./pages/Home/Home"));
@@ -15,6 +19,13 @@ const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculation
 const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
+const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
+const FAQ = React.lazy(() => import("./pages/FAQ"));
+const FAQAdmin = React.lazy(() => import("./pages/Admin/FAQAdmin"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
+
+
 
 // Componente de loading otimizado
 const PageLoader = () => (
@@ -24,20 +35,37 @@ const PageLoader = () => (
 );
 
 
+// Componente para inicializar o sistema de notificações
+const ToastInitializer = () => {
+  const toast = useToast();
+  React.useEffect(() => {
+    setToastInstance(toast);
+  }, [toast]);
+  return null;
+};
+
 function App() {
   const [user] = useAuthState(auth);
   
   // Hook para preload inteligente de rotas baseado no contexto do usuário
   useIntelligentPreload(user, user?.email?.includes('admin') || false);
   
+  // Hook para limpeza automática do histórico de cálculos (90 dias)
+  useCalculationHistoryCleanup(90, true);
+  
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <Router>
-        <Navbar />
-        <main className="flex-grow pt-20">
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+    <Router>
+      <ToastProvider>
+          <ToastInitializer />
+          <div className="flex min-h-screen w-full flex-col">
+            <Navbar />
+            <main className="flex-grow pt-20">
+              <Suspense fallback={<PageLoader />}>
+              <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/glossario" element={<GlossarioPage />} />
+              <Route path="/faq" element={<FAQ />} />
+              
               <Route
                 path="/login"
                 element={<PrivateRoute requiresAuth={false} />}
@@ -95,13 +123,38 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/faq"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <FAQAdmin />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/data-integrity"
+                element={
+                  <ProtectedRoute adminOnly={true} redirectTo="/">
+                    <DataIntegrityPage />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
-          </Suspense>
-        </main>
-        <Footer />
-      </Router>
-    </div>
-  );
+            </Suspense>
+            </main>
+            <Footer />
+          </div>
+      </ToastProvider>
+    </Router>
+    );
 }
 
 export default App;

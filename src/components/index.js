@@ -5,13 +5,19 @@ export { default as Footer } from './Footer';
 export { default as PrivateRoute } from './PrivateRoute';
 export { default as ProtectedRoute } from './ProtectedRoute';
 
+// Componentes de expressões matemáticas
+export { default as ExpressionValidator } from './ExpressionValidator';
+
 // Componentes específicos da calculadora - lazy load quando necessário
-export { default as CalculationList } from './CalculationList';
+// CalculationList removido para evitar conflito com importação dinâmica
+// Use: import CalculationList from '@/components/CalculationList';
 export { default as Categories } from './Categories';
+export { default as CategoriaCard } from './CategoriaCard';
 
 // Outros componentes podem ser importados diretamente quando necessários
 // para evitar carregar código desnecessário no bundle inicial
 // Exemplo: import CalculationModal from '@/components/CalculationModal';
+// Exemplo: import FormulaPreviewModal from '@/components/FormulaPreviewModal';
 
 // Componentes administrativos - apenas carregados quando necessário
 // export { default as CalculationActions } from "./CalculationActions"

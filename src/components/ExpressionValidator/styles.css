@@ -1,0 +1,239 @@
+.expression-validator {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.validator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.validator-header h3 {
+  margin: 0;
+  color: #343a40;
+  font-size: 1.2rem;
+}
+
+.validator-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.validate-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.validate-btn:hover {
+  background-color: #218838;
+}
+
+.validate-btn:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.toggle-docs-btn {
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.toggle-docs-btn:hover {
+  background-color: #5a6268;
+}
+
+/* Estilos para o status de validação */
+.validation-status {
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.validation-status.valid {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.validation-status.invalid {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.valid-message {
+  display: flex;
+  align-items: center;
+  color: #28a745;
+}
+
+.invalid-message {
+  display: flex;
+  align-items: center;
+  color: #dc3545;
+}
+
+.validation-status i {
+  margin-right: 8px;
+  font-size: 1.1rem;
+}
+
+/* Estilos para os valores de exemplo */
+.example-values {
+  margin-bottom: 16px;
+}
+
+.example-values h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.parameters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.parameter-input {
+  display: flex;
+  flex-direction: column;
+}
+
+.parameter-input label {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.parameter-input input {
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+/* Estilos para o resultado do teste */
+.test-result {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #f1f3f5;
+  border-radius: 6px;
+}
+
+.test-result h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1rem;
+  color: #495057;
+}
+
+.result-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.result-value .success {
+  color: #28a745;
+}
+
+.result-value .error {
+  color: #dc3545;
+}
+
+/* Estilos para a documentação de sintaxe */
+.syntax-docs {
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.syntax-docs h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #343a40;
+  font-size: 1.2rem;
+}
+
+.syntax-docs p {
+  margin-bottom: 16px;
+  color: #6c757d;
+}
+
+.docs-section {
+  margin-bottom: 20px;
+}
+
+.docs-section h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1rem;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 8px;
+}
+
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.docs-item {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.docs-format {
+  font-family: monospace;
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.docs-description {
+  margin-bottom: 8px;
+  color: #6c757d;
+}
+
+.docs-example {
+  font-family: monospace;
+  font-size: 0.9rem;
+  color: #0366d6;
+  background-color: rgba(3, 102, 214, 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.restrictions-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.restrictions-list li {
+  margin-bottom: 6px;
+  color: #6c757d;
+}

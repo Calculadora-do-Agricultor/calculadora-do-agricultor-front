@@ -1,9 +1,8 @@
 import React, { useContext, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth, db } from "../../services/firebaseConfig";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { authWrapper, firestoreWrapper } from "../../services/firebaseWrapper";
+import { useToast } from "../../context/ToastContext";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema } from "@/schemas";
@@ -37,6 +36,7 @@ const Login = () => {
   const [errorCode, setErrorCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const { success, error: toastError, info } = useToast();
 
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -67,48 +67,25 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
+      // Tentar autenticar mesmo offline
+      const userCredential = await authWrapper.signInWithEmailAndPassword(
         values.email,
-        values.password,
+        values.password
       );
       const user = userCredential.user;
 
-      if (!user.emailVerified) {
-        setError("Verifique seu e-mail antes de continuar.");
+      // Verificar se a conta está ativa antes de prosseguir
+      const userData = await firestoreWrapper.getDocument("users", user.uid);
+      
+      if (userData && userData.active === false) {
+        // Deslogar imediatamente e mostrar erro
+        await authWrapper.signOut();
+        setError("Sua conta foi desativada por um administrador.");
+        toastError("Sua conta foi desativada por um administrador.");
+        setErrorCode("account-disabled");
         setIsLoading(false);
         return;
       }
-
-      // Verificar se a conta está ativa antes de prosseguir
-      const userDocRef = doc(db, "users", user.uid);
-      const userDocSnap = await getDoc(userDocRef);
-      
-      if (userDocSnap.exists()) {
-        const userData = userDocSnap.data();
-        
-        if (userData.active === false) {
-          // Deslogar imediatamente e mostrar erro
-          await signOut(auth);
-          setError("Sua conta foi desativada por um administrador.");
-          setErrorCode("account-disabled");
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      // Proteção contra log duplicado por sessão
-      const sessionId = crypto.randomUUID();
-      localStorage.setItem("sessionId", sessionId);
-
-      await addDoc(collection(db, "Logs"), {
-        userId: user.uid,
-        email: user.email,
-        acao: "Login",
-        timestamp: serverTimestamp(),
-        userAgent: navigator.userAgent,
-        sessionId: sessionId,
-      });
 
       localStorage.setItem("authToken", "logado");
 
@@ -117,6 +94,9 @@ const Login = () => {
       } else {
         localStorage.removeItem("rememberedEmail");
       }
+
+
+      success("Bem-vindo de volta! Login realizado com sucesso.");
 
       navigate("/Calculator");
     } catch (error) {
@@ -131,6 +111,19 @@ const Login = () => {
       // Definir código de erro específico do Firebase Auth
       setErrorCode(error.code || 'default');
       setError("Erro de autenticação");
+      
+      // Mensagens de erro mais específicas para o usuário
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+
+        // Notificação de email ou senha incorretos removida conforme solicitado
+      } else if (error.code === 'auth/too-many-requests') {
+        // Notificação de muitas tentativas removida conforme solicitado
+      } else if (error.code === 'auth/user-disabled') {
+        // Mantendo apenas o registro do erro sem exibir notificação
+      } else {
+        // Notificação genérica de erro de login removida conforme solicitado
+
+      }
       
       // Log adicional para erros críticos de segurança
       if (error.code === 'auth/too-many-requests' || error.code === 'auth/user-disabled') {
