@@ -58,5 +58,44 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && 
         (request.auth.uid == resource.data.userId || isAdmin());
     }
+    
+    // Regras para coleção de fórmulas matemáticas
+    match /formulas/{formulaId} {
+      // Usuários podem ler apenas suas próprias fórmulas
+      allow read: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      
+      // Usuários podem criar fórmulas com validações de segurança
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.userId &&
+        isValidFormulaData(request.resource.data);
+      
+      // Usuários podem atualizar apenas suas próprias fórmulas
+      allow update: if isAuthenticated() && 
+        request.auth.uid == resource.data.userId &&
+        isValidFormulaUpdate(request.resource.data);
+      
+      // Usuários podem excluir (soft delete) apenas suas próprias fórmulas
+      allow delete: if isAuthenticated() && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+    }
+    
+    // Função para validar dados de fórmula na criação
+    function isValidFormulaData(data) {
+      return data.keys().hasAll(['name', 'expression', 'userId', 'createdAt', 'isActive']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.expression is string && data.expression.size() > 0 && data.expression.size() <= 1000 &&
+        data.userId is string &&
+        data.isActive is bool &&
+        data.createdAt is timestamp;
+    }
+    
+    // Função para validar atualizações de fórmula
+    function isValidFormulaUpdate(data) {
+      return (!('name' in data) || (data.name is string && data.name.size() > 0 && data.name.size() <= 100)) &&
+        (!('expression' in data) || (data.expression is string && data.expression.size() > 0 && data.expression.size() <= 1000)) &&
+        (!('userId' in data) || data.userId == resource.data.userId) &&
+        data.updatedAt is timestamp;
+    }
   }
 }
