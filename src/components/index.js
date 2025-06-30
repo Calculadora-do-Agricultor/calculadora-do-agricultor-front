@@ -17,6 +17,7 @@ export { default as CategoriaCard } from './CategoriaCard';
 // Outros componentes podem ser importados diretamente quando necessários
 // para evitar carregar código desnecessário no bundle inicial
 // Exemplo: import CalculationModal from '@/components/CalculationModal';
+// Exemplo: import FormulaPreviewModal from '@/components/FormulaPreviewModal';
 
 // Componentes administrativos - apenas carregados quando necessário
 // export { default as CalculationActions } from "./CalculationActions"
