@@ -36,6 +36,7 @@ import {
 import MetricCard from "../../components/MetricCard";
 import LogCard from "../../components/LogCard";
 import EmptyState from "../../components/ui/EmptyState";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import "./LogsManagement.css";
 
 // Constantes para tooltips das métricas
@@ -814,12 +815,14 @@ const LogsManagement = () => {
             {/* Conteúdo principal - Cards de logs */}
             <div className="overflow-x-auto bg-white/70 backdrop-blur-sm mt-8">
               {loading ? (
-                <div className="loading-state flex flex-col items-center justify-center space-y-4 p-16">
-                  <div className="spinner"></div>
-                  <p className="font-medium text-[#00418F]/70">
-                    Carregando logs...
-                  </p>
-                </div>
+                <LoadingSpinner
+                  tipo="inline"
+                  mensagem="Carregando logs..."
+                  size="md"
+                  color="primary"
+                  delay={200}
+                  ariaLabel="Carregando registros de logs"
+                />
               ) : error ? (
                 <div className="error-state m-4 flex items-center justify-center rounded-xl border border-red-100 bg-red-50/50 p-12 text-red-600 backdrop-blur-sm">
                   <ExclamationCircleIcon className="icon-animated mr-3 h-8 w-8" />

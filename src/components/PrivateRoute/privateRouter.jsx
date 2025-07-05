@@ -3,6 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../../services/firebaseConfig.js';
+import LoadingSpinner from '../LoadingSpinner';
 
 const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
   const [user, loading, error] = useAuthState(auth);
@@ -33,7 +34,16 @@ const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
   }, [user]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <LoadingSpinner
+        tipo="full"
+        mensagem="Autenticando usuário..."
+        size="md"
+        color="primary"
+        delay={100}
+        ariaLabel="Carregando autenticação"
+      />
+    );
   }
 
   if (error) {

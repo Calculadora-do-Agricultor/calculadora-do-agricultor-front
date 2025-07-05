@@ -15,6 +15,7 @@ import {
   RefreshCw,
   ChevronDown
 } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import { 
   BarChart, 
   Bar, 
@@ -370,10 +371,14 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <Loader2 className="animate-spin" size={48} />
-        <p>Carregando dados do dashboard...</p>
-      </div>
+      <LoadingSpinner
+        tipo="full"
+        mensagem="Carregando dados do dashboard..."
+        size="lg"
+        color="primary"
+        delay={200}
+        ariaLabel="Carregando dashboard"
+      />
     );
   }
 
@@ -398,7 +403,11 @@ const Dashboard = () => {
           className="refresh-button"
           disabled={loading}
         >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          {loading ? (
+            <LoadingSpinner tipo="inline" tamanho="small" cor="white" />
+          ) : (
+            <RefreshCw size={16} />
+          )}
           Atualizar dados
         </button>
       </div>

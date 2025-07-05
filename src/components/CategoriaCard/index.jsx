@@ -1,25 +1,26 @@
 import React, { useState } from 'react';
-import { PencilIcon } from '@heroicons/react/24/outline';
 import { Badge } from '../ui/badge';
 import { Edit, ImageIcon } from 'lucide-react';
 
 const CategoriaCard = ({
-  imageUrl, // URL da imagem da categoria
+  imageUrl,
   title,
   description,
   onClick,
   onEdit,
-  tags = [], // Array de tags da categoria
+  tags = [],
   className = '',
   disabled = false,
   calculosCount = 0,
-  color // Nova prop para a cor
+  color,
+  isSelected = false
 }) => {
   const [imageError, setImageError] = useState(false);
 
   const handleImageError = () => {
     setImageError(true);
   };
+
   const handleClick = () => {
     if (!disabled && onClick) {
       onClick();
@@ -43,9 +44,13 @@ const CategoriaCard = ({
   return (
     <div
       className={`
-        relative group cursor-pointer bg-white rounded-lg border border-gray-200 
-        shadow-sm hover:shadow-md transition-all duration-200 p-4 w-full
-        ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#00418F] hover:scale-[1.02]'}
+        relative group cursor-pointer bg-white rounded-lg border-2 transition-all duration-200 p-4 w-full
+        ${
+          isSelected 
+            ? 'border-[#00418F] bg-blue-50 shadow-lg shadow-blue-100' 
+            : 'border-gray-200 hover:border-[#00418F] hover:shadow-md'
+        }
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.01]'}
         ${className}
       `}
       onClick={handleClick}
@@ -57,67 +62,86 @@ const CategoriaCard = ({
     >
 
 
-      {/* Conteúdo principal - Layout horizontal */}
+      {/* Layout principal */}
       <div className="flex items-center gap-4 w-full">
-        {/* Imagem da categoria */}
+        {/* Ícone da categoria */}
         <div 
-          className="flex items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 flex-shrink-0 overflow-hidden p-2"
+          className="flex items-center justify-center w-12 h-12 rounded-lg flex-shrink-0 transition-all duration-200"
           style={{
-            backgroundColor: color ? `${color}50` : '#00418F20',
+            backgroundColor: color ? `${color}20` : '#00418F20',
           }}
         >
           {imageUrl && !imageError ? (
             <img 
               src={imageUrl} 
               alt={`Ícone da categoria ${title}`}
-              className="w-full h-full object-cover rounded-md"
+              className="w-8 h-8 object-cover rounded-md"
               onError={handleImageError}
             />
           ) : (
             <ImageIcon 
-              className="w-5 h-5" 
+              className="w-6 h-6" 
               style={{ color: color || '#00418F' }} 
               aria-hidden="true" 
             />
           )}
         </div>
 
-        {/* Nome da categoria */}
-        <div className="flex-1 min-w-0 mr-3">
-          <h3 className="text-lg font-semibold text-gray-900 truncate">
-            {title}
-          </h3>
-          {/* Tags da categoria */}
-          <div className="flex flex-wrap gap-1 mt-1">
-            {tags && tags.length > 0 && tags.map((tag, index) => (
-              <Badge 
-                key={index}
-                variant="outline" 
-                className="text-xs font-medium px-2 py-0.5"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {/* Área direita - Contador e botão de editar */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Contador de cálculos */}
-          <div className="text-right">
-            <p className="text-xs text-gray-500">{calculosCount} {calculosCount === 1 ? 'cálculo' : 'cálculos'}</p>
+        {/* Informações da categoria */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-base font-semibold text-gray-900 truncate leading-tight">
+                {title}
+              </h3>
+              {description && (
+                <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">
+                  {description}
+                </p>
+              )}
+            </div>
+            
+            {/* Contador de cálculos */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {calculosCount} {calculosCount === 1 ? 'cálculo' : 'cálculos'}
+              </span>
+              
+              {/* Botão de editar */}
+              {onEdit && (
+                <button
+                  onClick={handleEdit}
+                  className="p-1.5 rounded-full bg-gray-100 hover:bg-blue-100 transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  aria-label={`Editar categoria ${title}`}
+                >
+                  <Edit className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+                </button>
+              )}
+            </div>
           </div>
           
-          {/* Botão de editar - sempre visível */}
-           {onEdit && (
-             <button
-               onClick={handleEdit}
-               className="p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors duration-200 border border-gray-200 hover:border-gray-300 cursor-pointer"
-               aria-label={`Editar categoria ${title}`}
-             >
-               <Edit className="w-4 h-4 text-gray-600" />
-             </button>
-           )}
+          {/* Tags da categoria */}
+          {tags && tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {tags.slice(0, 3).map((tag, index) => (
+                <Badge 
+                  key={index}
+                  variant="outline" 
+                  className="text-xs font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200"
+                >
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > 3 && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs font-medium px-2 py-0.5 bg-gray-50 text-gray-500 border-gray-200"
+                >
+                  +{tags.length - 3}
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

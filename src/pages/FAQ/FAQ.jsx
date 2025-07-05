@@ -65,7 +65,16 @@ const FAQ = () => {
 
   // Mostrar loading enquanto carrega
   if (loading) {
-    return <LoadingSpinner size="xl" text="Carregando FAQ..." />;
+    return (
+      <LoadingSpinner 
+        tipo="full" 
+        mensagem="Carregando FAQ..." 
+        tamanho="large" 
+        cor="primary" 
+        delay={200}
+        ariaLabel="Carregando perguntas frequentes"
+      />
+    );
   }
 
   // Se não há itens e não há erro, mostrar mensagem amigável

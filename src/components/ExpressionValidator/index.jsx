@@ -171,7 +171,7 @@ ando          <div className="docs-grid">
 
         <div className="docs-section">
           <h4>Constantes</h4>
-          <div classNidame="docs-grid">
+          <div className="docs-grid">
             {syntaxDocs.constants.map((constant) => (
               <div key={constant.name} className="docs-item">
                 <div className="docs-format">{constant.name}</div>

@@ -19,12 +19,12 @@ import {
   Eye,
   AlertTriangle,
   CheckCircle,
-  Loader2,
 } from "lucide-react"
 import CalculationModal from "../CalculationModal"
 import { Tooltip } from "../ui/Tooltip"
 import CalculationActions from "../CalculationActions"
 import EmptyState from "../ui/EmptyState"
+import LoadingSpinner from "../LoadingSpinner"
 import { SearchX, Calculator as CalculatorIcon } from "lucide-react"
 import "./styles.css"
 
@@ -252,41 +252,18 @@ const CalculationList = ({
     setCalculationToDelete(null)
   }
 
-  // Skeleton loading component
-  const CalculationSkeleton = () => (
-    <div className="calculation-card is-loading">
-      <div className="calculation-content">
-        <div className="skeleton-title"></div>
-        <div className="skeleton-description"></div>
-        <div className="skeleton-description"></div>
-        <div className="skeleton-description" style={{ width: "70%" }}></div>
-      </div>
-      <div className="calculation-footer">
-        <div className="skeleton-button"></div>
-      </div>
-    </div>
-  )
+
 
   if (loading) {
     return (
-      <div className="calculations-container">
-        <div className="calculations-header">
-          <div className="calculations-count">
-            <div className="skeleton-text"></div>
-          </div>
-          <div className="calculations-actions">
-            <div className="skeleton-action"></div>
-            <div className="skeleton-action"></div>
-          </div>
-        </div>
-        <div className={`calculations-${viewMode}`}>
-          {Array(6)
-            .fill()
-            .map((_, index) => (
-              <CalculationSkeleton key={index} />
-            ))}
-        </div>
-      </div>
+      <LoadingSpinner
+        tipo="full"
+        mensagem="Carregando cálculos..."
+        tamanho="medium"
+        cor="primary"
+        delay={200}
+        ariaLabel="Carregando lista de cálculos"
+      />
     )
   }
 
@@ -576,7 +553,11 @@ const CalculationList = ({
                   >
                     {isDeleting ? (
                       <>
-                        <Loader2 size={16} className="animate-spin" />
+                        <LoadingSpinner
+                          tipo="inline"
+                          tamanho="small"
+                          cor="white"
+                        />
                         <span>Excluindo...</span>
                       </>
                     ) : (

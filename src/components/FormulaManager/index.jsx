@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useFormulaService } from '../../hooks/useFormulaService';
 import { validateExpression } from '../../utils/mathEvaluator';
+import LoadingSpinner from '../LoadingSpinner';
 import './styles.css';
 
 /**
@@ -292,7 +293,18 @@ const FormulaManager = () => {
                   className="btn btn--primary"
                   disabled={loading || (validationResult && !validationResult.isValid)}
                 >
-                  {loading ? 'Salvando...' : (editingFormula ? 'Atualizar' : 'Salvar')}
+                  {loading ? (
+                    <LoadingSpinner 
+                      tipo="inline" 
+                      mensagem="Salvando..." 
+                      tamanho="small" 
+                      cor="white" 
+                      delay={0}
+                      ariaLabel="Salvando fórmula"
+                    />
+                  ) : (
+                    editingFormula ? 'Atualizar' : 'Salvar'
+                  )}
                 </button>
               </div>
             </form>
@@ -302,7 +314,16 @@ const FormulaManager = () => {
 
       {/* Lista de fórmulas */}
       <div className="formula-list">
-        {loading && <div className="loading">Carregando fórmulas...</div>}
+        {loading && (
+          <LoadingSpinner 
+            tipo="inline" 
+            mensagem="Carregando fórmulas..." 
+            tamanho="medium" 
+            cor="primary" 
+            delay={200}
+            ariaLabel="Carregando lista de fórmulas"
+          />
+        )}
         
         {!loading && filteredFormulas.length === 0 && (
           <div className="empty-state">
