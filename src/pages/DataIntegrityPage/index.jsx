@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Database, Loader2, FileWarning } from 'lucide-react';
+import { Shield, AlertTriangle, Database, FileWarning } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebaseConfig';
 import DataIntegrityReport from '../../components/DataIntegrityReport';
 import { useOptimizedCategories } from '../../hooks/useOptimizedFirestore';
 import { useDataIntegrityCheck } from '../../hooks/useDataIntegrityCheck';
 import { useToast } from '../../context/ToastContext';
+import LoadingSpinner from '../../components/LoadingSpinner';
 
 /**
  * Página de administração para verificação de integridade de dados
@@ -88,32 +89,36 @@ const DataIntegrityPage = () => {
             <h2 className="text-xl font-semibold text-gray-700">Visão Geral</h2>
           </div>
           {loading && (
-            <div className="flex items-center gap-2 text-blue-600">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span className="text-sm font-medium">Carregando dados...</span>
-            </div>
+            <LoadingSpinner 
+              tipo="inline" 
+              mensagem="Carregando dados..." 
+              tamanho="small" 
+              cor="primary" 
+              delay={100}
+              ariaLabel="Carregando dados de integridade"
+            />
           )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
           <div className="rounded-lg bg-blue-50 p-4">
             <p className="mb-2 text-sm font-medium text-gray-600">Categorias Carregadas</p>
-            <p className="text-2xl font-bold text-blue-700">{loading ? '...' : categories.length}</p>
+            <div className="text-2xl font-bold text-blue-700">{loading ? <LoadingSpinner tipo="inline" mensagem="" tamanho="small" cor="primary" delay={0} ariaLabel="Carregando contagem de categorias" /> : categories.length}</div>
           </div>
 
           <div className="rounded-lg bg-blue-50 p-4">
             <p className="mb-2 text-sm font-medium text-gray-600">Cálculos Existentes</p>
-            <p className="text-2xl font-bold text-blue-700">
-              {calculationsLoading ? '...' : calculationsCount}
-            </p>
+            <div className="text-2xl font-bold text-blue-700">
+              {calculationsLoading ? <LoadingSpinner tipo="inline" mensagem="" tamanho="small" cor="primary" delay={0} ariaLabel="Carregando contagem de cálculos" /> : calculationsCount}
+            </div>
           </div>
 
           <div className={`rounded-lg p-4 ${dataIssues?.length > 0 ? 'bg-orange-50' : 'bg-green-50'}`}>
             <p className="mb-2 text-sm font-medium text-gray-600">Problemas de Dados</p>
             <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${dataIssues?.length > 0 ? 'text-orange-700' : 'text-green-700'}`}>
-                {loading ? '...' : dataIssues?.length || 0}
-              </p>
+              <div className={`text-2xl font-bold ${dataIssues?.length > 0 ? 'text-orange-700' : 'text-green-700'}`}>
+                {loading ? <LoadingSpinner tipo="inline" mensagem="" tamanho="small" cor="primary" delay={0} ariaLabel="Carregando problemas de dados" /> : dataIssues?.length || 0}
+              </div>
               {!loading && integrityChecked && dataIssues?.length === 0 && (
                 <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Tudo OK</span>
               )}
@@ -123,9 +128,9 @@ const DataIntegrityPage = () => {
           <div className={`rounded-lg p-4 ${duplicateFormIds?.length > 0 ? 'bg-orange-50' : 'bg-green-50'}`}>
             <p className="mb-2 text-sm font-medium text-gray-600">IDs Duplicados</p>
             <div className="flex items-center gap-2">
-              <p className={`text-2xl font-bold ${duplicateFormIds?.length > 0 ? 'text-orange-700' : 'text-green-700'}`}>
-                {loading ? '...' : duplicateFormIds?.length || 0}
-              </p>
+              <div className={`text-2xl font-bold ${duplicateFormIds?.length > 0 ? 'text-orange-700' : 'text-green-700'}`}>
+                {loading ? <LoadingSpinner tipo="inline" mensagem="" tamanho="small" cor="primary" delay={0} ariaLabel="Carregando IDs duplicados" /> : duplicateFormIds?.length || 0}
+              </div>
               {!loading && duplicateFormIds?.length === 0 && (
                 <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Tudo OK</span>
               )}
@@ -157,10 +162,14 @@ const DataIntegrityPage = () => {
             className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
           >
             {loading ? (
-              <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Carregando...
-              </span>
+              <LoadingSpinner 
+                tipo="inline" 
+                mensagem="Carregando..." 
+                tamanho="small" 
+                cor="white" 
+                delay={0}
+                ariaLabel="Carregando relatório"
+              />
             ) : (
               'Abrir Relatório Detalhado'
             )}

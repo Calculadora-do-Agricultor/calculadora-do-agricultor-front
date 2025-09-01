@@ -3,6 +3,7 @@ import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import {
   ArrowPathIcon,
   ChevronLeftIcon,
@@ -449,10 +450,14 @@ const UserManagement = () => {
         {/* Lista de usuários */}
         <div className="p-6">
           {loading ? (
-            <div className="flex h-64 items-center justify-center">
-              <div className="spinner"></div>
-              <p className="ml-3 text-[#00418F]">Carregando usuários...</p>
-            </div>
+            <LoadingSpinner
+              tipo="inline"
+              mensagem="Carregando usuários..."
+              size="md"
+              color="primary"
+              delay={200}
+              ariaLabel="Carregando lista de usuários"
+            />
           ) : error ? (
             <div className="flex h-64 flex-col items-center justify-center text-center">
               <ExclamationCircleIcon className="h-12 w-12 text-red-500" />

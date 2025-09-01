@@ -4,6 +4,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConfig";
 import EditCalculation from "@/components/EditCalculation";
 import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const EditCalculationPage = () => {
   const { id } = useParams();
@@ -52,13 +53,14 @@ const EditCalculationPage = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader2
-            size={36}
-            className="mx-auto mb-4 animate-spin text-[#00418F]"
-          />
-          <p className="text-gray-600">Carregando cálculo...</p>
-        </div>
+        <LoadingSpinner 
+          tipo="full" 
+          mensagem="Carregando cálculo..." 
+          tamanho="medium" 
+          cor="primary" 
+          delay={200}
+          ariaLabel="Carregando dados do cálculo"
+        />
       </div>
     );
   }

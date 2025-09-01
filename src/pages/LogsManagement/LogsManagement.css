@@ -1,42 +1,28 @@
 /* Estilos para a página de gerenciamento de logs */
 
-/* Transições simples e leves */
+/* Simplificar transições para evitar lag */
 .logs-container {
-  opacity: 1;
+  transition: none;
 }
-
-/* Cards de métricas com transições básicas */
 .metric-card {
-  transition: border-color 150ms ease;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-
-.metric-card:hover {
-  border-color: rgba(0, 102, 255, 0.3);
-}
-
-/* Filtros com transições suaves */
-.filter-input,
-.filter-select {
-  transition: border-color 150ms ease;
-}
-
-/* Cards de logs com transições básicas */
 .log-card {
-  transition: border-color 150ms ease;
-  opacity: 1;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-
-.log-card:hover {
-  border-color: rgba(0, 102, 255, 0.3);
+/* Padronizar cores com o sistema */
+body {
+  background-color: #f8f9fa; /* Fundo claro consistente */
 }
-
-/* Botões com feedback visual simples */
-.btn-primary {
-  transition: background-color 150ms ease;
+.text-primary {
+  color: #00418F;
 }
-
-.btn-primary:hover {
-  background-color: rgba(0, 65, 143, 0.9);
+.bg-primary {
+  background-color: #00418F;
+}
+/* Remover animação fadeIn se causar lag */
+.fadeIn {
+  animation: none;
 }
 
 /* Ícones sem animações complexas */

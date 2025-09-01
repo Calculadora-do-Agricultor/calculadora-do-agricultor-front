@@ -29,6 +29,7 @@ import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
 import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
 import ExpressionValidator from "../ExpressionValidator"
+import LoadingSpinner from "../LoadingSpinner"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -921,12 +922,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
   if (loadingCategories) {
     return (
-      <div className="create-calculation-container">
-        <div className="loading-indicator">
-          <Loader2 size={36} className="animate-spin" />
-          <p>Carregando dados...</p>
-        </div>
-      </div>
+      <LoadingSpinner
+        tipo="full"
+        mensagem="Carregando dados..."
+        size="lg"
+        color="primary"
+        delay={200}
+        ariaLabel="Carregando dados do cálculo"
+      />
     )
   }
 
@@ -973,12 +976,13 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       )}
 
       {loading && (
-        <div className="loading-overlay">
-          <div className="loading-container">
-            <Loader2 size={36} className="animate-spin" />
-            <p>Processando...</p>
-          </div>
-        </div>
+        <LoadingSpinner
+          tipo="overlay"
+          mensagem="Processando..."
+          size="lg"
+          color="primary"
+          ariaLabel="Processando atualização do cálculo"
+        />
       )}
 
       {/* Indicador de progresso */}
@@ -995,10 +999,14 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             </div>
 
             {loadingCategories ? (
-              <div className="loading-indicator">
-                <Loader2 size={24} className="animate-spin" />
-                <p>Carregando categorias...</p>
-              </div>
+              <LoadingSpinner
+                tipo="inline"
+                mensagem="Carregando categorias..."
+                size="md"
+                color="primary"
+                delay={200}
+                ariaLabel="Carregando lista de categorias"
+              />
             ) : (
               <>
                 <div className="form-group">

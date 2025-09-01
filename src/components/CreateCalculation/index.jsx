@@ -28,6 +28,7 @@ import DraggableList from "../DraggableList"
 import { MultiSelect } from "../ui"
 import { evaluateExpression, normalizeMathFunctions, validateExpression } from "../../utils/mathEvaluator"
 import ExpressionValidator from "../ExpressionValidator"
+import LoadingSpinner from "../LoadingSpinner"
 import "../DraggableList/styles.css"
 import "./styles.css"
 
@@ -811,12 +812,13 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       )}
 
       {loading && (
-        <div className="loading-overlay">
-          <div className="loading-container">
-            <Loader2 size={36} className="animate-spin" />
-            <p>Processando...</p>
-          </div>
-        </div>
+        <LoadingSpinner
+          tipo="overlay"
+          mensagem="Processando..."
+          size="lg"
+          color="primary"
+          ariaLabel="Processando criação do cálculo"
+        />
       )}
 
       {/* Indicador de progresso */}
@@ -833,10 +835,14 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
             </div>
 
             {loadingCategories ? (
-              <div className="loading-indicator">
-                <Loader2 size={24} className="animate-spin" />
-                <p>Carregando categorias...</p>
-              </div>
+              <LoadingSpinner
+                tipo="inline"
+                mensagem="Carregando categorias..."
+                size="md"
+                color="primary"
+                delay={200}
+                ariaLabel="Carregando lista de categorias"
+              />
             ) : (
               <>
                 <div className="form-group">

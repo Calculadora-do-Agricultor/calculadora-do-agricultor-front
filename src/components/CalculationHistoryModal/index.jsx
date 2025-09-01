@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { CalculationHistoryService } from "../../services/calculationHistoryService";
 import { useToast } from "../../context/ToastContext";
+import LoadingSpinner from "../LoadingSpinner";
 
 const CalculationHistoryModal = ({
   isOpen,
@@ -459,10 +460,14 @@ const CalculationHistoryModal = ({
             >
               {isLoading && (
                 <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-gray-600">
-                    Carregando histórico...
-                  </span>
+                  <LoadingSpinner 
+                    tipo="inline" 
+                    mensagem="Carregando histórico..." 
+                    tamanho="medium" 
+                    cor="primary" 
+                    delay={200}
+                    ariaLabel="Carregando histórico de cálculos"
+                  />
                 </div>
               )}
 
