@@ -444,77 +444,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {/* Breadcrumbs */}
 
-                <div className="breadcrumbs">
-                  <span
-                    className="breadcrumb-link"
-                    onClick={() => {
-                      setCategoriaSelecionada(null);
-                      navigate("/");
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      color: "#007bff",
-                      transition: "color 0.2s",
-                    }}
-                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
-                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
-                    role="link"
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        setCategoriaSelecionada(null);
-                        navigate("/");
-                      }
-                    }}
-                  >
-                    Início
-                  </span>
-                  <ChevronRight size={16} aria-hidden="true" />
-
-                  <span
-                    className="breadcrumb-link"
-                    onClick={() => {
-                      setCategoriaSelecionada(null);
-                      navigate("/calculator", {
-                        state: { from: "breadcrumb" },
-                      });
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      color: "#007bff",
-                      transition: "color 0.2s",
-                    }}
-                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
-                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
-                    role="link"
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        setCategoriaSelecionada(null);
-                        navigate("/calculator", {
-                          state: { from: "breadcrumb" },
-                        });
-                      }
-                    }}
-                  >
-                    Calculadora
-                  </span>
-                  <ChevronRight size={16} aria-hidden="true" />
-
-                  <span
-                    className="current"
-                    style={{
-                      fontWeight: "bold",
-                      color: "#333",
-                    }}
-                    role="text"
-                    aria-current="page"
-                  >
-                    {categoriaSelecionada}
-                  </span>
-                </div>
 
                 {/* Lista de cálculos */}
                 <CalculationList

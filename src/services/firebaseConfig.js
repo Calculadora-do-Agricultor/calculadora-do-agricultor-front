@@ -28,12 +28,14 @@ if (!getApps().length) { // Se nenhum app Firebase está inicializado
 }
 
 
-// Apenas inicialize o App Check se uma chave for fornecida
-if (import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
+// Inicialize o App Check apenas em produção e se a chave estiver definida
+if (process.env.NODE_ENV === 'production' && import.meta.env.VITE_RECAPTCHA_SITE_KEY) {
   initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
     isTokenAutoRefreshEnabled: true,
   });
+} else if (process.env.NODE_ENV !== 'production') {
+  console.warn("⚠️ App Check desativado em ambiente de desenvolvimento.");
 } else {
   console.warn("⚠️ VITE_RECAPTCHA_SITE_KEY não definida. O App Check não será inicializado.");
 }
