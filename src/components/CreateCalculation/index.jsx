@@ -85,7 +85,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       options: [],
       max: "",
       step: "0.01",
-      mask: "", // Máscara opcional
+
       tooltip: "Digite um valor numérico",
       ordem: 1
     },
@@ -257,7 +257,6 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       options: [],
       max: "",
       step: "0.01",
-      mask: "", // Máscara opcional
       tooltip: "Digite um valor numérico",
       ordem: parameters.length + 1
     }
@@ -283,7 +282,6 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
         [field]: value,
         max: '',
         step: '0.01',
-        mask: '', // Máscara opcional
         tooltip: 'Digite um valor numérico'
       }
     } else if (field === 'max' || field === 'step') {
@@ -292,12 +290,7 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
       if (!isNaN(numValue) || value === '') {
         updatedParameters[index][field] = value
       }
-    } else if (field === 'mask') {
-      // Validação para máscara (apenas # e . são permitidos)
-      if (/^[#.]*$/.test(value)) {
-        updatedParameters[index][field] = value
-      }
-    } else {
+    }  else {
       updatedParameters[index][field] = value
     }
     
@@ -531,12 +524,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
             isValid = false
           }
 
-          // Validação da máscara (opcional)
-          if (param.mask && param.mask.trim() !== '' && !/^[#.]+$/.test(param.mask)) {
-            if (!errors.parameters[index]) errors.parameters[index] = {}
-            errors.parameters[index].mask = "A máscara deve conter apenas # e ."
-            isValid = false
-          }
+          
+          
         }
 
         if (param.type === "select" && (!param.options || param.options.length === 0)) {
@@ -1089,21 +1078,8 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                         <div className="error-text">{validationErrors.parameters[index].step}</div>
                       )}
 
-                      <div className="mask-tooltip-row">
-                        <div className="form-group">
-                          <label htmlFor={`param-mask-${index}`}>Máscara</label>
-                          <input
-                            id={`param-mask-${index}`}
-                            type="text"
-                            placeholder="Ex: #.##"
-                            value={param.mask}
-                            onChange={(e) => updateParameter(index, "mask", e.target.value)}
-                            className={validationErrors.parameters[index]?.mask ? "input-error" : ""}
-                          />
-                          {validationErrors.parameters[index]?.mask && (
-                            <div className="error-text">{validationErrors.parameters[index].mask}</div>
-                          )}
-                        </div>
+                      <div className="tooltip-row">
+                        
                         <div className="form-group">
                           <label htmlFor={`param-tooltip-${index}`}>Tooltip</label>
                           <input
