@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app"; // Adicionado getApps e getApp
 import { getAnalytics } from "firebase/analytics";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // Configuração vinda do .env
@@ -43,6 +43,19 @@ if (process.env.NODE_ENV === 'production' && import.meta.env.VITE_RECAPTCHA_SITE
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Opcional: usar emulador do Firestore em desenvolvimento para evitar erros de rede
+try {
+  const useEmulators = import.meta.env?.VITE_FIREBASE_USE_EMULATORS === 'true';
+  const emulatorHost = import.meta.env?.VITE_FIRESTORE_EMULATOR_HOST || 'localhost';
+  const emulatorPort = Number(import.meta.env?.VITE_FIRESTORE_EMULATOR_PORT || 8080);
+  if (useEmulators && typeof window !== 'undefined') {
+    connectFirestoreEmulator(db, emulatorHost, emulatorPort);
+    console.info(`📡 Firestore emulador conectado em ${emulatorHost}:${emulatorPort}`);
+  }
+} catch (e) {
+  console.warn('Não foi possível conectar ao emulador do Firestore:', e?.message || e);
+}
 
 // Inicializa o Analytics apenas em ambiente de produção e quando o navegador suportar
 if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {

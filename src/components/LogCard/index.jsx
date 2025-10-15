@@ -8,72 +8,59 @@ import {
   GlobeAltIcon
 } from '@heroicons/react/24/outline';
 
+const Dot = () => <span className="mx-2 text-[#00418F]/30">•</span>;
+
 const LogCard = ({ log, formatDate, onLocationClick }) => {
+  const hasGeo = Boolean(log?.location?.latitude && log?.location?.longitude);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <ClockIcon className="h-5 w-5 text-[#00418F]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#00418F] font-medium mb-1">Data</p>
-            <p className="text-sm text-gray-800">{log.date ? formatDate(log.date) : 'Data indisponível'}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <UserIcon className="h-5 w-5 text-[#00418F]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#00418F] font-medium mb-1">Usuário</p>
-            <p className="text-sm text-gray-800 truncate">{log.idUser || 'Usuário desconhecido'}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <DocumentTextIcon className="h-5 w-5 text-[#00418F]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#00418F] font-medium mb-1">Descrição</p>
-            <p className="text-sm text-gray-800">{log.description || 'Sem descrição'}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <GlobeAltIcon className="h-5 w-5 text-[#00418F]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#00418F] font-medium mb-1">IP</p>
-            <p className="text-sm text-gray-800 font-mono">{log.ip || 'IP não disponível'}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-start space-x-3">
-          <div className="flex-shrink-0">
-            <MapPinIcon className="h-5 w-5 text-[#00418F]" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-[#00418F] font-medium mb-1">Localização</p>
-            {log.location && log.location.latitude && log.location.longitude ? (
-              <button
-                onClick={() => onLocationClick(log.location.latitude, log.location.longitude)}
-                className="text-sm text-[#00418F] hover:text-[#00418F]/80 transition-colors duration-300 flex items-center px-2 py-1 rounded-md hover:bg-[#00418F]/10"
-                title="Abrir localização no Google Maps"
-              >
-                <span className="mr-2">Ver no mapa</span>
-                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-              </button>
-            ) : (
-              <p className="text-sm text-gray-600 italic">
-                {log.location && log.location.status ? log.location.status : 'Localização não disponível'}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
+    <div className="flex items-center gap-2 text-sm">
+      <ClockIcon className="h-4 w-4 text-[#00418F]" />
+      <span className="text-gray-800">
+        {log?.date ? formatDate(log.date) : 'Data indisponível'}
+      </span>
+
+      <Dot />
+
+      <UserIcon className="h-4 w-4 text-[#00418F]" />
+      <span className="text-gray-800 truncate max-w-[160px]">
+        {log?.idUser || 'Usuário desconhecido'}
+      </span>
+
+      <Dot />
+
+      <DocumentTextIcon className="h-4 w-4 text-[#00418F]" />
+      <span className="text-gray-800 truncate flex-1">
+        {log?.description || 'Sem descrição'}
+      </span>
+
+      <Dot />
+
+      <GlobeAltIcon className="h-4 w-4 text-[#00418F]" />
+      <span className="text-gray-800 font-mono truncate max-w-[140px]">
+        {log?.ip || 'IP não disponível'}
+      </span>
+
+      <Dot />
+
+      <MapPinIcon className="h-4 w-4 text-[#00418F]" />
+      {hasGeo ? (
+        <button
+          onClick={() => onLocationClick(log.location.latitude, log.location.longitude)}
+          className="text-[#00418F] hover:text-[#00418F]/80 transition-colors px-2 py-0.5 rounded-md hover:bg-[#00418F]/10"
+          title="Abrir no Google Maps"
+        >
+          <span className="inline-flex items-center gap-1">
+            Mapa
+            <ArrowTopRightOnSquareIcon className="h-3 w-3" />
+          </span>
+        </button>
+      ) : (
+        <span className="text-gray-600 italic truncate max-w-[200px]">
+          {log?.location?.status || 'Localização não disponível'}
+        </span>
+      )}
+    </div>
   );
 };
 
