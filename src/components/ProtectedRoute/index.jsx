@@ -13,6 +13,7 @@ import { AuthContext } from "../../context/AuthContext";
  */
 const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
   const { user, loading, isAdmin } = useContext(AuthContext);
+  const isDev = import.meta.env?.DEV;
 
   // Aguarda a verificação de autenticação e permissões
   if (loading) {
@@ -21,6 +22,11 @@ const ProtectedRoute = ({ children, adminOnly = false, redirectTo = "/" }) => {
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#00418F]"></div>
       </div>
     );
+  }
+
+  // Em desenvolvimento, permitir acesso às rotas protegidas para facilitar testes
+  if (isDev) {
+    return children;
   }
 
   // Verifica se o usuário está autenticado
