@@ -179,7 +179,7 @@ Desenvolver uma calculadora agrícola inteligente baseada em fórmulas validadas
 
 Antes de começar, certifique-se de ter instalado:
 
-- **Node.js** (versão 18.0 ou superior) - [Download](https://nodejs.org/)
+- **Node.js** (20.19.0 LTS ou superior) - [Download](https://nodejs.org/)
 - **npm** (incluído com Node.js) ou **yarn**
 - **Git** - [Download](https://git-scm.com/)
 - **Visual Studio Code** (recomendado) - [Download](https://code.visualstudio.com/)

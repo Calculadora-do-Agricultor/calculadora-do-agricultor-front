@@ -52,6 +52,8 @@ export default defineConfig({
       'firebase/app',
       'firebase/auth', 
       'firebase/firestore',
+      // Pre-bundle Radix ScrollArea to avoid dynamic import transform hiccups
+      '@radix-ui/react-scroll-area',
       'lucide-react'
     ]
   },
@@ -59,7 +61,10 @@ export default defineConfig({
   server: {
     // Warm up de arquivos frequentemente usados
     host: 'localhost', // Apenas interface local (sem múltiplos IPs de rede)
-    hmr: true, // Enable HMR with default settings
+    // Desativar overlay de erros no navegador para evitar bloqueio visual do preview
+    hmr: {
+      overlay: false,
+    },
     warmup: {
       clientFiles: [
         './src/App.jsx',

@@ -557,11 +557,11 @@ const LogsManagement = () => {
 
           {/* Lista de Logs */}
           {filteredLogs.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-4">
               {filteredLogs.map((log) => (
                 <div
                   key={log.id}
-                  className="transform rounded-xl border border-[#00418F]/10 bg-white p-4 transition-all duration-300 hover:border-[#00418F]/40 hover:shadow-lg"
+                  className="transform rounded-lg sm:rounded-xl border border-[#00418F]/10 bg-white p-3 sm:p-4 transition-all duration-200 hover:border-[#00418F]/40 sm:hover:shadow-lg"
                 >
                   <LogCard
                     log={log}
