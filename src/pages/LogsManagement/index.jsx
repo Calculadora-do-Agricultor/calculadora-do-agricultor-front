@@ -392,35 +392,35 @@ const LogsManagement = () => {
               value={metrics.totalLogs}
               icon={DocumentTextIcon}
               tooltip={METRIC_TOOLTIPS.totalLogs}
-              className="h-full transform bg-gradient-to-br from-blue-50 via-blue-100/30 to-blue-50 border-blue-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Com Localização"
               value={metrics.logsWithLocation}
               icon={GlobeAltIcon}
               tooltip={METRIC_TOOLTIPS.withLocation}
-              className="h-full transform bg-gradient-to-br from-emerald-50 via-emerald-100/30 to-emerald-50 border-emerald-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Sem Localização"
               value={metrics.logsWithoutLocation}
               icon={ExclamationTriangleIcon}
               tooltip={METRIC_TOOLTIPS.withoutLocation}
-              className="h-full transform bg-gradient-to-br from-amber-50 via-amber-100/30 to-amber-50 border-amber-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Usuários Únicos"
               value={metrics.uniqueUsers}
               icon={UsersIcon}
               tooltip={METRIC_TOOLTIPS.uniqueUsers}
-              className="h-full transform bg-gradient-to-br from-violet-50 via-violet-100/30 to-violet-50 border-violet-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="IPs Únicos"
               value={metrics.uniqueIPs}
               icon={ServerIcon}
               tooltip={METRIC_TOOLTIPS.uniqueIps}
-              className="h-full transform bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-indigo-50 border-indigo-200/50 shadow-lg hover:scale-105 transition-all duration-300"
+              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
           </div>
         </div>
