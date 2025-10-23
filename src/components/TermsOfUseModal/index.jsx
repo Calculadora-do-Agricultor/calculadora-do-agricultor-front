@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Info, FileText, CheckCircle } from 'lucide-react';
+import LoadingSpinner from '../LoadingSpinner';
 import './styles.css';
 
 /**
@@ -174,7 +175,7 @@ const TermsOfUseModal = ({
           >
             {loading ? (
               <>
-                <span className="loading-spinner"></span>
+                <LoadingSpinner tipo="inline" tamanho="small" cor="white" />
                 <span>Processando...</span>
               </>
             ) : (

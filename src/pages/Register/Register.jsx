@@ -30,6 +30,7 @@ import {
 } from "../../components/ui";
 import TermsOfUseModal from "@/components/TermsOfUseModal";
 import useLocationLogger from "@/hooks/useLocationLogger";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 // Schema de validação com Zod
 
@@ -271,10 +272,14 @@ const Register = () => {
   if (authLoading || isProcessing || isLogging) {
     return (
       <div className="flex h-[calc(100vh-64px-40px)] items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-700"></div>
-          <p className="mt-4 font-medium text-blue-800">Carregando...</p>
-        </div>
+        <LoadingSpinner 
+          tipo="full" 
+          mensagem="Carregando..." 
+          tamanho="medium" 
+          cor="primary" 
+          delay={100}
+          ariaLabel="Carregando página de cadastro"
+        />
       </div>
     );
   }

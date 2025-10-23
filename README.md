@@ -29,6 +29,7 @@
 - [🛠️ Instalação e Configuração](#️-instalação-e-configuração)
 - [📖 Manual de Uso](#-manual-de-uso)
 - [🏗️ Arquitetura do Projeto](#️-arquitetura-do-projeto)
+- [🧩 Documentação de Componentes](#-documentação-de-componentes)
 - [🔧 Desenvolvimento](#-desenvolvimento)
 - [📜 Licença](#-licença)
 - [👥 Equipe](#-equipe)
@@ -170,14 +171,6 @@ Desenvolver uma calculadora agrícola inteligente baseada em fórmulas validadas
 - **🎯 DND Kit** - Drag and drop
 - **📱 React Icons** - Biblioteca de ícones
 
-  
-
-  
-
-  
-
-  
-
 ---
 
 ## 🛠️ Instalação e Configuração
@@ -277,7 +270,7 @@ firebase deploy
 ### 🔧 **Scripts Disponíveis**
 
 | Script | Descrição |
-|--------|-----------|
+|--------|-----------||
 | `npm run dev` | Inicia servidor de desenvolvimento |
 | `npm run build` | Cria build de produção |
 | `npm run preview` | Preview do build de produção |
@@ -379,10 +372,6 @@ A aplicação é totalmente responsiva:
 ---
 
 ## 🏗️ Arquitetura do Projeto
-
-  
-
-  
 
 ### 📁 **Estrutura de Diretórios**
 
@@ -494,6 +483,439 @@ logs/                  # Logs de sistema
 │   ├── timestamp: timestamp
 │   └── location: geopoint
 ```
+
+---
+
+## 🧩 Documentação de Componentes
+
+### 🔄 Sistema de Loading Padronizado
+
+Este sistema fornece componentes de loading padronizados e reutilizáveis para toda a aplicação.
+
+#### 📦 Componentes Disponíveis
+
+##### 1. LoadingSpinner (Básico)
+Componente principal para a maioria dos casos de uso.
+
+##### 2. LoadingAdvanced (Avançado)
+Componente com múltiplas animações e opções avançadas.
+
+##### 3. useLoading (Hook)
+Hooks personalizados para gerenciar estados de loading.
+
+#### 🎨 Tipos de Loading
+
+##### `tipo="inline"`
+- Usado dentro de componentes
+- Não bloqueia a interface
+- Ideal para botões e seções específicas
+
+##### `tipo="overlay"`
+- Aparece sobre o conteúdo existente
+- Usa transparência e blur
+- Ideal para formulários e cards
+
+##### `tipo="full"`
+- Ocupa a tela inteira
+- Bloqueia toda a interface
+- Ideal para carregamento de páginas
+
+#### 🔧 Propriedades
+
+| Propriedade | Tipo | Padrão | Descrição |
+|-------------|------|--------|----------|
+| `mensagem` | string | 'Carregando...' | Texto exibido |
+| `tipo` | 'full'\|'inline'\|'overlay' | 'inline' | Tipo de exibição |
+| `delay` | number | 0 | Delay em ms antes de exibir |
+| `size` | 'sm'\|'md'\|'lg'\|'xl' | 'md' | Tamanho do loading |
+| `color` | string | 'primary' | Cor do loading |
+| `animacao` | 'spinner'\|'dots'\|'bars'\|'skeleton' | 'spinner' | Tipo de animação (apenas LoadingAdvanced) |
+
+#### 📋 Exemplos de Uso
+
+##### Exemplo Básico - Inline
+```jsx
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+function MeuComponente() {
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <div>
+      {loading ? (
+        <LoadingSpinner 
+          mensagem="Carregando dados..." 
+          tipo="inline"
+        />
+      ) : (
+        <div>Conteúdo carregado</div>
+      )}
+    </div>
+  );
+}
+```
+
+##### Exemplo - Loading de Página Completa
+```jsx
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+function MinhaPage() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simula carregamento
+    setTimeout(() => setLoading(false), 2000);
+  }, []);
+
+  if (loading) {
+    return (
+      <LoadingSpinner 
+        mensagem="Carregando página..." 
+        tipo="full"
+        size="lg"
+      />
+    );
+  }
+
+  return <div>Conteúdo da página</div>;
+}
+```
+
+##### Exemplo - Loading com Overlay
+```jsx
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+function MeuFormulario() {
+  const [submitting, setSubmitting] = useState(false);
+
+  return (
+    <div className="relative">
+      <form>
+        {/* Campos do formulário */}
+      </form>
+      
+      {submitting && (
+        <LoadingSpinner 
+          mensagem="Salvando dados..." 
+          tipo="overlay"
+        />
+      )}
+    </div>
+  );
+}
+```
+
+##### Exemplo - Usando Hook useLoading
+```jsx
+import { useLoading } from '@/hooks/useLoading';
+import LoadingSpinner from '@/components/LoadingSpinner';
+
+function ComponenteComHook() {
+  const { isLoading, loadingMessage, loadingType, withLoading } = useLoading();
+
+  const handleClick = async () => {
+    await withLoading(
+      async () => {
+        // Simula operação assíncrona
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        console.log('Operação concluída!');
+      },
+      'Processando solicitação...', // mensagem
+      'overlay' // tipo
+    );
+  };
+
+  return (
+    <div className="relative">
+      <button onClick={handleClick}>
+        Executar Operação
+      </button>
+      
+      {isLoading && (
+        <LoadingSpinner 
+          mensagem={loadingMessage}
+          tipo={loadingType}
+        />
+      )}
+    </div>
+  );
+}
+```
+
+#### 🎯 Boas Práticas
+
+##### 1. Escolha do Tipo Correto
+- **inline**: Para operações locais (botões, seções)
+- **overlay**: Para formulários e cards
+- **full**: Para carregamento de páginas inteiras
+
+##### 2. Mensagens Descritivas
+```jsx
+// ❌ Genérico
+<LoadingSpinner mensagem="Carregando..." />
+
+// ✅ Específico
+<LoadingSpinner mensagem="Salvando cálculo..." />
+<LoadingSpinner mensagem="Buscando categorias..." />
+<LoadingSpinner mensagem="Processando fórmula..." />
+```
+
+##### 3. Use Delay para Operações Rápidas
+```jsx
+// Evita flash de loading para operações muito rápidas
+<LoadingSpinner delay={200} />
+```
+
+##### 4. Cores Consistentes
+```jsx
+// Use as cores do sistema
+<LoadingSpinner color="primary" />    // Cor principal
+<LoadingSpinner color="green" />      // Sucesso
+<LoadingSpinner color="emerald" />    // Agricultura
+```
+
+##### 5. Acessibilidade
+Todos os componentes já incluem:
+- `role="status"`
+- `aria-live="polite"`
+- `aria-label` apropriado
+
+### 🔧 FormulaService - Serviço de Persistência de Fórmulas
+
+O **FormulaService** é um serviço robusto para gerenciar fórmulas matemáticas no Firestore com parsing seguro, validação e sanitização de dados.
+
+#### 📋 Características
+
+- ✅ **Parsing Seguro**: Validação de expressões matemáticas antes da persistência
+- 🔒 **Segurança**: Sanitização de dados e proteção contra XSS
+- 🚀 **Performance**: Cache e otimizações para consultas eficientes
+- 📊 **Validação**: Verificação de integridade de dados
+- 🔄 **CRUD Completo**: Operações completas de Create, Read, Update, Delete
+- 👥 **Multi-usuário**: Isolamento de dados por usuário
+- 📱 **Responsivo**: Suporte a diferentes dispositivos
+
+#### 📖 Uso Básico
+
+##### Importação
+```javascript
+import { FormulaService } from '../services/formulaService';
+```
+
+##### Salvando uma Fórmula
+```javascript
+const formulaData = {
+  name: 'Área do Círculo',
+  expression: 'PI * r^2',
+  description: 'Calcula a área de um círculo',
+  category: 'matematica',
+  parameters: [
+    { name: 'r', description: 'Raio do círculo', unit: 'm' }
+  ]
+};
+
+try {
+  const formulaId = await FormulaService.saveFormula(formulaData);
+  console.log('Fórmula salva com ID:', formulaId);
+} catch (error) {
+  console.error('Erro ao salvar fórmula:', error.message);
+}
+```
+
+##### Recuperando Fórmulas
+```javascript
+// Buscar fórmula específica
+const formula = await FormulaService.getFormula('formula-id');
+
+// Buscar todas as fórmulas do usuário
+const userFormulas = await FormulaService.getUserFormulas();
+
+// Buscar com filtros
+const filteredFormulas = await FormulaService.getUserFormulas({
+  category: 'matematica',
+  limit: 10,
+  orderBy: 'createdAt'
+});
+```
+
+#### 🎣 Hook Personalizado
+
+Use o hook `useFormulaService` para integração fácil com React:
+
+```javascript
+import { useFormulaService } from '../hooks/useFormulaService';
+
+function MyComponent() {
+  const {
+    formulas,
+    loading,
+    error,
+    saveFormula,
+    updateFormula,
+    deleteFormula,
+    searchFormulas,
+    getFormulaStats
+  } = useFormulaService();
+
+  const handleSave = async () => {
+    const formulaData = {
+      name: 'Nova Fórmula',
+      expression: '2 + 2',
+      category: 'matematica'
+    };
+    
+    await saveFormula(formulaData);
+  };
+
+  if (loading) return <div>Carregando...</div>;
+  if (error) return <div>Erro: {error}</div>;
+
+  return (
+    <div>
+      <button onClick={handleSave}>Salvar Fórmula</button>
+      {formulas.map(formula => (
+        <div key={formula.id}>{formula.name}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+#### 📊 Estrutura de Dados
+
+##### Objeto Formula
+```javascript
+{
+  id: 'string',                    // ID único da fórmula
+  name: 'string',                  // Nome da fórmula (obrigatório)
+  expression: 'string',            // Expressão matemática (obrigatório)
+  description: 'string',           // Descrição opcional
+  category: 'string',              // Categoria (obrigatório)
+  parameters: Array,               // Parâmetros da fórmula
+  userId: 'string',                // ID do usuário proprietário
+  createdAt: Timestamp,            // Data de criação
+  updatedAt: Timestamp,            // Data da última atualização
+  isActive: boolean,               // Status ativo/inativo
+  metadata: {
+    complexity: number,            // Nível de complexidade (0-20)
+    usageCount: number,            // Contador de uso
+    lastUsed: Timestamp           // Último uso
+  }
+}
+```
+
+##### Categorias Disponíveis
+- `matematica` - Matemática
+- `fisica` - Física
+- `quimica` - Química
+- `agricultura` - Agricultura
+- `economia` - Economia
+- `estatistica` - Estatística
+
+#### 🔒 Segurança
+
+##### Validação de Expressões
+Todas as expressões matemáticas são validadas usando o `mathEvaluator`:
+
+```javascript
+// Expressões válidas
+'2 + 2'
+'PI * r^2'
+'sqrt(x^2 + y^2)'
+'sin(angle) * cos(angle)'
+
+// Expressões inválidas (rejeitadas)
+'eval("malicious code")'
+'document.cookie'
+'<script>alert("xss")</script>'
+```
+
+##### Sanitização de Dados
+Todos os dados são sanitizados antes da persistência:
+- Remoção de tags HTML
+- Escape de caracteres especiais
+- Validação de tipos de dados
+- Limitação de tamanho de strings
+
+##### Limites de Segurança
+- **Máximo de fórmulas por usuário**: 50
+- **Tamanho máximo do nome**: 100 caracteres
+- **Tamanho máximo da expressão**: 1000 caracteres
+- **Tamanho máximo da descrição**: 500 caracteres
+
+#### 🔧 API Reference
+
+##### FormulaService.saveFormula(formulaData)
+Salva uma nova fórmula no Firestore.
+
+**Parâmetros:**
+- `formulaData` (Object): Dados da fórmula
+
+**Retorna:**
+- `Promise<string>`: ID da fórmula criada
+
+**Throws:**
+- `Error`: Se dados inválidos ou usuário não autenticado
+
+##### FormulaService.getFormula(formulaId)
+Recupera uma fórmula específica.
+
+**Parâmetros:**
+- `formulaId` (string): ID da fórmula
+
+**Retorna:**
+- `Promise<Object|null>`: Dados da fórmula ou null se não encontrada
+
+##### FormulaService.getUserFormulas(options)
+Recupera fórmulas do usuário com filtros opcionais.
+
+**Parâmetros:**
+- `options` (Object): Opções de consulta
+  - `category` (string): Filtrar por categoria
+  - `limit` (number): Limitar resultados
+  - `orderBy` (string): Campo para ordenação
+  - `orderDirection` (string): 'asc' ou 'desc'
+
+**Retorna:**
+- `Promise<Array>`: Lista de fórmulas
+
+#### 🐛 Tratamento de Erros
+
+O FormulaService lança erros específicos para diferentes situações:
+
+```javascript
+try {
+  await FormulaService.saveFormula(invalidData);
+} catch (error) {
+  switch (error.message) {
+    case 'Usuário não autenticado':
+      // Redirecionar para login
+      break;
+    case 'Limite máximo de fórmulas atingido (50)':
+      // Mostrar mensagem de limite
+      break;
+    case 'Expressão matemática inválida':
+      // Mostrar erro de validação
+      break;
+    default:
+      // Erro genérico
+      console.error('Erro inesperado:', error);
+  }
+}
+```
+
+#### 📈 Performance
+
+##### Otimizações Implementadas
+- **Índices Firestore**: Criados automaticamente para consultas eficientes
+- **Paginação**: Suporte a limit e offset
+- **Cache**: Resultados podem ser cacheados no cliente
+- **Lazy Loading**: Carregamento sob demanda
+
+##### Melhores Práticas
+1. **Use filtros**: Sempre filtre por categoria quando possível
+2. **Limite resultados**: Use o parâmetro `limit` para consultas grandes
+3. **Cache local**: Implemente cache no cliente para dados frequentes
+4. **Validação prévia**: Valide dados no frontend antes de enviar
 
 ---
 

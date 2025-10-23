@@ -9,6 +9,7 @@ import CategoryActions from "../CategoryActions"
 import EditCategory from "../EditCategory"
 import EmptyState from "../ui/EmptyState"
 import CategoriaCard from "../CategoriaCard"
+import "./styles.css"
 
 const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated, idPrefix = "" }) => {
   // Add this style for hiding scrollbar in category names
@@ -33,12 +34,9 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
 
   useEffect(() => {
     if (!categories) {
-      logCategoryUpdate("No categories provided", []);
       setFilteredCategories([]);
       return;
     }
-
-    logCategoryUpdate("Processing categories", categories);
     let result = [...categories]
 
     // Aplicar filtro por quantidade de cálculos
@@ -70,7 +68,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
       })
     }
 
-    logCategoryUpdate("Filtered categories", result);
     setFilteredCategories(result)
 
     // Removida a seleção automática da categoria
@@ -119,9 +116,9 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-white rounded-b-xl p-4 sm:p-5 lg:p-6 flex-1">
+    <div className="categories-wrapper">
       {/* Search and Filter Section */}
-      <div className="mb-4 space-y-3 sm:space-y-4">
+      <div className="categories-search-section">
         {/* Search Input */}
         <div className="relative">
           <Search
@@ -177,14 +174,14 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
         </div>
       )}
       {/* Categories List */}
-      <div className="flex-1  overflow-y-auto max-h-[700px] sm:max-h-[800px] lg:max-h-[900px] xl:max-h-[1000px] scrollbar-thin scrollbar-thumb-blue-600 scrollbar-track-gray-100 md:pb-8">
+      <div className="categories-list-container">
         {filteredCategories.length > 0 ? (
-          <div className="space-y-3 p-3 pb-6">
+          <div className="categories-list">
             {filteredCategories.map((category, index) => {
               const isSelected = selectedCategory === category.name
               
               return (
-                <div key={`${category.id || category.name}-${index}`} className="relative w-full">
+                <div key={`${category.id || category.name}-${index}`} className="w-full">
                   <CategoriaCard
                     imageUrl={category.imageUrl}
                     title={category.name}
@@ -194,7 +191,7 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
                       onSelect(category.name);
                     }}
                     onEdit={canEditCategory(category) ? () => handleEditCategory(category) : null}
-                    className={`w-full ${isSelected ? 'ring-2 ring-[#00418F] border-[#00418F]' : ''}`}
+                    isSelected={isSelected}
                     tags={category.tags || []}
                     color={category.color}
                   />
@@ -203,17 +200,19 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
             })}
           </div>
         ) : (
-          <EmptyState
-            icon={searchTerm ? SearchX : FolderPlus}
-            title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
-            message={searchTerm
-              ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
-              : isAdmin
-                ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
-                : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
-            actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
-             onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => window.location.href = '/categories/new' : undefined}
-          />
+          <div className="categories-empty-state">
+            <EmptyState
+              icon={searchTerm ? SearchX : FolderPlus}
+              title={searchTerm ? "Nenhuma categoria encontrada" : "Nenhuma categoria disponível"}
+              message={searchTerm
+                ? "Tente ajustar sua busca ou filtros para encontrar o que procura"
+                : isAdmin
+                  ? "Não há categorias cadastradas. Crie sua primeira categoria para começar."
+                  : "Não há categorias disponíveis no momento. Entre em contato com o administrador."}
+              actionLabel={searchTerm ? "Limpar pesquisa" : isAdmin ? "Adicionar Categoria" : undefined}
+               onAction={searchTerm ? () => setSearchTerm("") : isAdmin ? () => window.location.href = '/categories/new' : undefined}
+            />
+          </div>
         )}
       </div>
 
@@ -230,11 +229,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
     </div>
   )
 }
-
-// Adiciona logs para debug
-const logCategoryUpdate = (action, categories) => {
-  // Debug logs removed for production
-};
 
 // Componente Categories otimizado com memo
 export default memo(Categories)

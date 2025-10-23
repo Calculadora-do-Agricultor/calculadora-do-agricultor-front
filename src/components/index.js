@@ -5,6 +5,9 @@ export { default as Footer } from './Footer';
 export { default as PrivateRoute } from './PrivateRoute';
 export { default as ProtectedRoute } from './ProtectedRoute';
 
+// Componente de loading padronizado - usado em toda a aplicação
+export { default as LoadingSpinner } from './LoadingSpinner';
+
 // Componentes de expressões matemáticas
 export { default as ExpressionValidator } from './ExpressionValidator';
 

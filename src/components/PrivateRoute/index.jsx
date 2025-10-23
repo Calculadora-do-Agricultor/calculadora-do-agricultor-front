@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { authWrapper, firestoreWrapper } from '../../services/firebaseWrapper';
+import LoadingSpinner from '../LoadingSpinner';
 
 const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
   const [role, setRole] = useState(null);
@@ -38,7 +39,16 @@ const PrivateRoute = ({ requiresAuth = true, requiredRole }) => {
   }, [user]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <LoadingSpinner
+        tipo="full"
+        mensagem="Verificando permissões..."
+        size="md"
+        color="primary"
+        delay={100}
+        ariaLabel="Carregando verificação de acesso"
+      />
+    );
   }
 
   if (error) {

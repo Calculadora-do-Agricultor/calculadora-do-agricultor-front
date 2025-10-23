@@ -40,6 +40,7 @@ import CalculationList from "@/components/CalculationList";
 import { Categories } from "@/components";
 import CreateCategory from "@/components/CreateCategory";
 import EditCalculation from "@/components/EditCalculation";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import logoClara from "@/assets/logoClara.svg";
 import "./Calculator.css";
 
@@ -273,64 +274,75 @@ export default function Calculator() {
         <div className="content-container" id="calculator-calculations-list">
           {/* Sidebar com categorias */}
           <div className="sidebar">
-            {error ? (
-              <div className="flex flex-col items-center justify-center rounded-lg bg-red-50 p-6 text-center">
-                <AlertTriangle className="mb-2 h-12 w-12 text-red-500" />
-                <h3 className="mb-1 text-lg font-semibold text-red-700">
-                  Erro ao carregar categorias
-                </h3>
-                <p className="mb-4 text-red-600">{error}</p>
-                <button
-                  onClick={() => {
-                    setError(null);
-                    fetchCategorias();
-                  }}
-                  className="rounded-md bg-red-100 px-4 py-2 text-red-700 transition-colors duration-200 hover:bg-red-200"
-                >
-                  Tentar novamente
-                </button>
-              </div>
-            ) : loading ? (
-              <div className="sidebar-loading">
-                <div className="skeleton-header"></div>
-                <div className="skeleton-item"></div>
-                <div className="skeleton-item"></div>
-                <div className="skeleton-item"></div>
-              </div>
-            ) : (
-              <>
-                <div className="categories-container-calculator">
-                  <div className="categories-header">
-                    <h2>Categorias</h2>
+            <div className="sidebar-content">
+              {error ? (
+                <div className="error-container">
+                  <div className="error-content">
+                    <AlertTriangle className="error-icon" />
+                    <h3 className="error-title">
+                      Erro ao carregar categorias
+                    </h3>
+                    <p className="error-message">{error}</p>
+                    <button
+                      onClick={() => {
+                        setError(null);
+                        fetchCategorias();
+                      }}
+                      className="error-retry-button"
+                    >
+                      Tentar novamente
+                    </button>
                   </div>
-                  <Categories
-                    key={`desktop-categories-${categoriesUpdateKey}`}
-                    categories={categorias}
-                    onSelect={(category) => {
-                      setCategoriaSelecionada(category);
-                    }}
-                    selectedCategory={categoriaSelecionada}
-                    onCategoryUpdated={handleCategoryUpdated}
-                    idPrefix="desktop-"
+                </div>
+              ) : loading ? (
+                <div className="loading-container">
+                  <LoadingSpinner
+                    tipo="inline"
+                    mensagem="Carregando categorias..."
+                    tamanho="medium"
+                    cor="primary"
+                    delay={200}
+                    ariaLabel="Carregando lista de categorias"
                   />
                 </div>
-              </>
-            )}
+              ) : (
+                <div className="categories-container-calculator">
+                  <div className="categories-header">
+                    <div className="categories-header-content">
+                      <h2 className="categories-title">Categorias</h2>
+                      <div className="categories-count">
+                        {categorias.length} {categorias.length === 1 ? 'categoria' : 'categorias'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="categories-content">
+                    <Categories
+                      key={`desktop-categories-${categoriesUpdateKey}`}
+                      categories={categorias}
+                      onSelect={(category) => {
+                        setCategoriaSelecionada(category);
+                      }}
+                      selectedCategory={categoriaSelecionada}
+                      onCategoryUpdated={handleCategoryUpdated}
+                      idPrefix="desktop-"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Conteúdo principal */}
           <div className="main-area">
             {loading ? (
-              <div className="main-area-loading">
-                <div className="skeleton-header"></div>
-                <div className="skeleton-text"></div>
-                <div className="skeleton-grid">
-                  <div className="skeleton-card"></div>
-                  <div className="skeleton-card"></div>
-                  <div className="skeleton-card"></div>
-                  <div className="skeleton-card"></div>
-                </div>
-              </div>
+              <LoadingSpinner
+                tipo="full"
+                mensagem="Carregando dados..."
+                tamanho="medium"
+                cor="primary"
+                delay={200}
+                ariaLabel="Carregando dados da calculadora"
+              />
             ) : !categoriaSelecionada ? (
               <div className="select-category-message">
                 <div className="message-icon">
@@ -432,77 +444,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {/* Breadcrumbs */}
 
-                <div className="breadcrumbs">
-                  <span
-                    className="breadcrumb-link"
-                    onClick={() => {
-                      setCategoriaSelecionada(null);
-                      navigate("/");
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      color: "#007bff",
-                      transition: "color 0.2s",
-                    }}
-                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
-                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
-                    role="link"
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        setCategoriaSelecionada(null);
-                        navigate("/");
-                      }
-                    }}
-                  >
-                    Início
-                  </span>
-                  <ChevronRight size={16} aria-hidden="true" />
-
-                  <span
-                    className="breadcrumb-link"
-                    onClick={() => {
-                      setCategoriaSelecionada(null);
-                      navigate("/calculator", {
-                        state: { from: "breadcrumb" },
-                      });
-                    }}
-                    style={{
-                      cursor: "pointer",
-                      color: "#007bff",
-                      transition: "color 0.2s",
-                    }}
-                    onMouseOver={(e) => (e.target.style.color = "#0056b3")}
-                    onMouseOut={(e) => (e.target.style.color = "#007bff")}
-                    role="link"
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        setCategoriaSelecionada(null);
-                        navigate("/calculator", {
-                          state: { from: "breadcrumb" },
-                        });
-                      }
-                    }}
-                  >
-                    Calculadora
-                  </span>
-                  <ChevronRight size={16} aria-hidden="true" />
-
-                  <span
-                    className="current"
-                    style={{
-                      fontWeight: "bold",
-                      color: "#333",
-                    }}
-                    role="text"
-                    aria-current="page"
-                  >
-                    {categoriaSelecionada}
-                  </span>
-                </div>
 
                 {/* Lista de cálculos */}
                 <CalculationList
