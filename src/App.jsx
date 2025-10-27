@@ -22,7 +22,6 @@ const UserManagement = React.lazy(() => import("./pages/UserManagement"));
 const FAQ = React.lazy(() => import("./pages/FAQ"));
 const FAQAdmin = React.lazy(() => import("./pages/Admin/FAQAdmin"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
-const DataIntegrityPage = React.lazy(() => import("./pages/DataIntegrityPage"));
 
 
 
@@ -134,14 +133,6 @@ function App() {
                 element={
                   <ProtectedRoute adminOnly={true} redirectTo="/">
                     <FAQAdmin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/data-integrity"
-                element={
-                  <ProtectedRoute adminOnly={true} redirectTo="/">
-                    <DataIntegrityPage />
                   </ProtectedRoute>
                 }
               />

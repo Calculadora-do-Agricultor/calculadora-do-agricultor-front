@@ -689,7 +689,6 @@ O **FormulaService** é um serviço robusto para gerenciar fórmulas matemática
 - ✅ **Parsing Seguro**: Validação de expressões matemáticas antes da persistência
 - 🔒 **Segurança**: Sanitização de dados e proteção contra XSS
 - 🚀 **Performance**: Cache e otimizações para consultas eficientes
-- 📊 **Validação**: Verificação de integridade de dados
 - 🔄 **CRUD Completo**: Operações completas de Create, Read, Update, Delete
 - 👥 **Multi-usuário**: Isolamento de dados por usuário
 - 📱 **Responsivo**: Suporte a diferentes dispositivos

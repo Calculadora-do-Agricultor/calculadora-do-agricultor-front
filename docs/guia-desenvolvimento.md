@@ -37,7 +37,7 @@ Este guia resume a arquitetura, padrões e fluxos já existentes no projeto para
 
 ## Roteamento e Lazy Loading
 - Rotas com `react-router-dom` definidas em `src/App.jsx`.
-- Páginas carregadas com `React.lazy`: `Home`, `Login`, `Register`, `Calculator`, `CreateCalculationPage`, `EditCalculationPage`, `LogsManagement`, `UserManagement`, `FAQ`, `FAQAdmin`, `Dashboard`, `DataIntegrityPage`.
+- Páginas carregadas com `React.lazy`: `Home`, `Login`, `Register`, `Calculator`, `CreateCalculationPage`, `EditCalculationPage`, `LogsManagement`, `UserManagement`, `FAQ`, `FAQAdmin`, `Dashboard`.
 - Proteção de rotas:
   - `PrivateRoute` — exige autenticação
   - `ProtectedRoute` — suporte a `adminOnly` e redirecionamentos
@@ -78,8 +78,8 @@ Este guia resume a arquitetura, padrões e fluxos já existentes no projeto para
   - Cache em memória com invalidação e debounce; evita consultas redundantes.
 - Fórmulas: `useFormulaService` e `formulaService` (CRUD de fórmulas, busca e métricas).
 - FAQ: `useFAQ` e `faqService` com categorias pré-definidas.
-- Integridade de dados: `useDataIntegrityCheck`
-  - Valida duplicidades e consistência; usa `validateExpression`.
+
+  
 - Loading e Toast:
   - `useLoading` — gerenciamento de estados de carregamento.
   - `useToast` — feedback ao usuário (ex.: `toastSuccess`, `toastError`).

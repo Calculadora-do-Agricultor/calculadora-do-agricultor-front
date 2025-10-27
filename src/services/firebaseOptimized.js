@@ -45,7 +45,7 @@ const clearFirebaseCache = () => {
     }
     sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
     
-    console.log('🧹 Cache do Firebase limpo com sucesso');
+    // console.log('🧹 Cache do Firebase limpo com sucesso');
   } catch (error) {
     console.warn('Erro ao limpar cache do Firebase:', error);
   }
