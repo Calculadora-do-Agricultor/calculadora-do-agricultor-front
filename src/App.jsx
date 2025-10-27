@@ -19,7 +19,6 @@ const CreateCalculationPage = React.lazy(() => import("./pages/CreateCalculation
 const EditCalculationPage = React.lazy(() => import("./pages/EditCalculationPage/EditCalculationPage.jsx"));
 const LogsManagement = React.lazy(() => import("./pages/LogsManagement"));
 const UserManagement = React.lazy(() => import("./pages/UserManagement"));
-const GlossarioPage = React.lazy(() => import("./pages/Glossario"));
 const FAQ = React.lazy(() => import("./pages/FAQ"));
 const FAQAdmin = React.lazy(() => import("./pages/Admin/FAQAdmin"));
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -63,7 +62,6 @@ function App() {
               <Suspense fallback={<PageLoader />}>
               <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/glossario" element={<GlossarioPage />} />
               <Route path="/faq" element={<FAQ />} />
               
               <Route

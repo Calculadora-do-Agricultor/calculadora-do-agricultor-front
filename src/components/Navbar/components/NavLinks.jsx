@@ -56,17 +56,6 @@ const NavLinks = ({ user }) => {
             role="menu"
           >
             <Link
-              to="/glossario"
-              className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/glossario' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
-              role="menuitem"
-              onClick={() => setHelpMenuOpen(false)}
-            >
-              <div className="flex flex-row items-center gap-2">
-                <BookOpenIcon className="w-5 h-5" />
-                <span>Glossário</span>
-              </div>
-            </Link>
-            <Link
               to="/faq"
               className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/faq' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
               role="menuitem"
