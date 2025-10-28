@@ -56,17 +56,6 @@ const NavLinks = ({ user }) => {
             role="menu"
           >
             <Link
-              to="/glossario"
-              className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/glossario' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
-              role="menuitem"
-              onClick={() => setHelpMenuOpen(false)}
-            >
-              <div className="flex flex-row items-center gap-2">
-                <BookOpenIcon className="w-5 h-5" />
-                <span>Glossário</span>
-              </div>
-            </Link>
-            <Link
               to="/faq"
               className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/faq' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
               role="menuitem"
@@ -163,20 +152,6 @@ const NavLinks = ({ user }) => {
                     <div className="flex items-center gap-2">
                       <QuestionMarkCircleIcon className="w-5 h-5" />
                       <span>Gerenciar FAQ</span>
-                    </div>
-                  </Link>
-                  <Link
-                    to="/admin/data-integrity"
-                    className={`block px-4 py-2 transition-all duration-300 transform hover:scale-105 rounded-lg ${location.pathname === '/admin/data-integrity' ? 'bg-[#00418F] text-[#FFEE00]' : 'text-gray-800 hover:bg-[#00418F] hover:text-[#FFEE00]'}`}
-                    role="menuitem"
-                    onClick={() => setAdminMenuOpen(false)}
-                  >
-                    <div className="flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        <path d="m9 12 2 2 4-4" />
-                      </svg>
-                      <span>Integridade de Dados</span>
                     </div>
                   </Link>
                 </div>
