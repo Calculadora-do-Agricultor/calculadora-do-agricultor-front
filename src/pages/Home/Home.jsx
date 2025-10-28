@@ -123,9 +123,14 @@ const Home = () => {
             A Calculadora do Agricultor é fruto da cooperação empresa-escola,
             através dos projetos Integradores do curso de Desenvolvimento de
             Software Multiplataforma. Este software foi desenvolvido pelos
-            alunos da Fatec Matão "Luiz Marchesan", com base na planilha da
-            empresa Marchesan.
-          </p>
+            alunos da Fatec Matão "Luiz Marchesan".
+          </p><br></br>
+           <p className="text-lg leading-relaxed text-gray-700">
+              Nosso objetivo é modernizar e simplificar os cálculos agrícolas,
+              transformando planilhas complexas em uma ferramenta digital intuitiva
+              e eficiente. Com foco na usabilidade e precisão, buscamos contribuir
+              para o aumento da produtividade no campo através da tecnologia.
+            </p>
           {!user && (
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button to="/register" variant="primary" size="large">
