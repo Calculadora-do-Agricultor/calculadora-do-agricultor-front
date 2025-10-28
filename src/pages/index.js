@@ -1,7 +1,6 @@
 export { default as Calculator } from './Calculator';
 export { default as Companies } from './Companies';
 export { default as CreateCalculationPage } from './CreateCalculationPage';
-export { default as DataIntegrityPage } from './DataIntegrityPage';
 export { default as EditCalculationPage } from './EditCalculationPage';
 export { default as FAQ } from './FAQ';
 export { default as Home } from './Home';

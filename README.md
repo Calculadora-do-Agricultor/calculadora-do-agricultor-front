@@ -179,7 +179,7 @@ Desenvolver uma calculadora agrícola inteligente baseada em fórmulas validadas
 
 Antes de começar, certifique-se de ter instalado:
 
-- **Node.js** (versão 18.0 ou superior) - [Download](https://nodejs.org/)
+- **Node.js** (20.19.0 LTS ou superior) - [Download](https://nodejs.org/)
 - **npm** (incluído com Node.js) ou **yarn**
 - **Git** - [Download](https://git-scm.com/)
 - **Visual Studio Code** (recomendado) - [Download](https://code.visualstudio.com/)
@@ -689,7 +689,6 @@ O **FormulaService** é um serviço robusto para gerenciar fórmulas matemática
 - ✅ **Parsing Seguro**: Validação de expressões matemáticas antes da persistência
 - 🔒 **Segurança**: Sanitização de dados e proteção contra XSS
 - 🚀 **Performance**: Cache e otimizações para consultas eficientes
-- 📊 **Validação**: Verificação de integridade de dados
 - 🔄 **CRUD Completo**: Operações completas de Create, Read, Update, Delete
 - 👥 **Multi-usuário**: Isolamento de dados por usuário
 - 📱 **Responsivo**: Suporte a diferentes dispositivos
