@@ -87,7 +87,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
       options: [],
       max: "",
       step: "0.01",
-      mask: "#.##",
       tooltip: "Digite um valor numérico"
     },
   ])
@@ -278,7 +277,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
               id: param.id || `param-${Date.now()}-${index}`,
               step: param.step || "0.01",
               max: param.max || "",
-              mask: param.mask || "",
               tooltip: param.tooltip || ""
             }))
             setParameters(parametersWithIds)
@@ -378,18 +376,12 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
         [field]: value,
         max: '',
         step: '0.01',
-        mask: '',
         tooltip: 'Digite um valor numérico'
       }
     } else if (field === 'max' || field === 'step') {
       // Validação para campos numéricos
       const numValue = value === '' ? '' : Number(value)
       if (!isNaN(numValue) || value === '') {
-        updatedParameters[index][field] = value
-      }
-    } else if (field === 'mask') {
-      // Validação para máscara (apenas # e . são permitidos)
-      if (/^[#.]*$/.test(value)) {
         updatedParameters[index][field] = value
       }
     } else {
@@ -636,12 +628,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
             isValid = false
           }
 
-          // Validação da máscara (opcional)
-          if (param.mask && param.mask.trim() !== '' && !/^[#.]+$/.test(param.mask)) {
-            if (!errors.parameters[index]) errors.parameters[index] = {}
-            errors.parameters[index].mask = "A máscara deve conter apenas # e ."
-            isValid = false
-          }
+          
         }
 
         if (param.type === "select" && (!param.options || param.options.length === 0)) {
@@ -1241,21 +1228,7 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                       </div>
 
                       <div className="form-row">
-                        <div className="form-group">
-                          <label htmlFor={`param-${index}-mask`} title="Use # para dígitos e . para decimal">
-                            Máscara
-                          </label>
-                          <input
-                            type="text"
-                            id={`param-${index}-mask`}
-                            value={param.mask}
-                            onChange={(e) => updateParameter(index, "mask", e.target.value)}
-                            placeholder="#.##"
-                          />
-                          {validationErrors.parameters[index]?.mask && (
-                            <div className="error-text">{validationErrors.parameters[index].mask}</div>
-                          )}
-                        </div>
+                        
 
                         <div className="form-group">
                           <label htmlFor={`param-${index}-tooltip`}>
