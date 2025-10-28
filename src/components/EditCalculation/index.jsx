@@ -1174,23 +1174,24 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
 
                     <div className="form-group">
                       <label htmlFor={`param-unit-${index}`}>Unidade</label>
-                      <input
-                        id={`param-unit-${index}`}
-                        type="text"
-                        placeholder="Ex: kg, m, L..."
-                        value={param.unit || ""}
-                        onChange={(e) => updateParameter(index, "unit", e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group form-checkbox">
-                      <input
-                        id={`param-required-${index}`}
-                        type="checkbox"
-                        checked={param.required}
-                        onChange={(e) => updateParameter(index, "required", e.target.checked)}
-                      />
-                      <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                      <div className="input-with-checkbox">
+                        <input
+                          id={`param-unit-${index}`}
+                          type="text"
+                          placeholder="Ex: kg, m, L..."
+                          value={param.unit || ""}
+                          onChange={(e) => updateParameter(index, "unit", e.target.value)}
+                        />
+                        <div className="compact-checkbox">
+                          <input
+                            id={`param-required-${index}`}
+                            type="checkbox"
+                            checked={param.required}
+                            onChange={(e) => updateParameter(index, "required", e.target.checked)}
+                          />
+                          <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1225,10 +1226,6 @@ const EditCalculation = ({ calculationId, onUpdate, onCancel }) => {
                             placeholder="0.01"
                           />
                         </div>
-                      </div>
-
-                      <div className="form-row">
-                        
 
                         <div className="form-group">
                           <label htmlFor={`param-${index}-tooltip`}>

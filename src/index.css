@@ -74,6 +74,32 @@
   to { opacity: 0.9; }
 }
 
+/* Estilos para o campo de unidade com checkbox */
+.input-with-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input-with-checkbox input[type="text"] {
+  flex: 1;
+}
+
+.compact-checkbox {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 0 12px;
+  height: 36px;
+  min-width: 120px;
+}
+
+.compact-checkbox input[type="checkbox"] {
+  margin-right: 4px;
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

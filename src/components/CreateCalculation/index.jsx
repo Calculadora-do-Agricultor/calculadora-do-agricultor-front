@@ -1002,25 +1002,26 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                     </div>
 
                     <div className="form-row secondary-row">
-                      <div className="form-group">
+                      <div className="form-group" style={{ flex: "1" }}>
                         <label htmlFor={`param-unit-${index}`}>Unidade</label>
-                        <input
-                          id={`param-unit-${index}`}
-                          type="text"
-                          placeholder="Ex: kg, m, L..."
-                          value={param.unit || ""}
-                          onChange={(e) => updateParameter(index, "unit", e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group form-checkbox">
-                        <input
-                          id={`param-required-${index}`}
-                          type="checkbox"
-                          checked={param.required}
-                          onChange={(e) => updateParameter(index, "required", e.target.checked)}
-                        />
-                        <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                        <div className="input-with-checkbox">
+                          <input
+                            id={`param-unit-${index}`}
+                            type="text"
+                            placeholder="Ex: kg, m, L..."
+                            value={param.unit || ""}
+                            onChange={(e) => updateParameter(index, "unit", e.target.value)}
+                          />
+                          <div className="compact-checkbox">
+                            <input
+                              id={`param-required-${index}`}
+                              type="checkbox"
+                              checked={param.required}
+                              onChange={(e) => updateParameter(index, "required", e.target.checked)}
+                            />
+                            <label htmlFor={`param-required-${index}`}>Obrigatório</label>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1038,47 +1039,32 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
 
                   {param.type === "number" && (
                     <div className="numeric-config">
-                      <div className="form-rows-container">
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor={`param-max-${index}`}>Valor Máximo</label>
-                            <input
-                              id={`param-max-${index}`}
-                              type="number"
-                              placeholder="Ex: 100"
-                              value={param.max}
-                              onChange={(e) => updateParameter(index, "max", e.target.value)}
-                              className={validationErrors.parameters[index]?.range ? "input-error" : ""}
-                              step="0.01"
-                            />
-                          </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label htmlFor={`param-max-${index}`}>Valor Máximo</label>
+                          <input
+                            id={`param-max-${index}`}
+                            type="number"
+                            placeholder="Ex: 100"
+                            value={param.max}
+                            onChange={(e) => updateParameter(index, "max", e.target.value)}
+                            className={validationErrors.parameters[index]?.range ? "input-error" : ""}
+                            step="0.01"
+                          />
                         </div>
 
-                        <div className="form-row secondary-row">
-                          <div className="form-group">
-                            <label htmlFor={`param-step-${index}`}>Incremento</label>
-                            <input
-                              id={`param-step-${index}`}
-                              type="number"
-                              placeholder="Ex: 0.01"
-                              value={param.step}
-                              onChange={(e) => updateParameter(index, "step", e.target.value)}
-                              step="0.01"
-                              min="0.01"
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label htmlFor={`param-step-${index}`}>Incremento</label>
+                          <input
+                            id={`param-step-${index}`}
+                            type="number"
+                            placeholder="Ex: 0.01"
+                            value={param.step}
+                            onChange={(e) => updateParameter(index, "step", e.target.value)}
+                            step="0.01"
+                            min="0.01"
+                          />
                         </div>
-                      </div>
-
-                      {validationErrors.parameters[index]?.range && (
-                        <div className="error-text">{validationErrors.parameters[index].range}</div>
-                      )}
-
-                      {validationErrors.parameters[index]?.step && (
-                        <div className="error-text">{validationErrors.parameters[index].step}</div>
-                      )}
-
-                      <div className="tooltip-row">
                         
                         <div className="form-group">
                           <label htmlFor={`param-tooltip-${index}`}>Tooltip</label>
@@ -1091,6 +1077,14 @@ const CreateCalculation = ({ onCreate, onCancel }) => {
                           />
                         </div>
                       </div>
+
+                      {validationErrors.parameters[index]?.range && (
+                        <div className="error-text">{validationErrors.parameters[index].range}</div>
+                      )}
+
+                      {validationErrors.parameters[index]?.step && (
+                        <div className="error-text">{validationErrors.parameters[index].step}</div>
+                      )}
                     </div>
                   )}
 
