@@ -832,8 +832,9 @@
     border-radius: 0;
     border: none;
     overflow: hidden;
-    height: 100%;
-    max-height: 600px;
+    /* Preenche verticalmente de forma responsiva */
+    height: calc(100vh - 180px);
+    min-height: 500px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -871,11 +872,12 @@
 
   .categories-content {
     flex: 1;
-    overflow: hidden;
+    /* Permite rolagem do conteúdo sem limitar a altura */
+    overflow: auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: 500px;
+    /* remove limite de altura para ocupar o espaço disponível */
   }
 
   /* Error Container */
@@ -1048,6 +1050,10 @@
     border: 1px solid #e5e7eb;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 65, 143, 0.1);
+    /* Garante que a área principal ocupe toda a altura disponível */
+    min-height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
   }
   
   .main-area-loading {
@@ -1064,7 +1070,9 @@
     justify-content: center;
     padding: 4rem 2rem;
     text-align: center;
-    min-height: 60vh;
+    /* Ocupa todo o espaço da área principal para centralização */
+    flex: 1;
+    height: 100%;
   
   }
   
