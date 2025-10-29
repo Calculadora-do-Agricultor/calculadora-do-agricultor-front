@@ -25,6 +25,8 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Mantém o modal visível e permite scroll interno no corpo */
+  max-height: 90vh;
 }
 
 /* Modal Header */
@@ -35,6 +37,10 @@
   padding: 1.25rem 1.5rem;
   background-color: #00418f;
   color: white;
+  /* Fixa o cabeçalho enquanto o corpo rola */
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .header-content {
@@ -84,6 +90,9 @@
 .modal-body {
   padding: 1.5rem;
   flex: 1;
+  /* Permite rolagem do conteúdo quando necessário */
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .input-group {
@@ -162,6 +171,10 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  /* Mantém o rodapé visível no fim do modal */
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .cancel-button {

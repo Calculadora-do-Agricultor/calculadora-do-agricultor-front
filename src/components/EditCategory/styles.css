@@ -20,6 +20,10 @@
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   animation: modalFadeIn 0.3s ease-out;
+  /* Mantém o modal visível e permite scroll interno no corpo */
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .edit-category-modal .modal-header {
@@ -28,6 +32,11 @@
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid #e5e7eb;
+  /* Fixa o cabeçalho enquanto o corpo rola */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: white;
 }
 
 .edit-category-modal .header-content {
@@ -76,6 +85,10 @@
 
 .edit-category-modal .modal-body {
   padding: 20px;
+  /* Permite rolagem do conteúdo quando necessário */
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .edit-category-modal .input-group {
@@ -138,6 +151,10 @@
   padding: 16px 20px;
   border-top: 1px solid #e5e7eb;
   background-color: white;
+  /* Mantém o rodapé visível no fim do modal */
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .edit-category-modal .modal-footer-left {
