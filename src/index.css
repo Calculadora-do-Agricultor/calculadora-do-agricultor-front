@@ -189,3 +189,64 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom Scrollbar Styles - Matching Categories List Style */
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #00418f;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #003166;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #002147;
+}
+
+::-webkit-scrollbar-corner {
+  background-color: #f1f5f9;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #00418f #f1f5f9;
+}
+
+/* Dark mode scrollbar adjustments */
+.dark ::-webkit-scrollbar-track {
+  background-color: #1e293b;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #0052cc;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #0066ff;
+}
+
+.dark ::-webkit-scrollbar-thumb:active {
+  background-color: #0080ff;
+}
+
+.dark ::-webkit-scrollbar-corner {
+  background-color: #1e293b;
+}
+
+.dark * {
+  scrollbar-color: #0052cc #1e293b;
+}
