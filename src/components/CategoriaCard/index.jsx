@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Badge } from '../ui/badge';
 import { Edit, ImageIcon } from 'lucide-react';
+import './styles.css';
 
 const CategoriaCard = ({
   imageUrl,
@@ -16,6 +17,7 @@ const CategoriaCard = ({
   isSelected = false
 }) => {
   const [imageError, setImageError] = useState(false);
+  const tagsContainerRef = useRef(null);
 
   const handleImageError = () => {
     setImageError(true);
@@ -31,6 +33,36 @@ const CategoriaCard = ({
     e.stopPropagation();
     if (onEdit) {
       onEdit();
+    }
+  };
+
+  const dragRef = useRef({ isDown: false, startX: 0, startY: 0, scrollLeft: 0 });
+
+  const handlePointerDown = (e) => {
+    e.stopPropagation();
+    if (!tagsContainerRef.current) return;
+    const el = tagsContainerRef.current;
+    dragRef.current.isDown = true;
+    dragRef.current.startX = e.clientX;
+    dragRef.current.startY = e.clientY;
+    dragRef.current.scrollLeft = el.scrollLeft;
+    el.classList.add('grabbing');
+  };
+
+  const handlePointerMove = (e) => {
+    if (!dragRef.current.isDown || !tagsContainerRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      e.preventDefault();
+      tagsContainerRef.current.scrollLeft = dragRef.current.scrollLeft - dx;
+    }
+  };
+
+  const endDrag = () => {
+    dragRef.current.isDown = false;
+    if (tagsContainerRef.current) {
+      tagsContainerRef.current.classList.remove('grabbing');
     }
   };
 
@@ -94,11 +126,6 @@ const CategoriaCard = ({
               <h3 className="text-base font-semibold text-gray-900 truncate leading-tight">
                 {title}
               </h3>
-              {description && (
-                <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">
-                  {description}
-                </p>
-              )}
             </div>
             
             {/* Contador de cálculos */}
@@ -122,24 +149,25 @@ const CategoriaCard = ({
           
           {/* Tags da categoria */}
           {tags && tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {tags.slice(0, 3).map((tag, index) => (
-                <Badge 
-                  key={index}
-                  variant="outline" 
-                  className="text-xs font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200"
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {tags.length > 3 && (
-                <Badge 
-                  variant="outline" 
-                  className="text-xs font-medium px-2 py-0.5 bg-gray-50 text-gray-500 border-gray-200"
-                >
-                  +{tags.length - 3}
-                </Badge>
-              )}
+            <div className="mt-2 relative">
+              <div
+                ref={tagsContainerRef}
+                className="tags-scroll"
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={endDrag}
+                onPointerLeave={endDrag}
+              >
+                {tags.map((tag, index) => (
+                  <Badge 
+                    key={index}
+                    variant="outline" 
+                    className="text-xs font-medium px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200 inline-flex"
+                  >
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
         </div>

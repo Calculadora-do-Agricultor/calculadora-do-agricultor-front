@@ -185,7 +185,6 @@ const Categories = ({ categories, onSelect, selectedCategory, onCategoryUpdated,
                   <CategoriaCard
                     imageUrl={category.imageUrl}
                     title={category.name}
-                    description={category.description || `Categoria com ${category.calculos?.length || 0} cálculos disponíveis`}
                     calculosCount={category.calculos?.length || 0}
                     onClick={() => {
                       onSelect(category.name);

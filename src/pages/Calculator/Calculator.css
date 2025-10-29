@@ -1243,8 +1243,11 @@
     border-radius: 0.5rem;
     border-left: 4px solid #00418f;
     border: 1px solid #e5e7eb;
-    max-height: 150px;
-    overflow-y: auto;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limita a 3 linhas */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f1f5f9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

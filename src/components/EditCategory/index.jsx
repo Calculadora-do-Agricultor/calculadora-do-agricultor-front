@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { doc, updateDoc, deleteDoc } from "firebase/firestore"
 import { db } from "../../services/firebaseConfig"
-import { X, Save, AlertCircle, Loader2, Trash2, Plus } from "lucide-react"
+import { X, Save, AlertCircle, Loader2, Trash2, Plus, Tag } from "lucide-react"
 import { useToast } from "../../context/ToastContext"
 import "./styles.css"
 
@@ -9,6 +9,7 @@ import "./styles.css"
 const CATEGORY_NAME_MAX = 50
 const CATEGORY_DESCRIPTION_MAX = 150
 const MAX_TAGS = 3
+const TAG_MAX_LENGTH = 32
 
 const EditCategory = ({ category, onUpdate, onCancel }) => {
   const [categoryName, setCategoryName] = useState("")
@@ -235,21 +236,28 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
                   </button>
                 </span>
               ))}
+              {categoryTags.length === 0 && (
+                <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-400 border border-dashed border-gray-300">
+                  <Tag size={14} className="mr-1" />
+                  Sem tags
+                </span>
+              )}
             </div>
             {categoryTags.length >= MAX_TAGS && (
               <p className="text-sm text-amber-600 mb-2 flex items-center gap-1">
                 <AlertCircle size={14} />
-                Limite máximo de {MAX_TAGS} tags atingido. Remova uma tag para adicionar outra.
+                Limite máximo de {MAX_TAGS} tags atingido.
               </p>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <input
                 type="text"
                 placeholder={categoryTags.length >= MAX_TAGS ? "Remova uma tag para adicionar outra" : "Adicionar nova tag"}
-                className={`input-field flex-1 ${categoryTags.length >= MAX_TAGS ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                className={`input-field flex-1 min-w-0 ${categoryTags.length >= MAX_TAGS ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 disabled={categoryTags.length >= MAX_TAGS || isSubmitting}
+                maxLength={TAG_MAX_LENGTH}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter' && newTag.trim() && categoryTags.length < MAX_TAGS) {
                     e.preventDefault();
@@ -258,6 +266,9 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
                   }
                 }}
               />
+              <span className={`text-sm ${newTag.length > TAG_MAX_LENGTH ? 'text-red-500' : 'text-gray-500'}`}>
+                {newTag.length} / {TAG_MAX_LENGTH}
+              </span>
               <button
                 type="button"
                 onClick={() => {
