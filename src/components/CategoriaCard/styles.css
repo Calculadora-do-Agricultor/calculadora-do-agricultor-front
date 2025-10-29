@@ -1,0 +1,32 @@
+/* Horizontal tag scroller styles */
+.tags-scroll {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  overscroll-behavior-x: contain; /* avoid interfering with parent scroll */
+  touch-action: pan-y; /* allow vertical scroll, handle horizontal via JS */
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+.tags-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.tags-scroll.grabbing {
+  cursor: grabbing;
+}
+
+/* Ensure badges don’t wrap inside the scroller */
+.tags-scroll .badge {
+  display: inline-flex;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}

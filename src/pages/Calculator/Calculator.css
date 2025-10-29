@@ -749,6 +749,9 @@
     margin-left: auto;
     margin-right: auto;
     padding: 0 1rem;
+    /* Garante que o container ocupe toda a altura disponível */
+    min-height: calc(100vh - 180px);
+    align-items: stretch;
   }
   
   /* Sidebar */
@@ -832,8 +835,9 @@
     border-radius: 0;
     border: none;
     overflow: hidden;
-    height: 100%;
-    max-height: 600px;
+    /* Preenche verticalmente de forma responsiva */
+    height: calc(100vh - 180px);
+    min-height: 500px;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -871,11 +875,12 @@
 
   .categories-content {
     flex: 1;
-    overflow: hidden;
+    /* Permite rolagem do conteúdo sem limitar a altura */
+    overflow: auto;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    max-height: 500px;
+    /* remove limite de altura para ocupar o espaço disponível */
   }
 
   /* Error Container */
@@ -1048,6 +1053,14 @@
     border: 1px solid #e5e7eb;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 65, 143, 0.1);
+    /* Garante que a área principal ocupe toda a altura e largura disponível */
+    min-height: calc(100vh - 180px);
+    height: calc(100vh - 180px);
+    display: flex;
+    flex-direction: column;
+    /* Ocupa todo o espaço restante do grid */
+    width: 100%;
+    min-width: 0;
   }
   
   .main-area-loading {
@@ -1064,7 +1077,9 @@
     justify-content: center;
     padding: 4rem 2rem;
     text-align: center;
-    min-height: 60vh;
+    /* Ocupa todo o espaço da área principal para centralização */
+    flex: 1;
+    height: 100%;
   
   }
   
@@ -1235,8 +1250,11 @@
     border-radius: 0.5rem;
     border-left: 4px solid #00418f;
     border: 1px solid #e5e7eb;
-    max-height: 150px;
-    overflow-y: auto;
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Limita a 3 linhas */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 #f1f5f9;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -2011,8 +2029,10 @@
 
     .category-header {
       flex-direction: column;
-      gap: 1rem;
-      padding: 1rem;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      align-items: center;
+      text-align: center;
     }
 
     .category-image-container {
@@ -2020,21 +2040,30 @@
       height: 60px;
       align-self: center;
       padding: 6px;
+      /* Evita que a cor da categoria pinte toda a largura no mobile */
+      background-color: transparent !important;
     }
 
     .category-content {
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.75rem;
       align-items: center;
       text-align: center;
+      min-width: 0;
     }
 
     .category-info {
       width: 100%;
+      min-width: 0;
     }
 
     .category-title-wrapper {
       justify-content: center;
+    }
+
+    /* Centraliza e evita quebra estranha do texto auxiliar quando não há descrição */
+    .category-info p:not(.category-description) {
+      text-align: center;
     }
 
     .stat-value {
