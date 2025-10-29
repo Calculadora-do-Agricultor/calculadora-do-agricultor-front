@@ -1175,6 +1175,21 @@
   hyphens: auto;
   max-width: 100%;
 }
+
+  /* Descrição sob o título: máximo de 3 linhas, sem overflow */
+  .category-description-text {
+    margin-top: 0.25rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal;
+    line-height: 1.5;
+    max-width: 100%;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
   
   .category-description-indicator {
     display: flex;
@@ -2061,8 +2076,9 @@
       justify-content: center;
     }
 
-    /* Centraliza e evita quebra estranha do texto auxiliar quando não há descrição */
-    .category-info p:not(.category-description) {
+    /* Centraliza apenas textos auxiliares quando não há descrição;
+       exclui a descrição padronizada para evitar conflito no mobile */
+    .category-info p:not(.category-description):not(.category-description-text) {
       text-align: center;
     }
 
