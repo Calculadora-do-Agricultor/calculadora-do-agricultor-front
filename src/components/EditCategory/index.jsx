@@ -237,11 +237,11 @@ const EditCategory = ({ category, onUpdate, onCancel }) => {
                 </span>
               ))}
               {categoryTags.length === 0 && (
-                <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-400 border border-dashed border-gray-300">
-                  <Tag size={14} className="mr-1" />
-                  Sem tags
-                </span>
-              )}
+              <span className="inline-flex items-center px-2 py-1 rounded-md bg-gray-50 text-gray-400 border border-dashed border-gray-300 select-none">
+                <Tag size={14} className="mr-1" />
+                Sem tags
+              </span>
+            )}
             </div>
             {categoryTags.length >= MAX_TAGS && (
               <p className="text-sm text-amber-600 mb-2 flex items-center gap-1">
