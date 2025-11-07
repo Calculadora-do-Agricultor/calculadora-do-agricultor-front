@@ -749,9 +749,11 @@
     margin-left: auto;
     margin-right: auto;
     padding: 0 1rem;
-    /* Garante que o container ocupe toda a altura disponível */
-    min-height: calc(100vh - 180px);
+    /* Remove a altura mínima fixa para permitir expansão natural */
+    min-height: auto;
     align-items: stretch;
+    /* Previne overflow horizontal */
+    overflow-x: hidden;
   }
   
   /* Sidebar */
@@ -835,8 +837,8 @@
     border-radius: 0;
     border: none;
     overflow: hidden;
-    /* Preenche verticalmente de forma responsiva */
-    height: calc(100vh - 180px);
+    /* Remove a altura fixa para permitir expansão natural */
+    height: auto;
     min-height: 500px;
     display: flex;
     flex-direction: column;
@@ -1053,9 +1055,9 @@
     border: 1px solid #e5e7eb;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 65, 143, 0.1);
-    /* Garante que a área principal ocupe toda a altura e largura disponível */
-    min-height: calc(100vh - 180px);
-    height: calc(100vh - 180px);
+    /* Remove altura fixa para permitir expansão natural */
+    min-height: auto;
+    height: auto;
     display: flex;
     flex-direction: column;
     /* Ocupa todo o espaço restante do grid */
