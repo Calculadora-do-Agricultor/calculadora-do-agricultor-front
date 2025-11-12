@@ -35,6 +35,7 @@ const CalculationList = ({
   viewMode = "grid",
   sortOption: initialSortOption = "name_asc",
   complexityFilters = [],
+  initialOpenCalculationId,
   onEditCalculation,
   onCalculationDeleted,
 }) => {
@@ -52,6 +53,7 @@ const CalculationList = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [sortOption, setSortOption] = useState(initialSortOption)
   const [showSortOptions, setShowSortOptions] = useState(false)
+  const [autoOpened, setAutoOpened] = useState(false)
 
   // Estados para o modal de exclusão global
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -168,6 +170,17 @@ const CalculationList = ({
 
     setFilteredCalculations(filtered)
   }, [searchTerm, calculations, sortOption])
+
+  useEffect(() => {
+    if (autoOpened) return
+    if (!initialOpenCalculationId) return
+    const target = filteredCalculations.find((c) => c.id === initialOpenCalculationId)
+    if (target) {
+      setSelectedCalculation(target)
+      setIsModalOpen(true)
+      setAutoOpened(true)
+    }
+  }, [filteredCalculations, initialOpenCalculationId, autoOpened])
 
   const sortCalculations = (calcs, option) => {
     switch (option) {

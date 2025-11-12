@@ -4,6 +4,7 @@ import logoClara from '../../assets/logoClara.svg';
 import { authWrapper, firestoreWrapper } from '../../services/firebaseWrapper';
 
 import { NavLinks, ProfileMenu, MobileMenu } from './components';
+import GlobalSearch from '../GlobalSearch';
 
 const Navbar = () => {
   const [userName, setUserName] = useState('');
@@ -48,6 +49,9 @@ const Navbar = () => {
       </Link>
 
       <div className="flex items-center space-x-4">
+        <div className="hidden md:block">
+          <GlobalSearch user={user} />
+        </div>
         <NavLinks user={user} />
         {user !== null && <div className="hidden lg:block"><ProfileMenu userName={userName} /></div>}
         <MobileMenu user={user} userName={userName} />
