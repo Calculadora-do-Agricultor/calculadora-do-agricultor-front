@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon, TagIcon } from '@heroicons/react/24/outline';
 import { useFAQ } from '../../hooks/useFAQ';
 import { faqService } from '../../services/faqService';
@@ -9,9 +10,16 @@ const FAQ = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('todos');
   const [expandedItems, setExpandedItems] = useState(new Set());
+  const location = useLocation();
   useEffect(() => {
     loadActiveFAQItems();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q') || '';
+    if (q) setSearchTerm(q);
+  }, [location.search]);
 
   // Categorias disponíveis
   const categories = useMemo(() => {
