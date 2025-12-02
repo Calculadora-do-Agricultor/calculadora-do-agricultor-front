@@ -5,7 +5,7 @@ export const backupApiConfigSchema = z.object({
     .string()
     .url({ message: "Informe uma URL válida" })
     .min(1, { message: "A URL é obrigatória" }),
-  token: z.string().min(1, { message: "Informe o token/chave" }),
+  token: z.string().optional(),
 });
 
 export const defaultBackupApiConfig = {

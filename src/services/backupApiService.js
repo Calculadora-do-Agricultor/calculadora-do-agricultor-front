@@ -1,5 +1,5 @@
 const CONFIG_KEY = "backupApiConfig";
-const ENABLED = false;
+const ENABLED = (import.meta.env?.VITE_BACKUP_API_ENABLED ?? "true") === "true";
 
 function readEnvDefaults() {
   const baseUrl = import.meta.env?.VITE_BACKUP_API_BASE_URL || "";
@@ -30,26 +30,6 @@ export function saveConfig(config) {
   return normalized;
 }
 
-export async function testConnection() {
-  const { baseUrl, token } = getConfig();
-  if (!ENABLED || !baseUrl) {
-    return { status: "pending", message: "Conexão pendente" };
-  }
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`${baseUrl}/health`, {
-      method: "GET",
-      headers: { Authorization: token ? `Bearer ${token}` : undefined },
-      signal: controller.signal,
-    });
-    clearTimeout(id);
-    if (!res.ok) return { status: "error", message: `HTTP ${res.status}` };
-    return { status: "ok", message: "API ativa" };
-  } catch (e) {
-    return { status: "error", message: String(e?.message || e) };
-  }
-}
 
 export async function triggerBackup() {
   const { baseUrl, token } = getConfig();
@@ -57,9 +37,10 @@ export async function triggerBackup() {
     return { status: "pending", message: "Backup pendente" };
   }
   try {
+    const normalizedBase = String(baseUrl).trim().replace(/\/+$/,'').replace(/\/backup$/i,'');
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(`${baseUrl}/backup`, {
+    const res = await fetch(`${normalizedBase}/backup`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -77,25 +58,5 @@ export async function triggerBackup() {
   }
 }
 
-export async function getBackupHistory() {
-  const { baseUrl, token } = getConfig();
-  if (!ENABLED || !baseUrl) {
-    return [];
-  }
-  try {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`${baseUrl}/backup/history`, {
-      method: "GET",
-      headers: { Authorization: token ? `Bearer ${token}` : undefined },
-      signal: controller.signal,
-    });
-    clearTimeout(id);
-    if (!res.ok) return [];
-    const data = await res.json().catch(() => []);
-    return Array.isArray(data) ? data : [];
-  } catch {
-    return [];
-  }
-}
+// Conexão e histórico removidos: API possui apenas POST /backup
 
