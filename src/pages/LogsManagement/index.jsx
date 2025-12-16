@@ -56,8 +56,6 @@ const LogsManagement = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [firstVisible, setFirstVisible] = useState(null);
-  const [lastVisible, setLastVisible] = useState(null);
 
   // Estados de filtros
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,32 +92,12 @@ const LogsManagement = () => {
     window.open(url, "_blank");
   };
 
-  // Função para buscar logs
-  const fetchLogs = async (page = 1, direction = "next") => {
+  // Função para buscar logs (carrega todos para permitir filtro em qualquer página)
+  const fetchLogs = async () => {
     setLoading(true);
     try {
       const logsCollectionRef = collection(db, "logs");
-      let q = query(
-        logsCollectionRef,
-        orderBy("date", "desc"),
-        limit(LOGS_PER_PAGE)
-      );
-
-      if (page > 1 && direction === "next" && lastVisible) {
-        q = query(
-          logsCollectionRef,
-          orderBy("date", "desc"),
-          startAfter(lastVisible),
-          limit(LOGS_PER_PAGE)
-        );
-      } else if (direction === "prev" && firstVisible) {
-        q = query(
-          logsCollectionRef,
-          orderBy("date", "desc"),
-          endBefore(firstVisible),
-          limit(LOGS_PER_PAGE)
-        );
-      }
+      const q = query(logsCollectionRef, orderBy("date", "desc"));
 
       const querySnapshot = await getDocs(q);
       const logsData = [];
@@ -127,17 +105,8 @@ const LogsManagement = () => {
         logsData.push({ id: doc.id, ...doc.data() });
       });
 
-      if (logsData.length > 0) {
-        setFirstVisible(querySnapshot.docs[0]);
-        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
-      }
-
       setLogs(logsData);
-      
-      // Calcular total de páginas (aproximação)
-      const totalSnapshot = await getDocs(query(logsCollectionRef));
-      setTotalPages(Math.ceil(totalSnapshot.size / LOGS_PER_PAGE));
-      
+      setTotalPages(Math.max(1, Math.ceil(logsData.length / LOGS_PER_PAGE)));
       setError(null);
     } catch (err) {
       console.error("Erro ao buscar logs:", err);
@@ -274,20 +243,27 @@ const LogsManagement = () => {
 
   // Função para mudar página
   const changePage = (newPage) => {
-    if (newPage > currentPage) {
-      fetchLogs(newPage, "next");
-    } else {
-      fetchLogs(newPage, "prev");
-    }
     setCurrentPage(newPage);
   };
 
   // Efeito para carregar logs iniciais
   useEffect(() => {
     if (user && isAdmin) {
-      fetchLogs(1);
+      fetchLogs();
     }
   }, [user, isAdmin]);
+
+  // Resetar página ao alterar filtros/busca e ajustar quando necessário
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, userFilter, ipFilter, locationFilter]);
+
+  const computedTotalPages = Math.max(1, Math.ceil(filteredLogs.length / LOGS_PER_PAGE));
+  useEffect(() => {
+    if (currentPage > computedTotalPages) {
+      setCurrentPage(computedTotalPages);
+    }
+  }, [computedTotalPages, currentPage]);
 
   // Calcular métricas
   const metrics = calculateMetrics(showFilteredMetrics ? filteredLogs : logs);
@@ -514,7 +490,9 @@ const LogsManagement = () => {
         <div className="p-2">
           {filteredLogs.length > 0 ? (
             <div className="space-y-2 sm:space-y-4">
-              {filteredLogs.map((log) => (
+              {filteredLogs
+                .slice((currentPage - 1) * LOGS_PER_PAGE, (currentPage - 1) * LOGS_PER_PAGE + LOGS_PER_PAGE)
+                .map((log) => (
                 <div
                   key={log.id}
                   className="transform rounded-lg sm:rounded-xl border border-[#00418F]/10 bg-white p-3 sm:p-4 transition-all duration-200 hover:border-[#00418F]/40 sm:hover:shadow-lg"
@@ -554,11 +532,11 @@ const LogsManagement = () => {
                   Anterior
                 </button>
                 <span className="text-sm font-medium text-[#00418F]">
-                  {currentPage} / {totalPages}
+                  {currentPage} / {computedTotalPages}
                 </span>
                 <button
                   onClick={() => changePage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  disabled={currentPage === computedTotalPages}
                   className="flex items-center gap-1 rounded-full bg-[#00418F]/10 p-2 text-[#00418F] transition-all hover:bg-[#00418F]/20 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Próxima

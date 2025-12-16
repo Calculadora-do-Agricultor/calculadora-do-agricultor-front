@@ -125,7 +125,20 @@ const UserManagement = () => {
   // Paginação
   const indexOfLastUser = currentPage * usersPerPage;
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
+  const computedTotalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
+
+  // Garantir que mudança de filtros leve para a primeira página
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterRole, filterStatus, searchQuery]);
+
+  // Ajustar página atual se os resultados filtrados diminuírem
+  useEffect(() => {
+    if (currentPage > computedTotalPages) {
+      setCurrentPage(computedTotalPages);
+    }
+  }, [computedTotalPages, currentPage]);
 
   // Função para alterar o papel do usuário (admin/user)
   const toggleUserRole = async (userId, currentRole) => {
@@ -482,8 +495,8 @@ const UserManagement = () => {
                     </button>
                     <button
                       onClick={() => setCurrentPage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className={`rounded-md p-2 ${currentPage === totalPages ? "cursor-not-allowed text-[#00418F]/30" : "text-[#00418F] hover:bg-[#00418F]/10"}`}
+                      disabled={currentPage === computedTotalPages}
+                      className={`rounded-md p-2 ${currentPage === computedTotalPages ? "cursor-not-allowed text-[#00418F]/30" : "text-[#00418F] hover:bg-[#00418F]/10"}`}
                     >
                       <ChevronRightIcon className="h-5 w-7" />
                     </button>
