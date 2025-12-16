@@ -43,6 +43,7 @@ import EditCalculation from "@/components/EditCalculation";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import logoClara from "@/assets/logoClara.svg";
 import "./Calculator.css";
+import useLocationLogger from "@/hooks/useLocationLogger";
 
 export default function Calculator() {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(null);
@@ -73,6 +74,8 @@ export default function Calculator() {
   const [calculos, setCalculos] = useState([]);
   const [categoriesUpdateKey, setCategoriesUpdateKey] = useState(Date.now());
   const [categoryImageError, setCategoryImageError] = useState(false);
+  const { createLog } = useLocationLogger();
+  const hasLoggedAccessRef = useRef(false);
 
   const fetchCategorias = useCallback(async () => {
     try {
@@ -133,6 +136,13 @@ export default function Calculator() {
       fetchCategorias();
     }
   }, [user, fetchCategorias]);
+
+  useEffect(() => {
+    if (user && !hasLoggedAccessRef.current) {
+      hasLoggedAccessRef.current = true;
+      createLog(user.uid, "Acesso à Calculadora", false);
+    }
+  }, [user, createLog]);
 
   // Add a callback to handle category updates and force re-render
   const handleCategoryUpdated = useCallback(() => {

@@ -37,6 +37,7 @@ import MetricCard from "../../components/MetricCard";
 import LogCard from "../../components/LogCard";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import "./LogsManagement.css";
+import "../Dashboard/Dashboard.css";
 
 // Constantes
 const LOGS_PER_PAGE = 10;
@@ -321,114 +322,93 @@ const LogsManagement = () => {
   }
 
   return (
-    <div className="logs-container flex min-h-screen flex-col items-center justify-start bg-gradient-to-br from-[#00418F]/5 via-white to-[#FFEE00]/5 p-4 md:p-8">
-      <div className="w-full max-w-7xl transform overflow-hidden rounded-2xl border border-[#00418F]/10 bg-white/80 shadow-xl backdrop-blur-sm transition-all duration-300 hover:shadow-2xl">
-        {/* Cabeçalho */}
-        <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/20 to-[#00418F]/10 p-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center">
-              <ShieldCheckIcon className="mr-4 h-10 w-10 text-[#00418F]" />
-              <div>
-                <h1 className="bg-gradient-to-r from-[#00418F] to-[#0066FF] bg-clip-text text-3xl font-bold text-transparent">
-                  Gerenciamento de Logs
-                </h1>
-                <p className="mt-1 text-[#00418F]/70">
-                  Visualize e gerencie os logs de atividades dos usuários
-                </p>
-              </div>
-            </div>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Gerenciamento de Logs</h1>
+        <p>Visualize e gerencie os logs de atividades</p>
+        <button
+          onClick={() => fetchLogs(1)}
+          className="refresh-button"
+          disabled={loading}
+          title="Atualizar logs"
+        >
+          {loading ? (
+            <LoadingSpinner tipo="inline" tamanho="small" cor="white" />
+          ) : (
+            <ArrowPathIcon className="h-4 w-4" />
+          )}
+          Atualizar
+        </button>
+      </div>
+
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Métricas</h2>
+          <div className="chart-actions">
             <button
-              onClick={() => fetchLogs(1)}
-              className="group flex transform items-center justify-center rounded-xl bg-[#00418F] p-3 text-white shadow-lg transition-all duration-150 hover:scale-105 hover:bg-[#00418F]/90 hover:shadow-xl"
-              title="Atualizar logs"
+              className={`export-button ${!showFilteredMetrics ? "bg-[#f8fafc]" : ""}`}
+              onClick={() => setShowFilteredMetrics(false)}
             >
-              <ArrowPathIcon className="h-6 w-6 transition-transform duration-500 group-hover:rotate-180" />
-              <span className="ml-2 font-medium">Atualizar</span>
+              <ChartBarIcon className="h-4 w-4" />
+              Visão Geral
+            </button>
+            <button
+              className={`export-button ${showFilteredMetrics ? "bg-[#f8fafc]" : ""}`}
+              onClick={() => setShowFilteredMetrics(true)}
+            >
+              <FunnelIcon className="h-4 w-4" />
+              Dados Filtrados
             </button>
           </div>
         </div>
-
-        {/* Menu Superior com Alternância de Visão */}
-        <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
-          <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-4">
-              <button
-                className={`flex items-center gap-2 rounded-xl px-6 py-3 font-medium transition-all duration-200 ${
-                  !showFilteredMetrics
-                    ? "bg-[#00418F] text-white"
-                    : "bg-[#00418F]/10 text-[#00418F]"
-                }`}
-                onClick={() => setShowFilteredMetrics(false)}
-              >
-                <ChartBarIcon className="h-5 w-5" />
-                Visão Geral
-              </button>
-              <button
-                className={`flex items-center gap-2 rounded-xl px-6 py-3 font-medium transition-all duration-200 ${
-                  showFilteredMetrics
-                    ? "bg-[#00418F] text-white"
-                    : "bg-[#00418F]/10 text-[#00418F]"
-                }`}
-                onClick={() => setShowFilteredMetrics(true)}
-              >
-                <FunnelIcon className="h-5 w-5" />
-                Dados Filtrados
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <InformationCircleIcon className="h-5 w-5 text-[#00418F]/70" />
-              <span className="text-sm text-[#00418F]/70">
-                {showFilteredMetrics
-                  ? "Exibindo métricas dos dados filtrados"
-                  : "Exibindo métricas de todos os registros"}
-              </span>
-            </div>
+        <div className="p-2">
+          <div className="mb-4 text-sm text-[#00418F]/70 flex items-center gap-2">
+            <InformationCircleIcon className="h-4 w-4" />
+            {showFilteredMetrics
+              ? "Exibindo métricas dos dados filtrados"
+              : "Exibindo métricas de todos os registros"}
           </div>
-
-          {/* Cards de Métricas */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 auto-rows-fr">
+          <div className="metrics-grid">
             <MetricCard
               title="Total de Logs"
               value={metrics.totalLogs}
               icon={DocumentTextIcon}
               tooltip={METRIC_TOOLTIPS.totalLogs}
-              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Com Localização"
               value={metrics.logsWithLocation}
               icon={GlobeAltIcon}
               tooltip={METRIC_TOOLTIPS.withLocation}
-              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Sem Localização"
               value={metrics.logsWithoutLocation}
               icon={ExclamationTriangleIcon}
               tooltip={METRIC_TOOLTIPS.withoutLocation}
-              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="Usuários Únicos"
               value={metrics.uniqueUsers}
               icon={UsersIcon}
               tooltip={METRIC_TOOLTIPS.uniqueUsers}
-              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
             <MetricCard
               title="IPs Únicos"
               value={metrics.uniqueIPs}
               icon={ServerIcon}
               tooltip={METRIC_TOOLTIPS.uniqueIps}
-              className="h-full transform bg-gradient-to-br from-[#00418F]/5 via-[#00418F]/10 to-[#00418F]/5 border-[#00418F]/20 shadow-lg hover:scale-105 transition-all duration-300"
             />
           </div>
         </div>
+      </div>
 
-        {/* Barra de busca e exportação */}
-        <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Busca e Exportação</h2>
+        </div>
+        <div className="p-2">
           <div className="mb-6 flex flex-col items-center justify-between gap-4 md:flex-row">
-            {/* Busca global */}
             <div className="relative w-full md:w-2/3">
               <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
                 <MagnifyingGlassIcon className="h-5 w-5 text-[#00418F]/70" />
@@ -441,121 +421,97 @@ const LogsManagement = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            {/* Botão de exportação */}
             <button
               onClick={exportLogsToCSV}
               disabled={isExporting || filteredLogs.length === 0}
-              className={`flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-medium shadow-lg transition-all duration-200 ${
-                isExporting || filteredLogs.length === 0
-                  ? "cursor-not-allowed bg-gray-300 text-gray-500"
-                  : "bg-[#00418F] text-white hover:scale-105 hover:bg-[#00418F]/90"
-              }`}
+              className={`refresh-button ${isExporting || filteredLogs.length === 0 ? "opacity-70 cursor-not-allowed" : ""}`}
+              title="Exportar CSV"
             >
-              <ArrowDownTrayIcon className="h-5 w-5" />
+              <ArrowDownTrayIcon className="h-4 w-4" />
               {isExporting ? "Exportando..." : "Exportar CSV"}
             </button>
           </div>
+        </div>
+      </div>
 
-          {/* Seção de Filtros */}
-          <div className="mt-8 rounded-xl bg-white/50 p-6 shadow-lg backdrop-blur-sm border border-[#00418F]/10">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-[#00418F]/10 p-2">
-                  <FunnelIcon className="h-6 w-6 text-[#00418F]" />
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Filtros</h2>
+          <div className="chart-actions">
+            <button onClick={clearFilters} className="export-button">
+              <ExclamationCircleIcon className="h-4 w-4" />
+              Limpar Filtros
+            </button>
+          </div>
+        </div>
+        <div className="p-2">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#00418F]/70">
+                Usuário
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                  <UserIcon className="h-5 w-5 text-[#00418F]/70" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[#00418F]">
-                    Filtros de Pesquisa
-                  </h3>
-                  <p className="text-sm text-[#00418F]/70">
-                    Refine sua busca usando os filtros abaixo
-                  </p>
-                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por usuário..."
+                  className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                  value={userFilter}
+                  onChange={(e) => setUserFilter(e.target.value)}
+                />
               </div>
-              <button
-                onClick={clearFilters}
-                className="flex items-center gap-2 rounded-lg bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-100 hover:scale-105 shadow-sm"
-              >
-                <ExclamationCircleIcon className="h-4 w-4" />
-                Limpar Filtros
-              </button>
             </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              {/* Filtro de usuário */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[#00418F]/70">
-                  Usuário
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                    <UserIcon className="h-5 w-5 text-[#00418F]/70" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar por usuário..."
-                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                    value={userFilter}
-                    onChange={(e) => setUserFilter(e.target.value)}
-                  />
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#00418F]/70">
+                Endereço IP
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                  <ServerIcon className="h-5 w-5 text-[#00418F]/70" />
                 </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por IP..."
+                  className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                  value={ipFilter}
+                  onChange={(e) => setIpFilter(e.target.value)}
+                />
               </div>
-
-              {/* Filtro de IP */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[#00418F]/70">
-                  Endereço IP
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                    <ServerIcon className="h-5 w-5 text-[#00418F]/70" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar por IP..."
-                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                    value={ipFilter}
-                    onChange={(e) => setIpFilter(e.target.value)}
-                  />
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-[#00418F]/70">
+                Localização
+              </label>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
+                  <MapPinIcon className="h-5 w-5 text-[#00418F]/70" />
                 </div>
-              </div>
-
-              {/* Filtro de localização */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-[#00418F]/70">
-                  Localização
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-4">
-                    <MapPinIcon className="h-5 w-5 text-[#00418F]/70" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar por localização..."
-                    className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                  />
-                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar por localização..."
+                  className="w-full rounded-xl border border-[#00418F]/20 bg-white/80 py-3 pr-4 pl-12 text-gray-700 placeholder-[#00418F]/60 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-[#00418F]/30 focus:border-[#00418F] focus:ring-[#00418F]/20"
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                />
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Conteúdo principal - Lista de logs */}
-        <div className="p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-[#00418F]">
-              Registros de Atividade
-            </h3>
-            <div className="text-sm text-[#00418F]/70">
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Registros de Atividade</h2>
+          <div className="chart-actions">
+            <span className="text-sm text-[#00418F]/70">
               {filteredLogs.length}{" "}
               {filteredLogs.length === 1 ? "registro encontrado" : "registros encontrados"}
-            </div>
+            </span>
           </div>
-
-          {/* Lista de Logs */}
+        </div>
+        <div className="p-2">
           {filteredLogs.length > 0 ? (
             <div className="space-y-2 sm:space-y-4">
               {filteredLogs.map((log) => (
@@ -583,7 +539,6 @@ const LogsManagement = () => {
             </div>
           )}
 
-          {/* Paginação */}
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between border-t border-[#00418F]/10 pt-4">
               <div className="text-sm text-[#00418F]/70">

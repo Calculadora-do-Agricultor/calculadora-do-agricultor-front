@@ -4,6 +4,8 @@ import { db } from "../../services/firebaseConfig";
 import { AuthContext } from "../../context/AuthContext";
 import { Navigate } from "react-router-dom";
 import LoadingSpinner from "../../components/LoadingSpinner";
+import MetricCard from "../../components/MetricCard";
+import { RefreshCw } from "lucide-react";
 import {
   ArrowPathIcon,
   ChevronLeftIcon,
@@ -19,6 +21,7 @@ import {
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import "./UserManagement.css";
+import "../Dashboard/Dashboard.css";
 
 // Implementação das métricas gerais de usuários (sem opção de filtro)
 const UserMetrics = ({ users }) => {
@@ -40,59 +43,11 @@ const UserMetrics = ({ users }) => {
   const metrics = calculateMetrics(users);
 
   return (
-    <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold text-[#00418F]">
-          Métricas de Usuários
-        </h2>
-      </div>
-
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white rounded-xl p-6 border border-[#00418F]/20 hover:border-[#00418F]/40 hover:shadow-lg transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-[#00418F]/80 font-medium mb-2">Total de Usuários</p>
-              <p className="text-3xl font-bold text-[#00418F] leading-tight">{metrics.totalUsers}</p>
-            </div>
-            <div className="ml-4 p-4 bg-gradient-to-br from-[#00418F] to-[#00418F]/80 rounded-xl shadow-md">
-              <UsersIcon className="h-7 w-7 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-[#00418F]/20 hover:border-[#00418F]/40 hover:shadow-lg transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-[#00418F]/80 font-medium mb-2">Usuários Ativos</p>
-              <p className="text-3xl font-bold text-[#00418F] leading-tight">{metrics.activeUsers}</p>
-            </div>
-            <div className="ml-4 p-4 bg-gradient-to-br from-[#00418F] to-[#00418F]/80 rounded-xl shadow-md">
-              <UserPlusIcon className="h-7 w-7 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-[#00418F]/20 hover:border-[#00418F]/40 hover:shadow-lg transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-[#00418F]/80 font-medium mb-2">Usuários Inativos</p>
-              <p className="text-3xl font-bold text-[#00418F] leading-tight">{metrics.inactiveUsers}</p>
-            </div>
-            <div className="ml-4 p-4 bg-gradient-to-br from-[#00418F] to-[#00418F]/80 rounded-xl shadow-md">
-              <UserMinusIcon className="h-7 w-7 text-white" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-[#00418F]/20 hover:border-[#00418F]/40 hover:shadow-lg transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm text-[#00418F]/80 font-medium mb-2">Administradores</p>
-              <p className="text-3xl font-bold text-[#00418F] leading-tight">{metrics.adminUsers}</p>
-            </div>
-            <div className="ml-4 p-4 bg-gradient-to-br from-[#00418F] to-[#00418F]/80 rounded-xl shadow-md">
-              <ShieldCheckIcon className="h-7 w-7 text-white" />
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="metrics-grid">
+      <MetricCard title="Usuários" value={metrics.totalUsers} icon={UsersIcon} />
+      <MetricCard title="Ativos" value={metrics.activeUsers} icon={UserPlusIcon} />
+      <MetricCard title="Inativos" value={metrics.inactiveUsers} icon={UserMinusIcon} />
+      <MetricCard title="Administradores" value={metrics.adminUsers} icon={ShieldCheckIcon} />
     </div>
   );
 };
@@ -298,12 +253,12 @@ const UserManagement = () => {
             >
               {user.role === "admin" ? (
                 <>
-                  <UserIcon className="h-4 w-4 mr-1" />
+                  <UserIcon className="mr-2 h-[1.6em] w-[1.6em]" />
                   Tornar usuário
                 </>
               ) : (
                 <>
-                  <ShieldCheckIcon className="h-4 w-4 mr-1" />
+                  <ShieldCheckIcon className="mr-2 h-[1.6em] w-[1.6em]" />
                   Tornar admin
                 </>
               )}
@@ -337,27 +292,32 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="user-management-container">
-      <div className="user-management-content">
-        <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-[#00418F]">Gerenciamento de Usuários</h1>
-            <button
-              onClick={fetchUsers}
-              className="flex items-center rounded-lg bg-[#00418F] px-4 py-2 text-white shadow-sm hover:bg-[#00418F]/90 transition-colors duration-150"
-              title="Atualizar lista de usuários"
-            >
-              <ArrowPathIcon className="h-5 w-5 mr-2" />
-              Atualizar
-            </button>
-          </div>
-        </div>
-        
-        {/* Métricas de Usuários */}
-        <UserMetrics users={users} />
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Gerenciamento de Usuários</h1>
+        <p>Administre usuários, papéis e status da plataforma</p>
+        <button 
+          onClick={fetchUsers} 
+          className="refresh-button"
+          disabled={loading}
+          title="Atualizar lista de usuários"
+        >
+          {loading ? (
+            <LoadingSpinner tipo="inline" tamanho="small" cor="white" />
+          ) : (
+            <RefreshCw size={16} />
+          )}
+          Atualizar dados
+        </button>
+      </div>
 
-        {/* Filtros */}
-        <div className="border-b border-[#00418F]/10 bg-gradient-to-r from-[#00418F]/5 to-transparent p-6">
+      <UserMetrics users={users} />
+
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Filtros</h2>
+        </div>
+        <div className="p-2">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Filtro de busca */}
             <div className="relative">
@@ -446,9 +406,13 @@ const UserManagement = () => {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Lista de usuários */}
-        <div className="p-6">
+      <div className="recent-calculations">
+        <div className="section-header">
+          <h2>Lista de Usuários</h2>
+        </div>
+        <div className="p-2">
           {loading ? (
             <LoadingSpinner
               tipo="inline"

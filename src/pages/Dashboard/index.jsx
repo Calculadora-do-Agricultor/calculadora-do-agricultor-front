@@ -225,19 +225,30 @@ const Dashboard = () => {
         });
       });
 
-      // Buscar logs para atividade de usuários
-      const logsQuery = query(
+      // Buscar logs para atividade de usuários (compatível com coleções 'logs' e 'Logs')
+      const logsLowerQuery = query(
+        collection(db, 'logs'),
+        orderBy('date', 'desc'),
+        limit(50)
+      );
+      const logsUpperQuery = query(
         collection(db, 'Logs'),
         orderBy('timestamp', 'desc'),
-        limit(30)
+        limit(50)
       );
-      const logsSnapshot = await getDocs(logsQuery);
+      const [logsLowerSnapshot, logsUpperSnapshot] = await Promise.all([
+        getDocs(logsLowerQuery),
+        getDocs(logsUpperQuery)
+      ]);
       
       // Agrupar logs por dia para criar dados de atividade
       const activityMap = {};
-      logsSnapshot.docs.forEach(doc => {
-        const log = doc.data();
-        const date = log.timestamp?.toDate() || new Date();
+      const combineLogs = [];
+      logsLowerSnapshot.docs.forEach(doc => combineLogs.push(doc.data()));
+      logsUpperSnapshot.docs.forEach(doc => combineLogs.push(doc.data()));
+
+      combineLogs.forEach(log => {
+        const date = (log.date?.toDate?.() ? log.date.toDate() : log.date) || (log.timestamp?.toDate?.() ? log.timestamp.toDate() : log.timestamp) || new Date();
         const dateString = date.toISOString().split('T')[0];
         
         activityMap[dateString] = (activityMap[dateString] || 0) + 1;
@@ -438,39 +449,8 @@ const Dashboard = () => {
           <div className="chart-header">
             <h2>Cálculos por Categoria</h2>
             <div className="chart-actions">
-              <div className="filter-dropdown" ref={categoryFilterRef}>
-                <button 
-                  onClick={() => setShowCategoryFilters(prev => !prev)} 
-                  className="filter-button"
-                >
-                  <Filter size={16} />
-                  Filtrar
-                  <ChevronDown size={14} />
-                </button>
-                {showCategoryFilters && (
-                  <div className="filter-menu">
-                    <div className="filter-group">
-                      <label>Categoria:</label>
-                      <select 
-                        id="dashboard-category-filter"
-                        name="dashboard-category-filter"
-                        value={categoryFilter} 
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="filter-select"
-                      >
-                        <option value="all">Todas</option>
-                        {metrics.calculationsByCategory.map((item) => (
-                          <option key={item.category} value={item.category}>
-                            {item.category}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
               <button 
-                onClick={() => exportAsCSV(filteredCalculationsByCategory, 'calculos-por-categoria')} 
+                onClick={() => exportAsCSV(metrics.calculationsByCategory, 'calculos-por-categoria')} 
                 className="export-button"
               >
                 <Download size={16} />
@@ -489,7 +469,7 @@ const Dashboard = () => {
             <ResponsiveContainer width="100%" height={300} aspect={undefined}>
               <BarChart
                 ref={barChartRef}
-                data={filteredCalculationsByCategory.length > 0 ? filteredCalculationsByCategory : metrics.calculationsByCategory}
+                data={metrics.calculationsByCategory}
                 margin={{
                   top: 20,
                   right: 30,
@@ -507,7 +487,7 @@ const Dashboard = () => {
             </ResponsiveContainer>
             
             <ul className="chart-data-list">
-              {(filteredCalculationsByCategory.length > 0 ? filteredCalculationsByCategory : metrics.calculationsByCategory).map((item, index) => (
+              {metrics.calculationsByCategory.map((item, index) => (
                 <li key={index}>
                   <span className="category-name">{item.category}</span>
                   <span className="category-count">{item.count} cálculos</span>
@@ -646,7 +626,6 @@ const Dashboard = () => {
                 <th>Nome</th>
                 <th>Categoria</th>
                 <th>Data de Criação</th>
-                <th>Visualizações</th>
               </tr>
             </thead>
             <tbody>
@@ -661,7 +640,6 @@ const Dashboard = () => {
                       : 'N/A'}
                   </td>
                   <td>{formatDate(calc.createdAt)}</td>
-                  <td>{calc.views || 0}</td>
                 </tr>
               ))}
             </tbody>
